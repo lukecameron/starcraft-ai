@@ -809,6 +809,12 @@ def _probe_reserve_summary(metadata: dict[str, object], opponent_race: str | Non
                          first_pylon <= second_gateway)
     if generation != "v44" and in_opening_window and any(isinstance(frame, int) and first_pylon <= frame < second_gateway for frame in accepted):
         review_flags.append("probe_train_during_pre_second_gateway_window")
+    second_zealot = _metadata_int(metadata, "second_zealot_train_frame", -1)
+    if generation == "v44" and second_gateway >= 0 and second_zealot >= 0 and any(
+        isinstance(frame, int) and not isinstance(frame, bool) and second_gateway < frame < second_zealot
+        for frame in accepted
+    ):
+        review_flags.append("probe_train_strictly_between_second_gateway_and_second_zealot")
     post_window_train = window_end >= 0 and any(isinstance(frame, int) and frame >= window_end for frame in accepted)
     max_reserve = _metadata_int(metadata, "max_opening_probe_reserve", 0)
     if race == "zerg" and max_reserve != 250:
@@ -832,7 +838,11 @@ def _probe_reserve_summary(metadata: dict[str, object], opponent_race: str | Non
         "block_frames_ordered": "probe_reserve_block_frames_not_ordered" not in review_flags,
         "block_minerals_in_range": "probe_reserve_block_minerals_out_of_range" not in review_flags,
         "window_ordered": not any(flag.startswith("probe_reserve_window") for flag in review_flags),
-        "probe_train_absence": "probe_train_during_pre_second_gateway_window" not in review_flags,
+        "probe_train_absence": not any(
+            flag in review_flags for flag in (
+                "probe_train_during_pre_second_gateway_window",
+                "probe_train_strictly_between_second_gateway_and_second_zealot",
+            )),
         "post_window_resumption": post_window_train if window_end >= 0 else None,
         "max_reserve_threshold": not any(flag.endswith("max_threshold_mismatch") for flag in review_flags),
         "non_zerg_inactive": (not any(flag.startswith("non_zerg_probe_reserve") or

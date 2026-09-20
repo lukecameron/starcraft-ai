@@ -114,6 +114,24 @@ class KestrelV44ScorerTest(unittest.TestCase):
         summary = scorer._v43_treatment_summary(metadata, "Zerg", require_ordering=True)
         self.assertIn("reserve_block_after_second_zealot", summary["review_flags"])
 
+    def test_probe_train_strictly_between_gateway_and_second_zealot_is_rejected(self):
+        metadata = self.zerg_metadata()
+        metadata["accepted_probe_train_frames"] = [120, 155]
+        summary = scorer._probe_reserve_summary(metadata, "Zerg", "v44")
+        self.assertIn(
+            "probe_train_strictly_between_second_gateway_and_second_zealot",
+            summary["review_flags"],
+        )
+        self.assertFalse(summary["checks"]["probe_train_absence"])
+
+        metadata["accepted_probe_train_frames"] = [120, 150, 160]
+        summary = scorer._probe_reserve_summary(metadata, "Zerg", "v44")
+        self.assertNotIn(
+            "probe_train_strictly_between_second_gateway_and_second_zealot",
+            summary["review_flags"],
+        )
+        self.assertTrue(summary["checks"]["probe_train_absence"])
+
 
 if __name__ == "__main__":
     unittest.main()
