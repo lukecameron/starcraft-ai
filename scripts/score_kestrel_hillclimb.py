@@ -134,7 +134,7 @@ def _candidate_generation(candidate_name: object) -> str | None:
     """Resolve a policy generation from the schedule's candidate display name."""
     if not isinstance(candidate_name, str):
         return None
-    match = re.search(r"(?:^|[^a-z0-9])v(42|41|40|38|37|36)(?:[^a-z0-9]|$)", candidate_name.lower())
+    match = re.search(r"(?:^|[^a-z0-9])v(43|42|41|40|38|37|36)(?:[^a-z0-9]|$)", candidate_name.lower())
     return f"v{match.group(1)}" if match else None
 
 
@@ -146,8 +146,14 @@ def _diagnostic_generation(metadata: dict[str, object], candidate_name: object =
     field-based detection remains the fallback for archived diagnostics.
     """
     candidate_generation = _candidate_generation(candidate_name)
-    if candidate_generation in {"v36", "v37", "v38", "v40", "v41", "v42"}:
+    if candidate_generation in {"v36", "v37", "v38", "v40", "v41", "v42", "v43"}:
         return candidate_generation
+    if any(name in metadata for name in (
+        "zerg_second_zealot_probe_reserve_active_frames",
+        "second_zealot_train_frame",
+        "zerg_second_zealot_probe_reserve_block_count",
+    )):
+        return "v43"
     if any(name in metadata for name in (
         "zerg_five_probe_policy_active_frames",
         "zerg_five_probe_pylon_accepted_frame",
@@ -323,7 +329,7 @@ def _construction_pending_summary(metadata: dict[str, object], opponent_race: st
         grade = "review"
     score_checks = [value for value in checks.values() if isinstance(value, bool)]
     return {
-        "generation": generation if generation in {"v35", "v36", "v37", "v38", "v40", "v41", "v42"} else "v35",
+        "generation": generation if generation in {"v35", "v36", "v37", "v38", "v40", "v41", "v42", "v43"} else "v35",
         "telemetry_status": "complete" if not missing and not invalid_fields else "partial",
         "fields_present": present,
         "missing_fields": missing,
@@ -423,6 +429,109 @@ def _v42_treatment_summary(metadata: dict[str, object], opponent_race: str | Non
     }
 
 
+def _v43_treatment_summary(metadata: dict[str, object], opponent_race: str | None = None) -> dict[str, object]:
+    """Validate v43's post-second-Gateway Probe reserve telemetry."""
+    names = (
+        "second_zealot_train_frame",
+        "zerg_second_zealot_probe_reserve_active_frames",
+        "zerg_second_zealot_probe_reserve_block_frames",
+        "zerg_second_zealot_probe_reserve_block_minerals",
+        "zerg_second_zealot_probe_reserve_block_count",
+        "zerg_second_zealot_probe_reserve",
+    )
+    present = [name for name in names if name in metadata]
+    missing = [name for name in names if name not in metadata]
+    invalid: list[str] = []
+    flags: list[str] = []
+    second_frame = metadata.get(names[0])
+    active = metadata.get(names[1])
+    block_frames = metadata.get(names[2])
+    block_minerals = metadata.get(names[3])
+    block_count = metadata.get(names[4])
+    reserve = metadata.get(names[5])
+    for name, value in ((names[0], second_frame), (names[1], active), (names[4], block_count), (names[5], reserve)):
+        if name in metadata and (not isinstance(value, int) or isinstance(value, bool)):
+            invalid.append(name)
+            flags.append(f"{name}_type_mismatch")
+    if names[2] in metadata and not isinstance(block_frames, list):
+        invalid.append(names[2])
+        flags.append("zerg_second_zealot_probe_reserve_block_frames_type_mismatch")
+    if names[3] in metadata and not isinstance(block_minerals, list):
+        invalid.append(names[3])
+        flags.append("zerg_second_zealot_probe_reserve_block_minerals_type_mismatch")
+    flags.extend(f"{name}_missing" for name in missing)
+    race = _normalise_race(opponent_race)
+    if race is None:
+        known_zerg = metadata.get("known_zerg")
+        if isinstance(known_zerg, bool):
+            race = "zerg" if known_zerg else "non-zerg"
+    frame_values = block_frames if isinstance(block_frames, list) else []
+    mineral_values = block_minerals if isinstance(block_minerals, list) else []
+    if len(frame_values) != len(mineral_values):
+        flags.append("reserve_trace_length_mismatch")
+    if isinstance(block_count, int) and not isinstance(block_count, bool) and block_count != len(frame_values):
+        flags.append("reserve_block_count_mismatch")
+    if any(not isinstance(value, int) or isinstance(value, bool) for value in frame_values):
+        flags.append("reserve_block_frame_type_mismatch")
+    if any(not isinstance(value, int) or isinstance(value, bool) for value in mineral_values):
+        flags.append("reserve_block_mineral_type_mismatch")
+    if any(current < previous for previous, current in zip(frame_values, frame_values[1:])
+           if isinstance(previous, int) and isinstance(current, int)):
+        flags.append("reserve_block_frames_not_ordered")
+    if any(isinstance(value, int) and not isinstance(value, bool) and not 50 <= value < 150 for value in mineral_values):
+        flags.append("reserve_block_minerals_out_of_range")
+    gateway_frame = metadata.get("second_gateway_current_frame")
+    accepted_trains = metadata.get("accepted_zealot_trains")
+    if race == "zerg":
+        if not isinstance(active, int) or isinstance(active, bool) or active <= 0:
+            flags.append("zerg_second_zealot_probe_reserve_active_frames_not_positive")
+        if not isinstance(second_frame, int) or isinstance(second_frame, bool) or second_frame < 0:
+            flags.append("zerg_second_zealot_train_frame_not_observed")
+        if not isinstance(accepted_trains, int) or isinstance(accepted_trains, bool) or accepted_trains < 2:
+            flags.append("zerg_second_zealot_acceptance_count_below_two")
+        if isinstance(gateway_frame, int) and isinstance(second_frame, int) and second_frame < gateway_frame:
+            flags.append("second_zealot_train_before_second_gateway")
+        if isinstance(gateway_frame, int) and any(isinstance(frame, int) and frame < gateway_frame for frame in frame_values):
+            flags.append("reserve_block_before_second_gateway")
+        if isinstance(second_frame, int) and any(isinstance(frame, int) and frame >= second_frame for frame in frame_values):
+            flags.append("reserve_block_after_second_zealot")
+        if reserve != 100:
+            flags.append("zerg_second_zealot_probe_reserve_threshold_mismatch")
+    elif race in {"terran", "protoss", "random", "non-zerg"}:
+        if active != 0:
+            flags.append("non_zerg_second_zealot_probe_reserve_active_frames_nonzero")
+        if frame_values or mineral_values or block_count != 0:
+            flags.append("non_zerg_second_zealot_probe_reserve_activity")
+    else:
+        flags.append("second_zealot_reserve_race_unknown")
+    checks = {
+        "reserve_trace_aligned": "reserve_trace_length_mismatch" not in flags,
+        "reserve_block_count": "reserve_block_count_mismatch" not in flags,
+        "reserve_block_frames_ordered": "reserve_block_frames_not_ordered" not in flags,
+        "reserve_block_minerals_in_range": "reserve_block_minerals_out_of_range" not in flags,
+        "second_zealot_accepted": race != "zerg" or "zerg_second_zealot_train_frame_not_observed" not in flags,
+        "non_zerg_inactive": race not in {"terran", "protoss", "random", "non-zerg"} or not any(
+            flag.startswith("non_zerg_second_zealot_probe_reserve") for flag in flags),
+    }
+    return {
+        "generation": "v43",
+        "telemetry_status": "complete" if not missing and not invalid else "partial",
+        "fields_present": present,
+        "missing_fields": missing,
+        "invalid_fields": sorted(set(invalid)),
+        "second_zealot_train_frame": second_frame if isinstance(second_frame, int) and not isinstance(second_frame, bool) else None,
+        "active_frames": active if isinstance(active, int) and not isinstance(active, bool) else None,
+        "reserve_block_frames": frame_values,
+        "reserve_block_minerals": mineral_values,
+        "reserve_block_count": block_count if isinstance(block_count, int) and not isinstance(block_count, bool) else None,
+        "reserve": reserve if isinstance(reserve, int) and not isinstance(reserve, bool) else None,
+        "checks": checks,
+        "quantitative_grade": {"score": round(100 * sum(value for value in checks.values()) / len(checks)),
+                               "max_score": 100, "grade": "pass" if not flags else "review"},
+        "review_flags": sorted(set(flags)),
+    }
+
+
 def _probe_reserve_summary(metadata: dict[str, object], opponent_race: str | None = None,
                            generation: str | None = None) -> dict[str, object]:
     """Validate v36's known-Zerg Probe reserve window telemetry."""
@@ -440,13 +549,24 @@ def _probe_reserve_summary(metadata: dict[str, object], opponent_race: str | Non
         "zerg_five_probe_pylon_accepted",
         "zerg_five_probe_pylon_accepted_frame",
     )
+    v43_names = (
+        "second_zealot_train_frame",
+        "zerg_second_zealot_probe_reserve_active_frames",
+        "zerg_second_zealot_probe_reserve_block_frames",
+        "zerg_second_zealot_probe_reserve_block_minerals",
+        "zerg_second_zealot_probe_reserve_block_count",
+        "zerg_second_zealot_probe_reserve",
+    )
     feature_present = any(name in metadata for name in names) or (
         generation == "v41" and pre_pylon_name in metadata
-    ) or (generation == "v42" and any(name in metadata for name in v42_names))
+    ) or (generation == "v42" and any(name in metadata for name in v42_names)) or (
+        generation == "v43" and any(name in metadata for name in v43_names)
+    )
     if not feature_present:
-        if generation in {"v36", "v37", "v38", "v40", "v41", "v42"}:
+        if generation in {"v36", "v37", "v38", "v40", "v41", "v42", "v43"}:
             required_names = (names + (pre_pylon_name,) if generation == "v41" else
-                              names + v42_names if generation == "v42" else names)
+                              names + v42_names if generation == "v42" else
+                              names + v42_names + v43_names if generation == "v43" else names)
             return {
                 "generation": generation,
                 "telemetry_status": "partial",
@@ -457,7 +577,8 @@ def _probe_reserve_summary(metadata: dict[str, object], opponent_race: str | Non
                 "reserve_blocks": {"frames": [], "minerals": [], "count": 0},
                 "window": {"start_frame": -1, "end_frame": -1, "threshold": 250},
                 "zerg_pre_pylon_probe_reserve_frames": None,
-                "v42_treatment": _v42_treatment_summary(metadata, opponent_race) if generation == "v42" else None,
+                "v42_treatment": _v42_treatment_summary(metadata, opponent_race) if generation in {"v42", "v43"} else None,
+                "v43_treatment": _v43_treatment_summary(metadata, opponent_race) if generation == "v43" else None,
                 "checks": {"trace_aligned": False, "block_count": False, "block_frames_ordered": False,
                             "block_minerals_in_range": False, "window_ordered": False,
                             "probe_train_absence": False, "post_window_resumption": None,
@@ -486,7 +607,8 @@ def _probe_reserve_summary(metadata: dict[str, object], opponent_race: str | Non
 
     list_names = ("accepted_probe_train_frames", "probe_reserve_block_frames", "probe_reserve_block_minerals")
     required_names = (names + (pre_pylon_name,) if generation == "v41" else
-                      names + v42_names if generation == "v42" else names)
+                      names + v42_names if generation == "v42" else
+                      names + v42_names + v43_names if generation == "v43" else names)
     present = [name for name in required_names if name in metadata]
     missing = [name for name in required_names if name not in metadata]
     if pre_pylon_name in metadata and pre_pylon_name not in present:
@@ -511,9 +633,13 @@ def _probe_reserve_summary(metadata: dict[str, object], opponent_race: str | Non
             review_flags.append("zerg_pre_pylon_probe_reserve_frames_missing")
         elif pre_pylon_invalid:
             review_flags.append("zerg_pre_pylon_probe_reserve_frames_type_mismatch")
-    v42_treatment = _v42_treatment_summary(metadata, opponent_race) if generation == "v42" else None
+    v42_treatment = _v42_treatment_summary(metadata, opponent_race) if generation in {"v42", "v43"} else None
     if v42_treatment is not None:
-        review_flags.extend(f"v42:{flag}" for flag in v42_treatment["review_flags"])
+        prefix = "v42:" if generation == "v42" else "v43:retained_v42:"
+        review_flags.extend(f"{prefix}{flag}" for flag in v42_treatment["review_flags"])
+    v43_treatment = _v43_treatment_summary(metadata, opponent_race) if generation == "v43" else None
+    if v43_treatment is not None:
+        review_flags.extend(f"v43:{flag}" for flag in v43_treatment["review_flags"])
     accepted = arrays["accepted_probe_train_frames"]
     block_frames = arrays["probe_reserve_block_frames"]
     block_minerals = arrays["probe_reserve_block_minerals"]
@@ -601,23 +727,26 @@ def _probe_reserve_summary(metadata: dict[str, object], opponent_race: str | Non
     scored_checks = [value for value in checks.values() if isinstance(value, bool)]
     if expected_inactive:
         v42_ok = v42_treatment is None or v42_treatment["quantitative_grade"]["grade"] == "pass"
-        grade = "pass" if checks["non_zerg_inactive"] and v42_ok else "review"
+        v43_ok = v43_treatment is None or v43_treatment["quantitative_grade"]["grade"] == "pass"
+        grade = "pass" if checks["non_zerg_inactive"] and v42_ok and v43_ok else "review"
     elif not review_flags:
         grade = "pass" if block_frames else "untested"
     else:
         grade = "review"
     return {
-        "generation": generation if generation in {"v36", "v37", "v38", "v40", "v41", "v42"} else "legacy" if not feature_present else "v36",
+        "generation": generation if generation in {"v36", "v37", "v38", "v40", "v41", "v42", "v43"} else "legacy" if not feature_present else "v36",
         "telemetry_status": "complete" if not missing and not invalid_fields and not invalid_scalars else "partial",
         "fields_present": present,
         "missing_fields": missing,
         "invalid_fields": sorted(set(invalid_fields + invalid_scalars +
-                                      (v42_treatment["invalid_fields"] if v42_treatment else []))),
+                                      (v42_treatment["invalid_fields"] if v42_treatment else []) +
+                                      (v43_treatment["invalid_fields"] if v43_treatment else []))),
         "accepted_probe_train_frames": accepted,
         "reserve_blocks": {"frames": block_frames, "minerals": block_minerals, "count": block_count},
         "window": {"start_frame": window_start, "end_frame": window_end, "threshold": 250},
         "zerg_pre_pylon_probe_reserve_frames": pre_pylon_value if pre_pylon_name in metadata else None,
         "v42_treatment": v42_treatment,
+        "v43_treatment": v43_treatment,
         "checks": checks,
         "quantitative_grade": {"score": round(100 * sum(scored_checks) / len(scored_checks)) if scored_checks else 0,
                                "max_score": 100, "grade": grade},
@@ -853,7 +982,7 @@ def _emergency_episode_summary(metadata: dict[str, object], opponent_race: str |
     else:
         grade = "pass" if not review_flags else "review"
     return {
-        "generation": generation if generation in {"v35", "v36", "v37", "v38", "v40", "v41", "v42"} else "v35",
+        "generation": generation if generation in {"v35", "v36", "v37", "v38", "v40", "v41", "v42", "v43"} else "v35",
         "telemetry_status": "complete" if not missing and not invalid_fields else "partial",
         "fields_present": present,
         "missing_fields": missing,
@@ -898,7 +1027,7 @@ def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | 
                               generation: str | None = None) -> dict[str, object]:
     """Normalize v33/v34 emergency-worker telemetry and legacy absence."""
     generation = generation or _diagnostic_generation(metadata)
-    army_generation = "three" if generation in {"v34", "v35", "v36", "v37", "v38", "v40", "v41", "v42"} else "two"
+    army_generation = "three" if generation in {"v34", "v35", "v36", "v37", "v38", "v40", "v41", "v42", "v43"} else "two"
     army_event_key = f"emergency_army_{army_generation}_release_events"
     army_defender_key = f"emergency_army_{army_generation}_released_defenders"
     first_army_frame_key = f"emergency_first_army_{army_generation}_release_frame"
@@ -1048,7 +1177,7 @@ def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | 
     if values["emergency_threat_clear_release_events"] + values[army_event_key] > 0 and not release_trace:
         review_flags.append("release_reason_without_release_trace")
 
-    episode_summary = _emergency_episode_summary(metadata, opponent_race, generation) if generation in {"v35", "v36", "v37", "v38", "v40", "v41", "v42"} else None
+    episode_summary = _emergency_episode_summary(metadata, opponent_race, generation) if generation in {"v35", "v36", "v37", "v38", "v40", "v41", "v42", "v43"} else None
     if episode_summary is not None:
         review_flags.extend(f"episode:{flag}" for flag in episode_summary.get("review_flags", []))
 
@@ -1431,7 +1560,7 @@ def _zerg_offense_stage_summary(metadata: dict[str, object], opponent_race: str 
         grade = "review" if review_flags else "pass"
         telemetry_status = "complete" if not missing else "partial"
     return {
-        "generation": generation if feature_present and generation in {"v34", "v35", "v36", "v37", "v38", "v40", "v41", "v42"} else "v34" if feature_present else "legacy",
+        "generation": generation if feature_present and generation in {"v34", "v35", "v36", "v37", "v38", "v40", "v41", "v42", "v43"} else "v34" if feature_present else "legacy",
         "opponent_race": race,
         "expected_active": expected_active,
         "expected_inactive": expected_inactive,
@@ -1557,7 +1686,7 @@ def _scaling_summary(metadata: dict[str, object], generation: str | None = None)
         "seventh_pylon_completed_frame", "fifth_gateway_accepted_frame",
         "fifth_gateway_current_frame", "fifth_gateway_completed_frame",
     )
-    feature_present = generation in {"v37", "v38", "v40", "v41", "v42"} or any(name in metadata for name in required)
+    feature_present = generation in {"v37", "v38", "v40", "v41", "v42", "v43"} or any(name in metadata for name in required)
     if not feature_present:
         return {
             "generation": "legacy_absent", "telemetry_status": "legacy_absent",
@@ -1668,7 +1797,7 @@ def _scaling_summary(metadata: dict[str, object], generation: str | None = None)
     else:
         grade = "pass"
     return {
-        "generation": generation if generation in {"v37", "v38", "v40", "v41", "v42"} else "v37", "telemetry_status": "complete" if not missing and not invalid else "partial",
+        "generation": generation if generation in {"v37", "v38", "v40", "v41", "v42", "v43"} else "v37", "telemetry_status": "complete" if not missing and not invalid else "partial",
         "fields_present": [name for name in required if name in metadata],
         "missing_fields": missing, "invalid_fields": invalid, "review_flags": sorted(set(flags)),
         "opportunity_notes": opportunity_notes, "checks": checks,
@@ -1698,7 +1827,7 @@ def _shared_target_summary(metadata: dict[str, object], opponent_race: str | Non
         "shared_target_accepted_counts", "shared_target_participant_ids",
     )
     required = scalar_names + list_names
-    feature_present = generation in {"v38", "v40", "v41", "v42"} or any(name in metadata for name in required)
+    feature_present = generation in {"v38", "v40", "v41", "v42", "v43"} or any(name in metadata for name in required)
     if not feature_present:
         return {
             "generation": "legacy_absent", "telemetry_status": "legacy_absent",
@@ -1826,7 +1955,7 @@ def _shared_target_summary(metadata: dict[str, object], opponent_race: str | Non
         opportunity_notes.append("shared_target_accepted_command_unobserved")
     grade = "review" if flags else "pass" if coordinated_accepted_selections else "untested"
     return {
-        "generation": generation if generation in {"v38", "v40", "v41", "v42"} else "v38", "telemetry_status": "complete" if not missing and not invalid else "partial",
+        "generation": generation if generation in {"v38", "v40", "v41", "v42", "v43"} else "v38", "telemetry_status": "complete" if not missing and not invalid else "partial",
         "fields_present": [name for name in required if name in metadata],
         "missing_fields": missing, "invalid_fields": invalid,
         "review_flags": sorted(set(flags)), "opportunity_notes": opportunity_notes,
@@ -1879,7 +2008,7 @@ def _gateway_probe_summary(metadata: dict[str, object], generation: str | None =
         "gateway_probe_candidate_reason_codes",
     )
     required = selection_names + candidate_names
-    feature_present = generation in {"v40", "v41", "v42"} or any(name in metadata for name in required)
+    feature_present = generation in {"v40", "v41", "v42", "v43"} or any(name in metadata for name in required)
     if not feature_present:
         return {
             "generation": "legacy_absent", "telemetry_status": "legacy_absent",
@@ -2067,7 +2196,7 @@ def _gateway_probe_summary(metadata: dict[str, object], generation: str | None =
     opportunity_notes = [] if selection_rows else ["gateway_probe_opportunity_unobserved"]
     grade = "review" if flags else "pass" if proof_sufficient else "untested"
     return {
-        "generation": generation if generation in {"v40", "v41", "v42"} else "v40",
+        "generation": generation if generation in {"v40", "v41", "v42", "v43"} else "v40",
         "telemetry_status": "complete" if not missing and not invalid else "partial",
         "fields_present": [name for name in required if name in metadata],
         "missing_fields": missing, "invalid_fields": invalid,
@@ -2143,6 +2272,7 @@ def _diagnostic_summary(metadata: dict[str, object], root: Path, opponent_race: 
             "first_gateway_completed_frame": metadata.get("first_gateway_completed_frame"),
             "first_zealot_train_frame": metadata.get("first_zealot_train_frame"),
             "first_zealot_completed_frame": metadata.get("first_zealot_completed_frame"),
+            "second_zealot_train_frame": metadata.get("second_zealot_train_frame"),
         },
     }
     result["defense"] = {
@@ -2567,7 +2697,7 @@ def _aggregate_gateway_probe(gateway_probe_games: list[dict[str, object]]) -> di
     aggregate: dict[str, object] = {
         "games": len(gateway_probe_games),
         "generations": {generation: sum(item.get("generation") == generation for item in gateway_probe_games)
-                         for generation in ("v40", "v41", "v42", "legacy_absent")},
+                         for generation in ("v40", "v41", "v42", "v43", "legacy_absent")},
         "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade
                                for item in gateway_probe_games)
                    for grade in ("pass", "untested", "review", "legacy_absent")},
@@ -2679,7 +2809,7 @@ def main() -> int:
     }
     episode_games = [
         (bridge.get("episodes") or {}) for bridge in bridge_games
-        if isinstance(bridge.get("episodes"), dict) and (bridge.get("episodes") or {}).get("generation") in {"v35", "v36", "v37", "v38", "v40", "v41", "v42"}
+        if isinstance(bridge.get("episodes"), dict) and (bridge.get("episodes") or {}).get("generation") in {"v35", "v36", "v37", "v38", "v40", "v41", "v42", "v43"}
     ]
     aggregate["emergency_bridge"]["episodes"] = _aggregate_emergency_episode_summaries(episode_games)
     stage_games = [g.get("zerg_offense_stage") for g in games if isinstance(g.get("zerg_offense_stage"), dict)]
@@ -2688,7 +2818,7 @@ def main() -> int:
     aggregate["zerg_offense_stage"] = {
         "games": len(stage_games),
         "generations": {generation: sum(stage.get("generation") == generation for stage in stage_games)
-                         for generation in ("v34", "v35", "v36", "v37", "v38", "v40", "v41", "v42", "legacy")},
+                         for generation in ("v34", "v35", "v36", "v37", "v38", "v40", "v41", "v42", "v43", "legacy")},
         "grades": {grade: sum((stage.get("quantitative_grade") or {}).get("grade") == grade for stage in stage_games)
                    for grade in ("pass", "untested", "review", "legacy_absent")},
         "threshold_observed": sum((stage.get("peak_surplus") or 0) >= 6 for stage in stage_games),
@@ -2716,7 +2846,7 @@ def main() -> int:
     aggregate["construction_pending"] = {
         "games": len(construction_games),
         "generations": {generation: sum(item.get("generation") == generation for item in construction_games)
-                         for generation in ("v35", "v36", "v37", "v38", "v40", "v41", "v42", "legacy")},
+                         for generation in ("v35", "v36", "v37", "v38", "v40", "v41", "v42", "v43", "legacy")},
         "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade for item in construction_games)
                    for grade in ("pass", "untested", "review", "legacy_absent")},
         "accepted_builds": sum(len((item.get("accepted_builds") or {}).get("rows", [])) for item in construction_games),
@@ -2732,7 +2862,7 @@ def main() -> int:
     aggregate["probe_reserve"] = {
         "games": len(reserve_games),
         "generations": {generation: sum(item.get("generation") == generation for item in reserve_games)
-                         for generation in ("v36", "v37", "v38", "v40", "v41", "v42", "legacy")},
+                         for generation in ("v36", "v37", "v38", "v40", "v41", "v42", "v43", "legacy")},
         "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade for item in reserve_games)
                    for grade in ("pass", "untested", "review", "legacy_absent")},
         "reserve_blocks": sum((item.get("reserve_blocks") or {}).get("count", 0) for item in reserve_games),
@@ -2749,7 +2879,7 @@ def main() -> int:
     aggregate["scaling"] = {
         "games": len(scaling_games),
         "generations": {generation: sum(item.get("generation") == generation for item in scaling_games)
-                         for generation in ("v37", "v38", "v40", "v41", "v42", "legacy_absent")},
+                         for generation in ("v37", "v38", "v40", "v41", "v42", "v43", "legacy_absent")},
         "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade for item in scaling_games)
                    for grade in ("pass", "partial", "untested", "review", "legacy_absent")},
         "eligible": sum((item.get("upgrade") or {}).get("range_upgrade_eligibility_frame", -1) >= 0 for item in scaling_games),
@@ -2773,7 +2903,7 @@ def main() -> int:
     aggregate["shared_target"] = {
         "games": len(shared_target_games),
         "generations": {generation: sum(item.get("generation") == generation for item in shared_target_games)
-                         for generation in ("v38", "v40", "v41", "v42", "legacy_absent")},
+                         for generation in ("v38", "v40", "v41", "v42", "v43", "legacy_absent")},
         "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade for item in shared_target_games)
                    for grade in ("pass", "untested", "review", "legacy_absent")},
         "selections": sum((item.get("counters") or {}).get("shared_target_selections", 0) for item in shared_target_games),

@@ -1,0 +1,85 @@
+--- third_party/kestrel-opening-v42-candidate/Kestrel.cpp	2026-09-21 06:59:12
++++ third_party/kestrel-opening-v43-candidate/Kestrel.cpp	2026-09-21 07:34:14
+@@ -61,6 +61,7 @@
+     bool knownZerg_ = false;
+     bool firstZealotQueued_ = false;
+     int acceptedZealotTrains_ = 0;
++    int secondZealotTrainFrame_ = -1;
+     int secondGatewayCurrentFrame_ = -1;
+     int secondGatewayCompletedFrame_ = -1;
+     int firstHomeThreatFrame_ = -1;
+@@ -82,6 +83,10 @@
+     int zergPrePylonProbeReserveFrames_ = 0;
+     int zergFiveProbePolicyActiveFrames_ = 0;
+     int zergFiveProbePylonAcceptedFrame_ = -1;
++    int zergSecondZealotProbeReserveActiveFrames_ = 0;
++    int zergSecondZealotProbeReserveBlockCount_ = 0;
++    std::vector<int> zergSecondZealotProbeReserveBlockFrames_;
++    std::vector<int> zergSecondZealotProbeReserveBlockMinerals_;
+     int firstProbeReserveWindowFrame_ = -1;
+     int probeReserveWindowEndFrame_ = -1;
+     int probeReserveBlockCount_ = 0;
+@@ -379,6 +384,7 @@
+             << ",\"first_zealot_train_frame\":" << firstZealotTrainFrame_
+             << ",\"first_zealot_completed_frame\":" << firstZealotCompletedFrame_
+             << ",\"accepted_zealot_trains\":" << acceptedZealotTrains_
++            << ",\"second_zealot_train_frame\":" << secondZealotTrainFrame_
+             << ",\"second_gateway_current_frame\":" << secondGatewayCurrentFrame_
+             << ",\"second_gateway_completed_frame\":" << secondGatewayCompletedFrame_
+             << ",\"fifth_gateway_accepted_frame\":" << fifthGatewayAcceptedFrame_
+@@ -556,6 +562,19 @@
+             << ",\"zerg_five_probe_policy_active_frames\":" << zergFiveProbePolicyActiveFrames_
+             << ",\"zerg_five_probe_pylon_accepted_frame\":" << zergFiveProbePylonAcceptedFrame_
+             << ",\"zerg_five_probe_pylon_accepted\":" << (zergFiveProbePylonAcceptedFrame_ >= 0 ? "true" : "false")
++            << ",\"zerg_second_zealot_probe_reserve_active_frames\":" << zergSecondZealotProbeReserveActiveFrames_
++            << ",\"zerg_second_zealot_probe_reserve_block_frames\":[";
++        for (size_t index = 0; index < zergSecondZealotProbeReserveBlockFrames_.size(); ++index) {
++            if (index) out << ',';
++            out << zergSecondZealotProbeReserveBlockFrames_[index];
++        }
++        out << "],\"zerg_second_zealot_probe_reserve_block_minerals\":[";
++        for (size_t index = 0; index < zergSecondZealotProbeReserveBlockMinerals_.size(); ++index) {
++            if (index) out << ',';
++            out << zergSecondZealotProbeReserveBlockMinerals_[index];
++        }
++        out << "],\"zerg_second_zealot_probe_reserve_block_count\":" << zergSecondZealotProbeReserveBlockCount_
++            << ",\"zerg_second_zealot_probe_reserve\":100"
+             << ",\"first_probe_reserve_window_frame\":" << firstProbeReserveWindowFrame_
+             << ",\"probe_reserve_window_end_frame\":" << probeReserveWindowEndFrame_
+             << ",\"probe_reserve_block_count\":" << probeReserveBlockCount_
+@@ -1422,11 +1441,14 @@
+             // publicly current.
+             if (firstGatewayCurrentFrame_ < 0) openingReserve = 250;
+             else if (secondGatewayCurrentFrame_ < 0) openingReserve = 250;
+-            else if (!firstZealotQueued_) openingReserve = 100;
++            else if (acceptedZealotTrains_ < 2) openingReserve = 100;
+         }
+         const int frame = BWAPI::Broodwar->getFrameCount();
+         openingProbeReserve_ = knownZerg_ ? openingReserve : 0;
+         if (zergFiveProbePolicyActive) ++zergFiveProbePolicyActiveFrames_;
++        const bool zergSecondZealotProbeReserve =
++            knownZerg_ && secondGatewayCurrentFrame_ >= 0 && acceptedZealotTrains_ < 2;
++        if (zergSecondZealotProbeReserve) ++zergSecondZealotProbeReserveActiveFrames_;
+         if (zergPrePylonProbeReserve) ++zergPrePylonProbeReserveFrames_;
+         maxOpeningProbeReserve_ = std::max(maxOpeningProbeReserve_, openingProbeReserve_);
+         if (knownZerg_ && firstPylonAcceptedFrame_ >= 0 && secondGatewayCurrentFrame_ < 0) {
+@@ -1446,6 +1468,11 @@
+                     ++probeReserveBlockCount_;
+                     probeReserveBlockFrames_.push_back(frame);
+                     probeReserveBlockMinerals_.push_back(minerals);
++                }
++                if (zergSecondZealotProbeReserve && minerals >= 50 && minerals < 150 && canTrainProbe) {
++                    ++zergSecondZealotProbeReserveBlockCount_;
++                    zergSecondZealotProbeReserveBlockFrames_.push_back(frame);
++                    zergSecondZealotProbeReserveBlockMinerals_.push_back(minerals);
+                 }
+                 if (minerals >= 50 + openingReserve + (rangeUpgradeBankActive() ? kSingularityChargeMineralCost : 0) && canTrainProbe) {
+                     if (issue(unit->train(BWAPI::UnitTypes::Protoss_Probe), TrainCommand))
+@@ -1461,6 +1488,7 @@
+                         ++acceptedZealotTrains_;
+                         firstZealotQueued_ = true;
+                         if (firstZealotTrainFrame_ < 0) firstZealotTrainFrame_ = BWAPI::Broodwar->getFrameCount();
++                        if (acceptedZealotTrains_ == 2) secondZealotTrainFrame_ = BWAPI::Broodwar->getFrameCount();
+                     }
+                 }
+             }
