@@ -91,6 +91,40 @@ class ExportDashboardTest(unittest.TestCase):
             self.assertEqual(shared["quantitative_grade"]["grade"], "pass")
             self.assertNotIn("shared_target_frames", json.dumps(public))
 
+    def test_scorecard_rows_retain_terminal_status_and_classification_for_speed_labels(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "dashboard").mkdir(); (root / "dashboard/index.html").write_text("ok")
+            (root / "config").mkdir()
+            experiment = root / "artifacts/experiments/timeout/manifest.json"; experiment.parent.mkdir(parents=True)
+            experiment.write_text(json.dumps({"experiment_id": "timeout", "status": "completed", "games": []}))
+            (experiment.parent / "hillclimb-scorecard.json").write_text(json.dumps({
+                "aggregate": {},
+                "games": [{"run_id": "run-timeout", "status": "timed_out", "durable_fps": 8126,
+                           "record": {"classification": "timeout"}, "outcome_verified": False}]
+            }))
+            game = export(root, root / "out")["experiments"][0]["scorecard"]["games"][0]
+            self.assertEqual(game["run_id"], "run-timeout")
+            self.assertEqual(game["status"], "timed_out")
+            self.assertEqual(game["classification"], "timeout")
+            self.assertFalse(game["outcome_verified"])
+
+    def test_dashboard_labels_local_context_speed_validity_and_replay_links(self):
+        source = Path(__file__).resolve().parents[1] / "dashboard/index.html"
+        html = source.read_text(encoding="utf-8")
+        self.assertIn("Local component:", html)
+        self.assertIn("not a BASIL rating or tournament prediction", html)
+        self.assertIn("Prior sensitivity (prior SD)", html)
+        self.assertIn("data-replay-run", html)
+        self.assertIn('href="#replay-${esc(runId)}"', html)
+        self.assertIn("No replay archived", html)
+        self.assertIn("find(item=>item.run_id===runId)", html)
+        self.assertIn("Speed unavailable", html)
+        self.assertIn("Durable speed is not a valid completed-game measurement.", html)
+        self.assertIn("originNames={original:'Original',port:'Port',fork:'Fork'", html)
+        self.assertIn(".join(' + ')", html)
+        self.assertNotIn("Port/Fork", html)
+
     def test_export_allowlists_manifest_and_names_bot(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
