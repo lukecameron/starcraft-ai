@@ -1,0 +1,254 @@
+{
+  "schema_version": 1,
+  "experiment_id": "kestrel-local-anchor-v3",
+  "registered_at": "2026-09-20T19:28:00Z",
+  "eval_plan": "docs/evaluations/kestrel-local-anchor-v3/EVAL_PLAN.md",
+  "eval_plan_sha256": "502c0967dd2f395db5f095e98c73e592259652d220caddae3607f51a04958bea",
+  "purpose": "Kestrel v13 exact-build current-engine local Elo anchor extension",
+  "hypothesis": "Sixteen fresh uniquely seeded games can narrow Kestrel v13 local rating uncertainty without repeating the v2 reciprocal same-seed runtime failure path",
+  "stop_condition": "Run the fixed 16 rows once with concurrency five; preserve every started row; stop after two consecutive infrastructure-invalid completions or completion; do not retry, reseed, replace, or rerun",
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "launcher_sha256": "af1682393f9fe43afe885b35a1637e9c464719ef93c83e799d614beed20316c1",
+  "launcher_sidecar": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher.build.json",
+  "launcher_sidecar_sha256": "0beebdd3bb6221a5e6143c015763d14fa20330a8976ede3f997062660b3e7390",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "game_data_files": [
+    {
+      "path": "third_party/game-data/runtime/BrooDat.mpq",
+      "sha256": "c6d810981e24b947b36d531ab047e143fec0284a581fdaad6fc431e1e75e21df"
+    },
+    {
+      "path": "third_party/game-data/runtime/Patch_rt.mpq",
+      "sha256": "a063f069f1abe202b142b08a9dab878eba8ba033bf13a818024a72631c4452be"
+    },
+    {
+      "path": "third_party/game-data/runtime/StarDat.mpq",
+      "sha256": "8845fd871b4f8f242cc5c2b6f6b8b319d86bbbd02bc836356b51f81b5ba8203f"
+    },
+    {
+      "path": "third_party/game-data/runtime/sscai/(2)Benzene.scx",
+      "sha256": "45764b9baa72f83a5eb2eab49ddea46c6af21da75bc42e687e6dab93e4e4044e"
+    },
+    {
+      "path": "third_party/game-data/runtime/sscai/(2)Destination.scx",
+      "sha256": "0241ae7e8b43632e3421444aa3ca3bb10d28b4796f4ccc138103c3b75e5158a5"
+    },
+    {
+      "path": "third_party/game-data/runtime/sscai/(2)Heartbreak Ridge.scx",
+      "sha256": "64527ae691307756dbc2700c68ab5878476eed27c3dfc9a64411955f4107f50b"
+    },
+    {
+      "path": "third_party/game-data/runtime/sscai/(4)Circuit Breaker.scx",
+      "sha256": "ba956f73d18342f3f329741b684fd569e6bcf718b1fcebd86c2d965481260bc0"
+    }
+  ],
+  "wall_timeout_seconds": 120,
+  "concurrency": 5,
+  "stop_after_consecutive_invalid": 2,
+  "candidate": {
+    "name": "Kestrel-v13",
+    "path": "artifacts/builds/622bca47b47f78f3e9d1971d1e340f991b54ced7f3bfdfd932d3062e125cbd98/kestrel-v13-gas-worker-guard/Kestrel.dylib",
+    "race": "Protoss",
+    "sha256": "622bca47b47f78f3e9d1971d1e340f991b54ced7f3bfdfd932d3062e125cbd98",
+    "ownership": "Ours",
+    "origin": "Original",
+    "author": "Luke Cameron",
+    "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel",
+    "source_sha256": "12cecdb5039569711c318bab5bb6781b4f1e86e22c87e453f9d85c295fa13df0",
+    "source_patch": "patches/kestrel-v7-to-v13.patch",
+    "source_patch_sha256": "8fd24ff479bc5a8794f0ae092855082b1a44270123fe8cc1810ee1493996177b",
+    "build_sidecar": "artifacts/builds/622bca47b47f78f3e9d1971d1e340f991b54ced7f3bfdfd932d3062e125cbd98/kestrel-v13-gas-worker-guard/Kestrel.dylib.build.json",
+    "build_sidecar_sha256": "1f66dec14e5d44b176080a640afd6a97a3ddcb474682cf23dc0c0ee2954c7bb7"
+  },
+  "opponents": {
+    "uab-t": {
+      "name": "UAlbertaBot-Terran",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "race": "Terran",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9",
+      "ownership": "Ours",
+      "origin": "Port",
+      "author": "David Churchill",
+      "source_url": "https://github.com/davechurchill/ualbertabot"
+    },
+    "zzzk": {
+      "name": "ZZZKBot",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "race": "Zerg",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748",
+      "ownership": "Ours",
+      "origin": "Port",
+      "author": "Chris Coxe",
+      "source_url": "https://github.com/chriscoxe/ZZZKBot"
+    }
+  },
+  "games": [
+    {
+      "block": 1,
+      "index": 1,
+      "opponent": "uab-t",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9801,
+      "candidate_player": 1
+    },
+    {
+      "block": 1,
+      "index": 2,
+      "opponent": "zzzk",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9802,
+      "candidate_player": 2
+    },
+    {
+      "block": 1,
+      "index": 3,
+      "opponent": "uab-t",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9803,
+      "candidate_player": 2
+    },
+    {
+      "block": 1,
+      "index": 4,
+      "opponent": "zzzk",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9804,
+      "candidate_player": 1
+    },
+    {
+      "block": 1,
+      "index": 5,
+      "opponent": "uab-t",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9805,
+      "candidate_player": 1
+    },
+    {
+      "block": 1,
+      "index": 6,
+      "opponent": "zzzk",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9806,
+      "candidate_player": 2
+    },
+    {
+      "block": 1,
+      "index": 7,
+      "opponent": "uab-t",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9807,
+      "candidate_player": 2
+    },
+    {
+      "block": 1,
+      "index": 8,
+      "opponent": "zzzk",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9808,
+      "candidate_player": 1
+    },
+    {
+      "block": 2,
+      "index": 9,
+      "opponent": "uab-t",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9809,
+      "candidate_player": 1
+    },
+    {
+      "block": 2,
+      "index": 10,
+      "opponent": "zzzk",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9810,
+      "candidate_player": 2
+    },
+    {
+      "block": 2,
+      "index": 11,
+      "opponent": "uab-t",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9811,
+      "candidate_player": 2
+    },
+    {
+      "block": 2,
+      "index": 12,
+      "opponent": "zzzk",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9812,
+      "candidate_player": 1
+    },
+    {
+      "block": 2,
+      "index": 13,
+      "opponent": "uab-t",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9813,
+      "candidate_player": 1
+    },
+    {
+      "block": 2,
+      "index": 14,
+      "opponent": "zzzk",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9814,
+      "candidate_player": 2
+    },
+    {
+      "block": 2,
+      "index": 15,
+      "opponent": "uab-t",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9815,
+      "candidate_player": 2
+    },
+    {
+      "block": 2,
+      "index": 16,
+      "opponent": "zzzk",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9816,
+      "candidate_player": 1
+    }
+  ],
+  "required_files": [
+    {
+      "path": "docs/evaluations/kestrel-local-anchor-v3/EVAL_PLAN.md",
+      "sha256": "502c0967dd2f395db5f095e98c73e592259652d220caddae3607f51a04958bea"
+    },
+    {
+      "path": "patches/kestrel-v7-to-v13.patch",
+      "sha256": "8fd24ff479bc5a8794f0ae092855082b1a44270123fe8cc1810ee1493996177b"
+    },
+    {
+      "path": "artifacts/builds/622bca47b47f78f3e9d1971d1e340f991b54ced7f3bfdfd932d3062e125cbd98/kestrel-v13-gas-worker-guard/Kestrel.dylib.build.json",
+      "sha256": "1f66dec14e5d44b176080a640afd6a97a3ddcb474682cf23dc0c0ee2954c7bb7"
+    },
+    {
+      "path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher.build.json",
+      "sha256": "0beebdd3bb6221a5e6143c015763d14fa20330a8976ede3f997062660b3e7390"
+    },
+    {
+      "path": "scripts/run_batch.py",
+      "sha256": "3060df9c655f25cac0de45fd422108460bf47aba462389b53ba643fb5549f7ef"
+    },
+    {
+      "path": "scripts/run_match.py",
+      "sha256": "d0a0eee0d932fc279b2ee53831ddf82accf7042a8b7be52e73f144deeb191cbe"
+    }
+  ],
+  "engine_sha256": "eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b",
+  "provenance_registry": "config/bot-identities.json",
+  "provenance_registry_sha256": "7336555a6cfaa992bc6d912c61c1d0c421953e084ab10af0e202a5a632801b7d",
+  "rating_rule": {
+    "prior_sd_elo": 400,
+    "minimum_valid_games": 14,
+    "minimum_valid_games_per_opponent": 6,
+    "minimum_valid_games_per_candidate_slot": 3,
+    "minimum_distinct_maps_per_opponent": 3,
+    "reference": "ZZZKBot",
+    "invalid_rows_enter_likelihood": false
+  }
+}
