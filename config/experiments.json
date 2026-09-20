@@ -1391,6 +1391,30 @@
         "origin": "Original",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
       }
+    },
+    {
+      "id": "kestrel-hillclimb-v12",
+      "title": "Kestrel v33 two-Probe emergency Zerg bridge hill-climb",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "INCONCLUSIVE",
+      "hypothesis": "A threat-qualified bridge of at most two eligible Probes will cover a real local Zerg threat until two completed combat units exist, while preserving v32\u2019s stable reserve and non-Zerg behavior.",
+      "notes": "Four games completed as verified losses with eight hash- and frame-verified replays. The ZZZK lane exercised two coherent two-Probe bridge episodes and survived to the 300-second wall cap, but produced no terminal result or replay.",
+      "conclusion": "Inconclusive because the frozen ZZZK attempt timed out. The bridge assignments, releases, role exclusions and post-release gathering were coherent, but no verified win exists and the 964,800-frame non-terminal game fails the short-game objective. No Elo update.",
+      "evidence_run_ids": [
+        "20260920T161814-5e0caf25d8d7",
+        "20260920T161814-cc76bd4a2ea8",
+        "20260920T161814-9cfceb031f25",
+        "20260920T161814-47c190f36465",
+        "20260920T161814-c638126c9d7a"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v12",
+      "candidate_binary_sha256": "1d77b4483ea0fa21db1df9d8b45e15364986b793a2745b2c570f0db2fb55b632",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      }
     }
   ]
 }
