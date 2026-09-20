@@ -1,4 +1,5 @@
 import json
+import hashlib
 from pathlib import Path
 import signal
 import subprocess
@@ -22,7 +23,7 @@ if mode in ("sleep", "interrupt"):
     time.sleep(30)
 replay = pathlib.Path(os.environ["BWAPI_CONFIG_AUTO_MENU__SAVE_REPLAY"])
 replay.write_bytes(b"test-only-replay-" + os.environ["BWAPI_CONFIG_AUTO_MENU__RACE"].encode())
-pathlib.Path(os.environ["MATCH_RESULT_PATH"]).write_text(json.dumps({"frame_count": 240, "winner": True}))
+pathlib.Path(os.environ["MATCH_RESULT_PATH"]).write_text(json.dumps({"frame_count": 240, "winner": os.environ["BWAPI_CONFIG_AUTO_MENU__RACE"] == "Terran", "ended": True}))
 '''
 
 
@@ -71,14 +72,40 @@ class RunMatchTest(unittest.TestCase):
 
     def test_tournament_write_path_is_used_as_result_fallback(self):
         launcher = self.launcher.read_text().replace(
-            'pathlib.Path(os.environ["MATCH_RESULT_PATH"]).write_text(json.dumps({"frame_count": 240, "winner": True}))',
-            'p = pathlib.Path("bwapi-data/write/diagnostic.json"); p.write_text(json.dumps({"frame_count": 321, "winner": False}))')
+            'pathlib.Path(os.environ["MATCH_RESULT_PATH"])',
+            'pathlib.Path("bwapi-data/write/diagnostic.json")').replace('"frame_count": 240', '"frame_count": 321')
         self.launcher.write_text(launcher)
         completed = subprocess.run(self.command(), text=True, capture_output=True)
         self.assertEqual(completed.returncode, 0, completed.stderr)
         manifest = json.loads(self.manifests()[0].read_text())
         self.assertEqual(manifest["logical_frame_count"], 321)
         self.assertEqual(len(manifest["players"][0]["write_state"]), 1)
+
+    def test_packaged_ai_config_is_snapshotted_and_checked(self):
+        ai = self.root / "AI"
+        ai.mkdir()
+        config = ai / "config.json"
+        config.write_text('{"strategy":"normal"}')
+        sidecar = {"binary_sha256": hashlib.sha256(self.bot1.read_bytes()).hexdigest(),
+                   "ai_files": [{"path": "config.json", "sha256": hashlib.sha256(config.read_bytes()).hexdigest()}]}
+        Path(str(self.bot1) + ".build.json").write_text(json.dumps(sidecar))
+        self.launcher.write_text(self.launcher.read_text().replace(
+            'mode = os.environ.get',
+            'assert pathlib.Path("bwapi-data/AI/config.json").read_text() == \'{"strategy":"normal"}\'\nmode = os.environ.get'))
+        completed = subprocess.run(self.command(), text=True, capture_output=True)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        manifest = json.loads(self.manifests()[0].read_text())
+        archived = Path(manifest["inputs"]["players"][0]["ai_files"][0]["path"])
+        self.assertFalse(archived.is_symlink())
+        config.write_text('{"strategy":"changed"}')
+        self.assertEqual(archived.read_text(), '{"strategy":"normal"}')
+        completed = subprocess.run(self.command(), text=True, capture_output=True)
+        self.assertEqual(completed.returncode, 1)
+        failed = [json.loads(path.read_text()) for path in self.manifests()
+                  if json.loads(path.read_text())["status"] == "failed"]
+        self.assertEqual(len(failed), 1)
+        self.assertIn("Missing or changed AI file", failed[0]["launch_error"])
+        self.assertEqual(failed[0]["players"], [])
 
     def test_timeout_is_recorded_without_fake_result_or_replay(self):
         completed = subprocess.run(self.command("0.15"), env={**dict(__import__("os").environ), "FAKE_MODE": "sleep"},
@@ -89,6 +116,14 @@ class RunMatchTest(unittest.TestCase):
         self.assertEqual(manifest["termination_reason"], "wall_timeout")
         self.assertEqual(manifest["replays"], [])
         self.assertIsNone(manifest["result"])
+
+    def test_controlled_seed_cannot_silently_use_an_unsupported_engine(self):
+        completed = subprocess.run(self.command() + ["--seed", "42"], text=True, capture_output=True)
+        self.assertEqual(completed.returncode, 1)
+        manifest = json.loads(self.manifests()[0].read_text())
+        self.assertEqual(manifest["status"], "failed")
+        self.assertEqual(manifest["players"], [])
+        self.assertIn("scenario-capable", manifest["launch_error"])
 
     def test_failed_startup_is_durable(self):
         completed = subprocess.run(self.command(), env={**dict(__import__("os").environ), "FAKE_MODE": "startup"},
@@ -101,11 +136,29 @@ class RunMatchTest(unittest.TestCase):
 
     def test_partial_replay_and_unfinished_callback_are_not_a_completed_match(self):
         self.launcher.write_text(self.launcher.read_text().replace(
-            '"winner": True', '"winner": None, "ended": False'))
+            '"ended": True', '"ended": False'))
         completed = subprocess.run(self.command(), text=True, capture_output=True)
         self.assertEqual(completed.returncode, 1)
         manifest = json.loads(self.manifests()[0].read_text())
         self.assertEqual(manifest["status"], "incomplete")
+        self.assertEqual(len(manifest["replays"]), 2)
+
+    def test_replay_without_terminal_metadata_is_not_success(self):
+        self.launcher.write_text(self.launcher.read_text().replace(
+            'pathlib.Path(os.environ["MATCH_RESULT_PATH"]).write_text', '# no metadata: '))
+        completed = subprocess.run(self.command(), text=True, capture_output=True)
+        self.assertEqual(completed.returncode, 1)
+        manifest = json.loads(self.manifests()[0].read_text())
+        self.assertEqual(manifest["status"], "incomplete")
+        self.assertFalse(manifest["outcome_verified"])
+
+    def test_malformed_frame_metadata_still_finalizes(self):
+        self.launcher.write_text(self.launcher.read_text().replace('"frame_count": 240', '"frame_count": "bad"'))
+        completed = subprocess.run(self.command(), text=True, capture_output=True)
+        self.assertEqual(completed.returncode, 1)
+        manifest = json.loads(self.manifests()[0].read_text())
+        self.assertEqual(manifest["status"], "incomplete")
+        self.assertIn("frame_count", manifest["players"][0]["result_metadata_note"])
         self.assertEqual(len(manifest["replays"]), 2)
 
     def test_interrupt_finalizes_manifest(self):

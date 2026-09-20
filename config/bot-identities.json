@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "bots": {
+    "McRave.dylib": {"name": "McRave", "ownership": "project", "origin": "port", "upstream_name": "McRave", "author": "Christian McCrave", "author_url": "https://github.com/Cmccrave", "source_url": "https://github.com/Cmccrave/McRave"},
+    "ZZZKBot.dylib": {"name": "ZZZKBot", "ownership": "project", "origin": "port", "upstream_name": "ZZZKBot", "author": "Chris Coxe", "author_url": "https://github.com/chriscoxe", "source_url": "https://github.com/chriscoxe/ZZZKBot"},
+    "UAlbertaBot.dylib": {"name": "UAlbertaBot", "ownership": "project", "origin": "port", "upstream_name": "UAlbertaBot", "author": "David Churchill", "author_url": "https://davechurchill.ca/", "source_url": "https://github.com/davechurchill/ualbertabot"},
+    "WorkerRush.dylib": {"name": "WorkerRush", "ownership": "project", "origin": "original", "upstream_name": null, "author": "Starcraft AI project", "author_url": null, "source_url": "https://github.com/lukecameron/starcraft-ai"},
+    "Idle.dylib": {"name": "Idle", "ownership": "project", "origin": "original", "upstream_name": null, "author": "Starcraft AI project", "author_url": null, "source_url": "https://github.com/lukecameron/starcraft-ai"}
+  }
+}

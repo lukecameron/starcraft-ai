@@ -1,12 +1,17 @@
 # Resume
 
-Checkpoint: 2026-09-20, initial engine milestone.
+Checkpoint: 2026-09-20 03:05 UTC. First controlled batch complete; reliability and performance work continues.
 
-- **Best validated competitive build:** none. `build/bots/WorkerRush.dylib` and `Idle.dylib` are original diagnostic fixtures only.
-- **Working command:** README diagnostic command. Requires local socket permission in this agent sandbox.
-- **Evidence:** `artifacts/runs/20260920T015245-8d1cc76f5e12/` and updated-harness run `20260920T015722-17e3dc11ff1d/`. Each records module/map hashes, logs, callback results and archived replays. Game data remains local under `third_party/game-data/`.
-- **Parallel work at checkpoint:** Sol `harness_sol` ports McRave; Sol `engine_sol` ports ZZZKBot; Luna `wiki_luna` independently parses the archived replay. Each tracks its own bounded process/session and logs. Do not start conflicting edits while those tasks are active.
-- **Next decision:** assess ported bots' actual gameplay and cost, then choose the first reusable candidate. Current McRave requires author permission before derivative submission under SSCAIT's recent-update clause; development and local benchmarking can proceed. No public contact or submission authorized.
-- **Remaining evaluation gaps:** diverse runnable anchors, representative late-game performance, controlled seeds/starts, compact scheduling/rating uncertainty, official Win32 linking and runtime validation.
+- **Reference:** our native McRave Zerg port, frozen SHA-256 `c49ee3c4b20a2772f1bfca03249c182d32a7238f9453a7a568990a188a1c4c65`. It repairs queue lifetime and block-grid bounds defects without changing intended policy. Source/binary/patch identities are in `config/baseline.json`. Strength is uncalibrated; no robust competitive incumbent is adopted.
+- **Evaluation:** `quick-mcrave-crashfix-baseline-v1`, exact runner session 55144, finished. Ten attempts, seven clean completions (six wins/one loss), one peer OpenBW teardown SIGSEGV and two Terran timeouts. Decision INCONCLUSIVE. [Plan](evaluations/quick-baseline-v1/EVAL_PLAN.md) and [result](evaluations/quick-baseline-v1/RESULT.md) retain the registered bar. Original ledger is `manifest.collected.json`; an explicit analysis amendment fixes failure categories only. No games replaced.
+- **Performance:** clean games average 380.5 fps, all attempts 306.7 fps, below the 384 fps requirement. Candidate-plus-engine process dominates CPU in the two timeouts. Profile before strategic changes.
+- **Active Sol work:** `harness_sol` owns engine socket shutdown fix, canonical patch, build and before/after evidence. `engine_sol` owns McRave profiling and coordinates engine use. Do not rebuild shared engine/source during a running game. Track exact tool sessions.
+- **Dashboard:** Luna landed bot identity data and alternate viewer URL; parent integrates frontend labels, publishes and verifies. Live site is <https://starcraft-ai.pages.dev/>. Build command `scripts/build-pages.sh`, output `public`, root `/`, project `starcraft-ai`. Local Wrangler is authenticated. Batch completion hook publishes all terminal outcomes unless explicitly disabled.
+- **Viewer:** use `https://dgant.github.io/openbw-replay-viewer/?url=<encoded-public-replay-url>` with download fallback. Parent observed Destination McRave/ZZZK replay playing there. The official host was inaccessible. Immutable deployment URLs keep replays usable after source-only Git builds.
+- **Opponents:** frozen ZZZKBot Zerg and full UAlbertaBot Protoss/Terran packages are available. All are ours as native ports, with upstream authors credited; WorkerRush/Idle are ours and original. BASIL observations refer to upstream bots, not these binaries.
+- **Engine:** verified seed/player-ID patch and direct LOCAL transport. Fixture seed 424242 repeats byte-identical replay; swapped policies keep assigned starts. The shutdown repair changes the engine regime; new evaluation needs a new plan/ID.
+- **Replay evidence:** all emitted files retained, parser validation plus complete native replay playback and browser playback. No full live/replay terminal-state equivalence proof. Multiplayer is LF3; single-player passive observer reports LF2.
+- **Remaining gaps:** late-game callback tails/throughput, broader cohort, official Win32 linking/original-game execution. McRave 114 and UAlbertaBot 115 official-header translation units compile; this is not Windows runtime proof.
+- **Permissions:** authorized public repository `lukecameron/starcraft-ai` and Pages dashboard; no contact or tournament submission. Bulk evidence/game assets stay ignored. Reset redemption needs an explicit user decision; heavy usage is authorized. Check quota occasionally.
 
-Read `docs/experiments.md`, `docs/compatibility-debt.md` and `config/opponents.json` before making strength claims or starting more simulations.
+Read the brief, experiment ledger and compatibility debt before new strategic experiments. Finish reliability/performance diagnosis, preserve failures, checkpoint on main, and continue the empirical improvement loop.

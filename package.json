@@ -1,0 +1,10 @@
+{
+  "name": "starcraft-ai-dashboard",
+  "private": true,
+  "scripts": {
+    "dashboard:build": "scripts/build-pages.sh"
+  },
+  "devDependencies": {
+    "wrangler": "^4.135.0"
+  }
+}

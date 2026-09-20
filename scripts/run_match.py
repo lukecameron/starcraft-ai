@@ -7,6 +7,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import resource
@@ -21,6 +22,7 @@ import uuid
 SCHEMA_VERSION = 1
 RACES = ("Terran", "Protoss", "Zerg", "Random")
 REQUIRED_MPQS = ("Patch_rt.mpq", "StarDat.mpq", "BrooDat.mpq")
+RECORDED_RUNTIME_ENV = {"DYLD_LIBRARY_PATH", "DYLD_INSERT_LIBRARIES", "ASAN_OPTIONS", "UBSAN_OPTIONS", "LSAN_OPTIONS"}
 
 
 def sha256(path: Path) -> str:
@@ -61,6 +63,24 @@ def artifact(path: Path) -> dict[str, object]:
     return {"path": str(path), "size_bytes": path.stat().st_size, "sha256": sha256(path)}
 
 
+def binary_artifact(path: Path) -> dict[str, object]:
+    record = artifact(path)
+    sidecar = Path(str(path) + ".build.json")
+    if not sidecar.is_file():
+        record["build_provenance_status"] = "no build sidecar; source identity not verified"
+        return record
+    try:
+        provenance = json.loads(sidecar.read_text())
+        if provenance.get("binary_sha256") != record["sha256"]:
+            raise ValueError("build sidecar does not match current binary")
+        record["build_provenance"] = provenance
+        record["build_provenance_file"] = artifact(sidecar)
+        record["build_provenance_status"] = "binary hash matches build sidecar"
+    except (ValueError, OSError, AttributeError) as error:
+        record["build_provenance_status"] = str(error)
+    return record
+
+
 def link_game_data(source: Path, destination: Path) -> None:
     destination.mkdir(parents=True)
     for item in source.iterdir():
@@ -72,21 +92,49 @@ def link_game_data(source: Path, destination: Path) -> None:
         (private / name).mkdir(parents=True, exist_ok=True)
 
 
+def snapshot_ai_data(bot: Path, work: Path, player_input: dict[str, object]) -> None:
+    """Copy the module's packaged AI files so later source edits cannot affect play."""
+    source = bot.resolve().parent / "AI"
+    destination = work / "bwapi-data" / "AI"
+    files = []
+    if source.is_dir():
+        for path in sorted(source.rglob("*")):
+            if path.is_symlink():
+                raise ValueError(f"AI bundle must contain ordinary files, not symlinks: {path}")
+            if not path.is_file():
+                continue
+            relative = path.relative_to(source)
+            target = destination / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(path, target)
+            files.append({"relative_path": str(relative), "source_path": str(path), **artifact(target)})
+    player_input["ai_files"] = files
+    actual = {item["relative_path"]: item["sha256"] for item in files}
+    provenance = player_input["bot_module"].get("build_provenance", {})
+    for expected in provenance.get("ai_files", []):
+        if actual.get(expected["path"]) != expected["sha256"]:
+            raise ValueError(f"Missing or changed AI file for {bot.name}: {expected['path']}")
+
+
 def player_environment(args: argparse.Namespace, player: int, work: Path, socket_dir: Path) -> tuple[dict[str, str], Path, Path]:
     bot = (args.bot1 if player == 1 else args.bot2).resolve()
     race = args.race1 if player == 1 else args.race2
+    name = args.name1 if player == 1 else args.name2
     raw_replay = work / "replay.rep"
-    result_path = work / "result.json"
+    result_path = work / "bwapi-data" / "write" / "result.json"
     env = {key: value for key, value in os.environ.items()
            if not key.startswith(("OPENBW_", "BWAPI_CONFIG_", "MATCH_"))}
     env.update(
         {
             "OPENBW_ENABLE_UI": "0",
-            "OPENBW_LAN_MODE": "LOCAL_AUTO",
-            "OPENBW_LOCAL_AUTO_DIRECTORY": str(socket_dir),
+            # One known peer per game: avoid LOCAL_AUTO's directory discovery,
+            # which can leave two simultaneous launchers waiting in the lobby.
+            "OPENBW_LAN_MODE": "LOCAL",
+            "OPENBW_LOCAL_PATH": str(socket_dir / "game.socket"),
             "BWAPI_CONFIG_AI__AI": str(bot),
             "BWAPI_CONFIG_AUTO_MENU__AUTO_MENU": "LAN",
             "BWAPI_CONFIG_AUTO_MENU__RACE": race,
+            "BWAPI_CONFIG_AUTO_MENU__CHARACTER_NAME": f"{name} {race}"[:24],
             "BWAPI_CONFIG_AUTO_MENU__MAP": args.map,
             "BWAPI_CONFIG_AUTO_MENU__GAME": args.game_name,
             "BWAPI_CONFIG_AUTO_MENU__GAME_TYPE": "MELEE",
@@ -101,6 +149,9 @@ def player_environment(args: argparse.Namespace, player: int, work: Path, socket
     )
     if args.library_path:
         env["DYLD_LIBRARY_PATH"] = str(args.library_path.resolve())
+    if args.seed is not None:
+        env["OPENBW_SCENARIO_SEED"] = str(args.seed)
+        env["OPENBW_SCENARIO_PLAYER_ID"] = str(player)
     return env, raw_replay, result_path
 
 
@@ -151,6 +202,12 @@ def read_result(path: Path, fallback: Path) -> tuple[dict[str, object] | None, s
         value = json.loads(selected.read_text(encoding="utf-8"))
         if not isinstance(value, dict):
             raise ValueError("root is not an object")
+        if type(value.get("frame_count")) is not int or value["frame_count"] < 0:
+            raise ValueError("frame_count must be a nonnegative integer")
+        if type(value.get("ended")) is not bool:
+            raise ValueError("ended must be a boolean")
+        if value["ended"] and type(value.get("winner")) is not bool:
+            raise ValueError("terminal winner must be a boolean")
         value["metadata_path"] = str(selected)
         return value, None
     except (OSError, ValueError, json.JSONDecodeError) as error:
@@ -162,18 +219,24 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--launcher", required=True, type=Path)
     parser.add_argument("--bot1", required=True, type=Path)
     parser.add_argument("--race1", required=True, choices=RACES)
+    parser.add_argument("--name1", help="Display name; defaults to module filename")
     parser.add_argument("--bot2", required=True, type=Path)
     parser.add_argument("--race2", required=True, choices=RACES)
+    parser.add_argument("--name2", help="Display name; defaults to module filename")
     parser.add_argument("--map", required=True, help="Map path as seen from the game-data directory")
     parser.add_argument("--game-data-dir", required=True, type=Path)
     parser.add_argument("--purpose", required=True)
+    parser.add_argument("--experiment-id", help="Stable experiment ledger identity for dashboard grouping")
+    parser.add_argument("--seed", type=int, help="Controlled uint32 engine seed before race and start-slot draws")
     parser.add_argument("--wall-timeout", required=True, type=float)
     parser.add_argument("--artifacts-dir", type=Path, default=Path("artifacts"))
     parser.add_argument("--library-path", type=Path)
     parser.add_argument("--game-name", default="openbw-match")
     args = parser.parse_args(argv)
-    if args.wall_timeout <= 0:
-        parser.error("--wall-timeout must be positive")
+    if not math.isfinite(args.wall_timeout) or args.wall_timeout <= 0:
+        parser.error("--wall-timeout must be finite and positive")
+    if args.seed is not None and not 0 <= args.seed <= 0xffffffff:
+        parser.error("--seed must be an unsigned 32-bit integer")
     for label in ("launcher", "bot1", "bot2", "game_data_dir"):
         path = getattr(args, label)
         if not path.exists():
@@ -183,6 +246,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(f"--game-data-dir is missing required OpenBW files: {', '.join(missing)}")
     if Path(args.map).is_absolute() or not (args.game_data_dir / args.map).is_file():
         parser.error("--map must name a regular file relative to --game-data-dir")
+    args.name1 = args.name1 or args.bot1.stem
+    args.name2 = args.name2 or args.bot2.stem
     return args
 
 
@@ -201,7 +266,7 @@ def main(argv: list[str] | None = None) -> int:
     manifest_path = game_dir / "manifest.json"
     replay_dir.mkdir(parents=True)
 
-    inputs = {"launcher": artifact(args.launcher.resolve()), "map": {"configured_path": args.map}, "players": []}
+    inputs = {"launcher": binary_artifact(args.launcher.resolve()), "map": {"configured_path": args.map}, "players": []}
     inputs["game_data"] = [artifact(args.game_data_dir.resolve() / name) for name in REQUIRED_MPQS]
     if args.library_path:
         inputs["engine_libraries"] = [artifact(path) for path in sorted(args.library_path.resolve().glob("*.dylib"))]
@@ -211,22 +276,31 @@ def main(argv: list[str] | None = None) -> int:
     else:
         inputs["map"]["hash_unavailable_reason"] = "configured map is not a regular file under game-data-dir"
     for number, (bot, race) in enumerate(((args.bot1, args.race1), (args.bot2, args.race2)), 1):
-        inputs["players"].append({"player": number, "race": race, "bot_module": artifact(bot.resolve())})
+        inputs["players"].append({"player": number, "race": race,
+                                  "name": args.name1 if number == 1 else args.name2,
+                                  "bot_module": binary_artifact(bot.resolve())})
 
     manifest: dict[str, object] = {
         "schema_version": SCHEMA_VERSION,
         "run_id": run_id,
         "game_id": game_id,
         "purpose": args.purpose,
+        "experiment_id": args.experiment_id,
         "status": "launching",
         "started_at": started_at,
         "backend": "OpenBW via BWAPILauncher",
         "platform": {"sys_platform": sys.platform, "machine": os.uname().machine},
-        "rules": {"latency": "LF3: OpenBW source hardcodes 3 logical frames; runtime diagnostic pending", "adjudication": "none", "wall_timeout_seconds": args.wall_timeout},
+        "rules": {"latency": "LF3: OpenBW source hardcodes 3 logical frames; per-player metadata records runtime observations when available", "adjudication": "none", "wall_timeout_seconds": args.wall_timeout},
         "reproducibility": {
             "learning_state": "empty isolated read/write directories for each player",
-            "random_seed": None,
-            "known_nondeterminism": "OpenBW derives its start seed from random client IDs; replay contains the actual seed. Fixed scenario control not implemented yet.",
+            "random_seed": args.seed,
+            "seed_semantics": "OpenBW LCG state before random-race and start-slot draws" if args.seed is not None else None,
+            "protocol_player_ids": [1, 2] if args.seed is not None else None,
+            "known_nondeterminism": (
+                "Engine initialization controlled; bot wall-clock seeds, address-dependent ordering, or search budgets may still differ."
+                if args.seed is not None else
+                "OpenBW derives its start seed from random client IDs; replay contains the resulting seed."
+            ),
         },
         "inputs": inputs,
         "measurement_scope": {
@@ -254,13 +328,29 @@ def main(argv: list[str] | None = None) -> int:
     for signum in (signal.SIGINT, signal.SIGTERM):
         old_handlers[signum] = signal.signal(signum, on_signal)
     try:
+        if args.seed is not None:
+            provenance = inputs["launcher"].get("build_provenance", {})
+            if not provenance.get("scenario_control") or not args.library_path:
+                raise ValueError("Controlled --seed requires a verified scenario-capable engine sidecar and --library-path")
+            expected = {Path(item["path"]).name: item["sha256"] for item in provenance.get("artifacts", [])}
+            actual = {Path(item["path"]).name: item["sha256"] for item in inputs["engine_libraries"]}
+            for name in ("libOpenBWData.dylib", "libBWAPI.dylib", "libBWAPILIB.dylib"):
+                if name not in expected or actual.get(name) != expected[name]:
+                    raise ValueError(f"Controlled engine library does not match build provenance: {name}")
         for number in (1, 2):
             work = game_dir / f"player-{number}"
             link_game_data(args.game_data_dir.resolve(), work)
+            snapshot_ai_data(args.bot1 if number == 1 else args.bot2, work, inputs["players"][number - 1])
             env, raw_replay, result_path = player_environment(args, number, work, socket_dir)
             stdout_path, stderr_path = work / "stdout.log", work / "stderr.log"
             stdout_file, stderr_file = stdout_path.open("wb"), stderr_path.open("wb")
             opened_logs.extend((stdout_file, stderr_file))
+            manifest.setdefault("launch_configuration", []).append({
+                "player": number, "command": [str(args.launcher.resolve())], "cwd": str(work),
+                "environment": {key: env[key] for key in sorted(env)
+                                if key.startswith(("OPENBW_", "BWAPI_CONFIG_", "MATCH_")) or key in RECORDED_RUNTIME_ENV},
+            })
+            atomic_json(manifest_path, manifest)
             process = subprocess.Popen(
                 [str(args.launcher.resolve())], cwd=work, env=env, stdout=stdout_file, stderr=stderr_file,
                 stdin=subprocess.DEVNULL, start_new_session=True,
@@ -302,7 +392,7 @@ def main(argv: list[str] | None = None) -> int:
             "player": number,
             "command": [str(args.launcher.resolve())],
             "cwd": str(work),
-            "environment": {key: env[key] for key in sorted(env) if key.startswith(("OPENBW_", "BWAPI_CONFIG_", "MATCH_")) or key == "DYLD_LIBRARY_PATH"},
+            "environment": {key: env[key] for key in sorted(env) if key.startswith(("OPENBW_", "BWAPI_CONFIG_", "MATCH_")) or key in RECORDED_RUNTIME_ENV},
             "return_code": process.returncode,
             "stdout": artifact(work / "stdout.log"),
             "stderr": artifact(work / "stderr.log"),
@@ -328,6 +418,14 @@ def main(argv: list[str] | None = None) -> int:
                 os.fsync(replay_file.fileno())
             manifest["replays"].append({"player": number, **artifact(destination), "source_path": str(source), "archival_status": "copied"})
 
+    # Persist the archive directory entries as well as each replay's contents.
+    # The manifest lives in another directory and cannot flush these entries.
+    replay_directory_fd = os.open(replay_dir, os.O_RDONLY)
+    try:
+        os.fsync(replay_directory_fd)
+    finally:
+        os.close(replay_directory_fd)
+
     if not manifest["replays"]:
         manifest["replay_missing_reason"] = (
             "match was interrupted before replay archival" if interrupted_signal else
@@ -343,12 +441,20 @@ def main(argv: list[str] | None = None) -> int:
         "launch_error" if launch_error else "children_exited"
     )
     manifest["launch_error"] = launch_error
-    unfinished = any(isinstance(result, dict) and result.get("ended") is False for result in results)
-    manifest["status"] = "interrupted" if interrupted_signal else "timed_out" if timed_out else "failed" if launch_error or any(p.returncode != 0 for p in processes) or not manifest["replays"] else "incomplete" if unfinished else "completed"
     manifest["outcome_verified"] = (
         len(results) == 2 and all(isinstance(result, dict) and result.get("ended") is True for result in results)
         and {result.get("winner") for result in results} == {True, False}
     )
+    if interrupted_signal:
+        manifest["status"] = "interrupted"
+    elif timed_out:
+        manifest["status"] = "timed_out"
+    elif launch_error or any(p.returncode != 0 for p in processes) or not manifest["replays"]:
+        manifest["status"] = "failed"
+    elif manifest["outcome_verified"]:
+        manifest["status"] = "completed"
+    else:
+        manifest["status"] = "incomplete"
     manifest["outcome_verification_scope"] = "opposing onEnd winner callbacks; replay determinism verified separately (clients may end on different frames)"
     manifest["replay_validation"] = "not performed by launcher; replay emission alone is not proof of valid playback"
     manifest["finished_at"] = utc_now()

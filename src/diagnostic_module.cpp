@@ -39,6 +39,8 @@ class DiagnosticModule final : public BWAPI::AIModule {
         out << "{\"schema_version\":1,\"fixture\":\""
             << (DIAGNOSTIC_IDLE ? "idle" : "worker_rush")
             << "\",\"frame_count\":" << BWAPI::Broodwar->getFrameCount()
+            << ",\"is_replay\":" << (BWAPI::Broodwar->isReplay() ? "true" : "false")
+            << ",\"replay_frame_count\":" << BWAPI::Broodwar->getReplayFrameCount()
             << ",\"ended\":" << (ended ? "true" : "false")
             << ",\"winner\":" << (ended ? (won ? "true" : "false") : "null")
             << ",\"latency_frames\":" << first_latency

@@ -7,6 +7,12 @@ artifacts/
 data/
 __pycache__/
 *.pyc
+dashboard/dist/
+dashboard/deploy-status.json
+dashboard/.publish.lock/
+.wrangler/
+node_modules/
+public/
 # Game data and generated binaries must never enter the public source repository.
 *.mpq
 *.MPQ

@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "experiment_id": "quick-mcrave-crashfix-baseline-v1",
+  "hypothesis": "The frozen McRave crash-fix build completes controlled games against three opponent race/policy configurations from two independent codebases without a candidate process crash or timeout. Win rate is descriptive baseline evidence, not evidence of a strategic improvement.",
+  "stop_condition": "Run exactly the ten preregistered games unless interrupted or a repeated infrastructure failure makes further games uninterpretable; preserve every attempted game and investigate any crash, timeout, or missing/inconsistent result metadata.",
+  "purpose": "Quick baseline of frozen McRave crash-fix build; collect comparison evidence, do not infer strategy promotion",
+  "wall_timeout_seconds": 120,
+  "publish_hook": "scripts/publish_dashboard.sh",
+  "launcher": "third_party/bwapi/build-arm64/bin/BWAPILauncher",
+  "library_path": "third_party/bwapi/build-arm64/lib",
+  "game_data_dir": "third_party/game-data/runtime",
+  "candidate": {
+    "name": "McRave",
+    "race": "Zerg",
+    "sha256": "c49ee3c4b20a2772f1bfca03249c182d32a7238f9453a7a568990a188a1c4c65"
+  },
+  "opponents": {
+    "zzzk-z": {
+      "name": "ZZZKBot",
+      "race": "Zerg",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+    },
+    "ualberta-p": {
+      "name": "UAlbertaBot-P",
+      "race": "Protoss",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+    },
+    "ualberta-t": {
+      "name": "UAlbertaBot-T",
+      "race": "Terran",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+    }
+  },
+  "games": [
+    {
+      "opponent": "zzzk-z",
+      "map": "sscai/(2)Benzene.scx",
+      "candidate_player": 1,
+      "scenario_seed": 1001
+    },
+    {
+      "opponent": "zzzk-z",
+      "map": "sscai/(2)Benzene.scx",
+      "candidate_player": 2,
+      "scenario_seed": 1001
+    },
+    {
+      "opponent": "zzzk-z",
+      "map": "sscai/(2)Destination.scx",
+      "candidate_player": 1,
+      "scenario_seed": 1002
+    },
+    {
+      "opponent": "zzzk-z",
+      "map": "sscai/(2)Destination.scx",
+      "candidate_player": 2,
+      "scenario_seed": 1002
+    },
+    {
+      "opponent": "ualberta-p",
+      "map": "sscai/(2)Benzene.scx",
+      "candidate_player": 1,
+      "scenario_seed": 2001
+    },
+    {
+      "opponent": "ualberta-p",
+      "map": "sscai/(2)Destination.scx",
+      "candidate_player": 2,
+      "scenario_seed": 2002
+    },
+    {
+      "opponent": "ualberta-p",
+      "map": "sscai/(2)Benzene.scx",
+      "candidate_player": 2,
+      "scenario_seed": 2003
+    },
+    {
+      "opponent": "ualberta-t",
+      "map": "sscai/(2)Destination.scx",
+      "candidate_player": 1,
+      "scenario_seed": 3001
+    },
+    {
+      "opponent": "ualberta-t",
+      "map": "sscai/(2)Benzene.scx",
+      "candidate_player": 1,
+      "scenario_seed": 3002
+    },
+    {
+      "opponent": "ualberta-t",
+      "map": "sscai/(2)Destination.scx",
+      "candidate_player": 2,
+      "scenario_seed": 3003
+    }
+  ]
+}
