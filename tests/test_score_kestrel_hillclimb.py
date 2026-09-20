@@ -125,6 +125,110 @@ class KestrelScorecardTests(TestCase):
             "zerg_offense_stage_state_cause_codes": [0, 0, 2, 0],
         }
 
+    @staticmethod
+    def v35_metadata() -> dict[str, object]:
+        metadata = KestrelScorecardTests.v34_metadata()
+        metadata.update({
+            "accepted_build_frames": [20, 50, 75],
+            "accepted_build_type_ids": [156, 160, 160],
+            "accepted_build_pre_command_counts": [0, 0, 0],
+            "accepted_build_post_command_counts": [0, 0, 0],
+            "first_pylon_accepted_frame": 20,
+            "first_pylon_current_frame": 30,
+            "first_pylon_completed_frame": 40,
+            "first_gateway_accepted_frame": 50,
+            "first_gateway_current_frame": 60,
+            "first_gateway_completed_frame": 70,
+            "second_gateway_current_frame": 90,
+            "second_gateway_completed_frame": 100,
+            "first_zealot_train_frame": 71,
+            "first_zealot_completed_frame": 80,
+            "emergency_episode_current_id": 1,
+            "emergency_episode_current_assignment_count": 0,
+            "emergency_episode_threat_present": False,
+            "emergency_episode_ids": [1],
+            "emergency_episode_start_frames": [90],
+            "emergency_episode_reset_frames": [250],
+            "emergency_episode_assignment_counts": [2],
+            "emergency_episode_cap_blocks": 1,
+            "emergency_episode_cap_block_frames": [200],
+            "emergency_episode_cap_block_counts": [2],
+            "emergency_assignment_episode_ids": [1, 1],
+        })
+        return metadata
+
+    def test_v35_extracts_construction_baselines_and_episode_trace(self):
+        metadata = self.v35_metadata()
+
+        construction = scorer._construction_pending_summary(metadata, "Zerg")
+        self.assertEqual(construction["generation"], "v35")
+        self.assertEqual(construction["quantitative_grade"]["grade"], "pass")
+        self.assertEqual(construction["accepted_builds"]["rows"][1], {
+            "index": 1, "accepted_frame": 50, "type_id": 160,
+            "pre_command_count": 0, "post_command_count": 0,
+        })
+        self.assertEqual(construction["accepted_builds"]["second_gateway_accepted_frame"], 75)
+        self.assertTrue(construction["checks"]["gateway_sequence_observed"])
+        self.assertEqual(construction["timing"]["second_gateway_current_frame"], 90)
+
+        episode = scorer._emergency_episode_summary(metadata, "Zerg")
+        self.assertEqual(episode["quantitative_grade"]["grade"], "pass")
+        self.assertEqual(episode["episodes"], [{"index": 0, "id": 1, "start_frame": 90, "assignment_count": 2}])
+        self.assertEqual(episode["assignments"]["batches"][0]["episode_id"], 1)
+        self.assertTrue(episode["checks"]["per_episode_cap"])
+        self.assertTrue(episode["checks"]["cap_block_alignment"])
+
+        bridge = scorer._emergency_bridge_summary(metadata, "Zerg")
+        self.assertEqual(bridge["generation"], "v35")
+        self.assertEqual(bridge["release_threshold"], 3)
+        self.assertEqual(bridge["episodes"]["assignment_cap"], 2)
+        self.assertTrue(bridge["checks"]["episode_state_consistent"])
+
+    def test_v35_episode_summary_rejects_duplicate_probe_and_misaligned_cap_trace(self):
+        metadata = self.v35_metadata()
+        metadata["emergency_assigned_probe_ids"] = [101, 101]
+        metadata["emergency_episode_cap_block_counts"] = [1]
+
+        summary = scorer._emergency_episode_summary(metadata, "Zerg")
+
+        self.assertIn("episode_assignment_ids_duplicate", summary["review_flags"])
+        self.assertIn("episode_cap_block_below_cap", summary["review_flags"])
+        self.assertEqual(summary["quantitative_grade"]["grade"], "review")
+
+    def test_v35_non_zerg_episode_and_construction_fields_must_be_inactive(self):
+        metadata = self.v35_metadata()
+        metadata["known_zerg"] = False
+        for name in (
+            "emergency_trigger_frame", "emergency_first_assignment_frame", "emergency_first_release_frame",
+            "emergency_first_threat_clear_release_frame", "emergency_first_army_three_release_frame",
+            "emergency_army_at_trigger", "emergency_local_combat_at_trigger",
+        ):
+            metadata[name] = -1
+        for name in (
+            "emergency_trigger_events", "emergency_assignments", "emergency_assignment_batches",
+            "emergency_first_assignment_size", "emergency_max_assignment_batch", "emergency_peak_defenders",
+            "emergency_current_defenders", "emergency_accepted_attack_orders", "emergency_releases",
+            "emergency_threat_clear_release_events", "emergency_threat_clear_released_defenders",
+            "emergency_army_three_release_events", "emergency_army_three_released_defenders", "emergency_defender_deaths",
+            "emergency_build_selection_exclusions", "emergency_economy_exclusions",
+            "emergency_post_release_gather_orders", "emergency_post_release_build_orders",
+            "emergency_episode_current_id", "emergency_episode_current_assignment_count", "emergency_episode_cap_blocks",
+        ):
+            metadata[name] = 0
+        metadata.update({
+            "emergency_episode_threat_present": False,
+            "emergency_assigned_probe_ids": [], "emergency_assignment_frames": [], "emergency_assignment_sizes": [],
+            "emergency_release_frames": [], "emergency_release_sizes": [], "emergency_release_army_three_flags": [],
+            "emergency_episode_ids": [], "emergency_episode_start_frames": [], "emergency_episode_reset_frames": [],
+            "emergency_episode_assignment_counts": [], "emergency_episode_cap_block_frames": [],
+            "emergency_episode_cap_block_counts": [], "emergency_assignment_episode_ids": [],
+        })
+        construction = scorer._construction_pending_summary(metadata, "Terran")
+        episode = scorer._emergency_episode_summary(metadata, "Terran")
+        self.assertTrue(episode["checks"]["non_zerg_inactive"])
+        self.assertEqual(episode["quantitative_grade"]["grade"], "pass")
+        self.assertEqual(construction["quantitative_grade"]["grade"], "pass")
+
     def test_v33_emergency_bridge_exposes_batches_reasons_exclusions_and_recovery(self):
         summary = scorer._emergency_bridge_summary(self.v33_metadata(), "Zerg")
 

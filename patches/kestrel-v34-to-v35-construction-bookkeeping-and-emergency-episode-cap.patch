@@ -1,0 +1,236 @@
+diff --git a/third_party/kestrel-opening-v34-candidate/Kestrel.cpp b/third_party/kestrel-opening-v35-candidate/Kestrel.cpp
+index b88c421..c5be32c 100644
+--- a/third_party/kestrel-opening-v34-candidate/Kestrel.cpp
++++ b/third_party/kestrel-opening-v35-candidate/Kestrel.cpp
+@@ -68,6 +68,12 @@ class Kestrel final : public BWAPI::AIModule {
+     int maxLocalCompletedZealotsBeforeLoss_ = 0;
+     int acceptedStructuresAfterFirstZealot_ = 0;
+     int zealotLossPositionMissing_ = 0;
++    // Ordered accepted-build observations make the pending-baseline fix
++    // auditable without exposing anything beyond public self state.
++    std::vector<int> acceptedBuildFrames_;
++    std::vector<int> acceptedBuildTypeIds_;
++    std::vector<int> acceptedBuildPreCommandCounts_;
++    std::vector<int> acceptedBuildPostCommandCounts_;
+     std::unordered_map<int, BWAPI::Position> lastZealotPositions_;
+     std::unordered_map<int, int> zergOffenseStageSuppressedTargets_;
+     std::unordered_map<int, int> zergOffenseStageHomeMoveLastFrame_;
+@@ -160,6 +166,19 @@ class Kestrel final : public BWAPI::AIModule {
+     std::vector<int> emergencyReleaseFrames_;
+     std::vector<int> emergencyReleaseSizes_;
+     std::vector<int> emergencyReleaseArmyThreeFlags_;
++    // A threat episode is defined only by the public observation of a
++    // qualifying non-worker enemy unit inside the home radius.  It survives
++    // army>=3 releases and is reset only after that observation disappears.
++    bool emergencyThreatPresentLastPass_ = false;
++    int emergencyEpisodeId_ = 0;
++    int emergencyEpisodeAssignmentCount_ = 0;
++    int emergencyEpisodeCapBlocks_ = 0;
++    std::vector<int> emergencyEpisodeStartFrames_;
++    std::vector<int> emergencyEpisodeResetFrames_;
++    std::vector<int> emergencyEpisodeAssignmentCounts_;
++    std::vector<int> emergencyEpisodeCapBlockFrames_;
++    std::vector<int> emergencyEpisodeCapBlockCounts_;
++    std::vector<int> emergencyAssignmentEpisodeIds_;
+     bool emergencyThreatQualifiedLastPass_ = false;
+     int emergencyTriggerFrame_ = -1;
+     int emergencyTriggerEvents_ = 0;
+@@ -273,6 +292,27 @@ class Kestrel final : public BWAPI::AIModule {
+             << ",\"accepted_zealot_trains\":" << acceptedZealotTrains_
+             << ",\"second_gateway_current_frame\":" << secondGatewayCurrentFrame_
+             << ",\"second_gateway_completed_frame\":" << secondGatewayCompletedFrame_
++            << ",\"accepted_build_frames\":[";
++        for (size_t index = 0; index < acceptedBuildFrames_.size(); ++index) {
++            if (index) out << ',';
++            out << acceptedBuildFrames_[index];
++        }
++        out << "],\"accepted_build_type_ids\":[";
++        for (size_t index = 0; index < acceptedBuildTypeIds_.size(); ++index) {
++            if (index) out << ',';
++            out << acceptedBuildTypeIds_[index];
++        }
++        out << "],\"accepted_build_pre_command_counts\":[";
++        for (size_t index = 0; index < acceptedBuildPreCommandCounts_.size(); ++index) {
++            if (index) out << ',';
++            out << acceptedBuildPreCommandCounts_[index];
++        }
++        out << "],\"accepted_build_post_command_counts\":[";
++        for (size_t index = 0; index < acceptedBuildPostCommandCounts_.size(); ++index) {
++            if (index) out << ',';
++            out << acceptedBuildPostCommandCounts_[index];
++        }
++        out << "]"
+             << ",\"first_home_threat_frame\":" << firstHomeThreatFrame_
+             << ",\"first_home_zealot_loss_frame\":" << firstHomeZealotLossFrame_
+             << ",\"max_local_completed_zealots_before_loss\":" << maxLocalCompletedZealotsBeforeLoss_
+@@ -399,6 +439,9 @@ class Kestrel final : public BWAPI::AIModule {
+             << ",\"emergency_post_release_build_orders\":" << emergencyPostReleaseBuildOrders_
+             << ",\"emergency_army_at_trigger\":" << emergencyArmyAtTrigger_
+             << ",\"emergency_local_combat_at_trigger\":" << emergencyLocalCombatAtTrigger_
++            << ",\"emergency_episode_current_id\":" << emergencyEpisodeId_
++            << ",\"emergency_episode_current_assignment_count\":" << emergencyEpisodeAssignmentCount_
++            << ",\"emergency_episode_threat_present\":" << (emergencyThreatPresentLastPass_ ? "true" : "false")
+             << ",\"emergency_assigned_probe_ids\":[";
+         for (size_t index = 0; index < emergencyAssignedIds_.size(); ++index) {
+             if (index) out << ',';
+@@ -429,6 +472,42 @@ class Kestrel final : public BWAPI::AIModule {
+             if (index) out << ',';
+             out << emergencyReleaseArmyThreeFlags_[index];
+         }
++        out << "],\"emergency_episode_ids\":[";
++        for (int index = 0; index < static_cast<int>(emergencyEpisodeStartFrames_.size()); ++index) {
++            if (index) out << ',';
++            out << (index + 1);
++        }
++        out << "],\"emergency_episode_start_frames\":[";
++        for (size_t index = 0; index < emergencyEpisodeStartFrames_.size(); ++index) {
++            if (index) out << ',';
++            out << emergencyEpisodeStartFrames_[index];
++        }
++        out << "],\"emergency_episode_reset_frames\":[";
++        for (size_t index = 0; index < emergencyEpisodeResetFrames_.size(); ++index) {
++            if (index) out << ',';
++            out << emergencyEpisodeResetFrames_[index];
++        }
++        out << "],\"emergency_episode_assignment_counts\":[";
++        for (size_t index = 0; index < emergencyEpisodeAssignmentCounts_.size(); ++index) {
++            if (index) out << ',';
++            out << emergencyEpisodeAssignmentCounts_[index];
++        }
++        out << "],\"emergency_episode_cap_blocks\":" << emergencyEpisodeCapBlocks_
++            << ",\"emergency_episode_cap_block_frames\":[";
++        for (size_t index = 0; index < emergencyEpisodeCapBlockFrames_.size(); ++index) {
++            if (index) out << ',';
++            out << emergencyEpisodeCapBlockFrames_[index];
++        }
++        out << "],\"emergency_episode_cap_block_counts\":[";
++        for (size_t index = 0; index < emergencyEpisodeCapBlockCounts_.size(); ++index) {
++            if (index) out << ',';
++            out << emergencyEpisodeCapBlockCounts_[index];
++        }
++        out << "],\"emergency_assignment_episode_ids\":[";
++        for (size_t index = 0; index < emergencyAssignmentEpisodeIds_.size(); ++index) {
++            if (index) out << ',';
++            out << emergencyAssignmentEpisodeIds_[index];
++        }
+         out << "]}\n";
+         out.close();
+         if (out) {
+@@ -535,12 +614,31 @@ class Kestrel final : public BWAPI::AIModule {
+         const int army = count(BWAPI::UnitTypes::Protoss_Zealot, true) +
+                          count(BWAPI::UnitTypes::Protoss_Dragoon, true);
+         BWAPI::Unit threat = nearestEmergencyThreat(home);
+-        if (!threat || army >= 3) {
++        if (!threat) {
++            if (emergencyThreatPresentLastPass_) {
++                emergencyEpisodeResetFrames_.push_back(frame);
++            }
++            emergencyThreatPresentLastPass_ = false;
++            emergencyEpisodeAssignmentCount_ = 0;
+             if (!emergencyDefenderIds_.empty()) releaseEmergencyDefenders(frame, army >= 3);
+             emergencyThreatQualifiedLastPass_ = false;
+             return;
+         }
+ 
++        if (!emergencyThreatPresentLastPass_) {
++            ++emergencyEpisodeId_;
++            emergencyThreatPresentLastPass_ = true;
++            emergencyEpisodeAssignmentCount_ = 0;
++            emergencyEpisodeStartFrames_.push_back(frame);
++            emergencyEpisodeAssignmentCounts_.push_back(0);
++        }
++
++        if (army >= 3) {
++            if (!emergencyDefenderIds_.empty()) releaseEmergencyDefenders(frame, true);
++            emergencyThreatQualifiedLastPass_ = false;
++            return;
++        }
++
+         if (emergencyTriggerFrame_ < 0) {
+             emergencyTriggerFrame_ = frame;
+             emergencyArmyAtTrigger_ = army;
+@@ -558,9 +656,10 @@ class Kestrel final : public BWAPI::AIModule {
+         emergencyThreatQualifiedLastPass_ = true;
+ 
+         const int completedProbes = count(BWAPI::UnitTypes::Protoss_Probe, true);
+-        const int availableSlots = std::min(2 - static_cast<int>(emergencyDefenderIds_.size()),
+-                                            completedProbes - 4 - static_cast<int>(emergencyDefenderIds_.size()));
+-        if (availableSlots <= 0) {
++        const int baseAvailableSlots = std::min(
++            2 - static_cast<int>(emergencyDefenderIds_.size()),
++            completedProbes - 4 - static_cast<int>(emergencyDefenderIds_.size()));
++        if (baseAvailableSlots <= 0) {
+             emergencyPeakDefenders_ = std::max(emergencyPeakDefenders_, static_cast<int>(emergencyDefenderIds_.size()));
+             return;
+         }
+@@ -578,6 +677,16 @@ class Kestrel final : public BWAPI::AIModule {
+             if (aDistance != bDistance) return aDistance < bDistance;
+             return a->getID() < b->getID();
+         });
++        if (2 - emergencyEpisodeAssignmentCount_ <= 0) {
++            if (!probes.empty()) {
++                ++emergencyEpisodeCapBlocks_;
++                emergencyEpisodeCapBlockFrames_.push_back(frame);
++                emergencyEpisodeCapBlockCounts_.push_back(emergencyEpisodeAssignmentCount_);
++            }
++            emergencyPeakDefenders_ = std::max(emergencyPeakDefenders_, static_cast<int>(emergencyDefenderIds_.size()));
++            return;
++        }
++        const int availableSlots = std::min(baseAvailableSlots, 2 - emergencyEpisodeAssignmentCount_);
+         const int assignments = std::min(availableSlots, static_cast<int>(probes.size()));
+         if (assignments > 0) {
+             ++emergencyAssignmentBatches_;
+@@ -593,6 +702,9 @@ class Kestrel final : public BWAPI::AIModule {
+             const int id = probes[static_cast<size_t>(index)]->getID();
+             emergencyDefenderIds_.push_back(id);
+             emergencyAssignedIds_.push_back(id);
++            emergencyAssignmentEpisodeIds_.push_back(emergencyEpisodeId_);
++            ++emergencyEpisodeAssignmentCount_;
++            emergencyEpisodeAssignmentCounts_.back() = emergencyEpisodeAssignmentCount_;
+             ++emergencyAssignments_;
+         }
+         emergencyPeakDefenders_ = std::max(emergencyPeakDefenders_, static_cast<int>(emergencyDefenderIds_.size()));
+@@ -830,6 +942,7 @@ class Kestrel final : public BWAPI::AIModule {
+             return false;
+         }
+         builderId_ = worker->getID();
++        const int preCommandStructureCount = count(type);
+         const bool accepted = issue(worker->build(type, tile), BuildCommand);
+         if (accepted) {
+             if (wasEmergencyDefender(worker->getID())) {
+@@ -841,8 +954,12 @@ class Kestrel final : public BWAPI::AIModule {
+             if (type == BWAPI::UnitTypes::Protoss_Pylon && firstPylonAcceptedFrame_ < 0) firstPylonAcceptedFrame_ = frame;
+             if (type == BWAPI::UnitTypes::Protoss_Pylon && count(type) >= 5 && sixthPylonAcceptedFrame_ < 0) sixthPylonAcceptedFrame_ = frame;
+             if (type == BWAPI::UnitTypes::Protoss_Gateway && firstGatewayAcceptedFrame_ < 0) firstGatewayAcceptedFrame_ = frame;
++            acceptedBuildFrames_.push_back(frame);
++            acceptedBuildTypeIds_.push_back(type.getID());
++            acceptedBuildPreCommandCounts_.push_back(preCommandStructureCount);
++            acceptedBuildPostCommandCounts_.push_back(count(type));
+             pendingBuildType_ = type;
+-            pendingBuildBaseline_ = count(type);
++            pendingBuildBaseline_ = preCommandStructureCount;
+             pendingBuildFrame_ = frame;
+             pendingBuildFirstFrame_ = frame;
+         }
+@@ -871,6 +988,7 @@ class Kestrel final : public BWAPI::AIModule {
+             return false;
+         }
+         builderId_ = worker->getID();
++        const int preCommandStructureCount = count(BWAPI::UnitTypes::Protoss_Assimilator);
+         const bool accepted = issue(worker->build(BWAPI::UnitTypes::Protoss_Assimilator, best->getTilePosition()), BuildCommand);
+         if (accepted) {
+             if (wasEmergencyDefender(worker->getID())) {
+@@ -879,8 +997,12 @@ class Kestrel final : public BWAPI::AIModule {
+             }
+             lastAcceptedBuildFrame_ = frame;
+             if (firstZealotTrainFrame_ >= 0) ++acceptedStructuresAfterFirstZealot_;
++            acceptedBuildFrames_.push_back(frame);
++            acceptedBuildTypeIds_.push_back(BWAPI::UnitTypes::Protoss_Assimilator.getID());
++            acceptedBuildPreCommandCounts_.push_back(preCommandStructureCount);
++            acceptedBuildPostCommandCounts_.push_back(count(BWAPI::UnitTypes::Protoss_Assimilator));
+             pendingBuildType_ = BWAPI::UnitTypes::Protoss_Assimilator;
+-            pendingBuildBaseline_ = count(pendingBuildType_);
++            pendingBuildBaseline_ = preCommandStructureCount;
+             pendingBuildFrame_ = frame;
+             pendingBuildFirstFrame_ = frame;
+         }

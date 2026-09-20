@@ -132,6 +132,12 @@ def _normalise_race(race: object) -> str | None:
 def _diagnostic_generation(metadata: dict[str, object]) -> str:
     """Identify the Kestrel telemetry generation from additive field names."""
     if any(name in metadata for name in (
+        "accepted_build_pre_command_counts",
+        "emergency_episode_ids",
+        "emergency_assignment_episode_ids",
+    )):
+        return "v35"
+    if any(name in metadata for name in (
         "emergency_army_three_release_events",
         "emergency_release_army_three_flags",
         "zerg_offense_stage_state_frames",
@@ -143,6 +149,166 @@ def _diagnostic_generation(metadata: dict[str, object]) -> str:
     )):
         return "v33"
     return "legacy"
+
+
+def _construction_pending_summary(metadata: dict[str, object], opponent_race: str | None = None) -> dict[str, object]:
+    """Validate v35's pre-command construction bookkeeping observations.
+
+    v35 deliberately records the accepted-build arrays rather than exposing
+    evaluator state.  The current/current-completed milestone fields are the
+    public self-state observations used to check that an accepted request was
+    eventually reflected by the engine.  Older diagnostics have no arrays and
+    remain ``legacy_absent``.
+    """
+    names = (
+        "accepted_build_frames",
+        "accepted_build_type_ids",
+        "accepted_build_pre_command_counts",
+        "accepted_build_post_command_counts",
+    )
+    feature_present = any(name in metadata for name in names)
+    if not feature_present:
+        return {
+            "generation": "legacy",
+            "telemetry_status": "legacy_absent",
+            "fields_present": [],
+            "missing_fields": [],
+            "invalid_fields": [],
+            "accepted_builds": {"rows": [], "frames": [], "type_ids": [],
+                                 "pre_command_counts": [], "post_command_counts": []},
+            "timing": {},
+            "checks": {"trace_aligned": True, "baseline_values": True,
+                        "milestone_order": True, "gateway_sequence_observed": None},
+            "quantitative_grade": {"score": 0, "max_score": 100, "grade": "legacy_absent"},
+            "review_flags": [],
+            "opportunity_notes": [],
+            "note": "v35 construction telemetry is absent from this archived candidate.",
+        }
+
+    present = [name for name in names if name in metadata]
+    missing = [name for name in names if name not in metadata]
+    arrays = {name: _metadata_list(metadata, name) for name in names}
+    invalid_fields = [name for name in names if name in metadata and not isinstance(metadata[name], list)]
+    review_flags: list[str] = []
+    if invalid_fields:
+        review_flags.append("construction_trace_type_mismatch")
+    lengths = {name: len(value) for name, value in arrays.items()}
+    if len(set(lengths.values())) > 1:
+        review_flags.append("construction_trace_length_mismatch")
+
+    row_count = min(lengths.values(), default=0)
+    rows: list[dict[str, object]] = []
+    for index in range(row_count):
+        row = {
+            "index": index,
+            "accepted_frame": arrays["accepted_build_frames"][index],
+            "type_id": arrays["accepted_build_type_ids"][index],
+            "pre_command_count": arrays["accepted_build_pre_command_counts"][index],
+            "post_command_count": arrays["accepted_build_post_command_counts"][index],
+        }
+        rows.append(row)
+        for key in ("accepted_frame", "type_id", "pre_command_count", "post_command_count"):
+            if not isinstance(row[key], int) or isinstance(row[key], bool):
+                review_flags.append("construction_trace_value_type_mismatch")
+        for key in ("accepted_frame", "type_id", "pre_command_count", "post_command_count"):
+            if isinstance(row[key], int) and row[key] < 0:
+                review_flags.append("construction_trace_negative_value")
+        if (isinstance(row["pre_command_count"], int) and isinstance(row["post_command_count"], int)
+                and row["post_command_count"] < row["pre_command_count"]):
+            review_flags.append("post_command_count_below_baseline")
+        if (isinstance(row["pre_command_count"], int) and isinstance(row["post_command_count"], int)
+                and row["post_command_count"] > row["pre_command_count"] + 1):
+            review_flags.append("post_command_count_jump")
+
+    frames = arrays["accepted_build_frames"]
+    if any(isinstance(previous, int) and isinstance(current, int) and current < previous
+           for previous, current in zip(frames, frames[1:])):
+        review_flags.append("accepted_build_frames_not_ordered")
+
+    timing_names = (
+        "first_pylon_accepted_frame", "first_pylon_current_frame", "first_pylon_completed_frame",
+        "sixth_pylon_accepted_frame", "sixth_pylon_current_frame", "sixth_pylon_completed_frame",
+        "first_gateway_accepted_frame", "first_gateway_current_frame", "first_gateway_completed_frame",
+        "second_gateway_current_frame", "second_gateway_completed_frame",
+        "first_zealot_train_frame", "first_zealot_completed_frame",
+    )
+    timing = {name: _metadata_int(metadata, name, -1) for name in timing_names}
+    milestone_groups = (
+        ("first_pylon", ("first_pylon_accepted_frame", "first_pylon_current_frame", "first_pylon_completed_frame")),
+        ("sixth_pylon", ("sixth_pylon_accepted_frame", "sixth_pylon_current_frame", "sixth_pylon_completed_frame")),
+        ("first_gateway", ("first_gateway_accepted_frame", "first_gateway_current_frame", "first_gateway_completed_frame")),
+        ("second_gateway", ("second_gateway_current_frame", "second_gateway_completed_frame")),
+        ("first_zealot", ("first_zealot_train_frame", "first_zealot_completed_frame")),
+    )
+    for label, group in milestone_groups:
+        group_values = [timing[name] for name in group]
+        if any(value < 0 for value in group_values):
+            # A later milestone is not allowed to exist without its earlier
+            # public observation, but an unobserved suffix is valid for a
+            # game that ended before construction completed.
+            first_missing = next((index for index, value in enumerate(group_values) if value < 0), None)
+            if first_missing is not None and any(value >= 0 for value in group_values[first_missing + 1:]):
+                review_flags.append(f"{label}_milestone_gap")
+        for previous, current in zip(group_values, group_values[1:]):
+            if previous >= 0 and current >= 0 and current < previous:
+                review_flags.append(f"{label}_milestone_order")
+
+    gateway_rows = [row for row in rows if row.get("type_id") == 160]
+    gateway_accepted_frames = [row["accepted_frame"] for row in gateway_rows]
+    second_gateway_accepted_frame = gateway_accepted_frames[1] if len(gateway_accepted_frames) >= 2 else -1
+    if timing["first_gateway_accepted_frame"] >= 0 and (
+            not gateway_accepted_frames or gateway_accepted_frames[0] != timing["first_gateway_accepted_frame"]):
+        review_flags.append("first_gateway_acceptance_trace_mismatch")
+    if timing["second_gateway_current_frame"] >= 0:
+        if second_gateway_accepted_frame < 0:
+            review_flags.append("second_gateway_acceptance_missing")
+        elif second_gateway_accepted_frame > timing["second_gateway_current_frame"]:
+            review_flags.append("second_gateway_acceptance_after_current")
+    gateway_sequence_observed = (
+        second_gateway_accepted_frame >= 0
+        and timing["second_gateway_current_frame"] >= second_gateway_accepted_frame
+    )
+    checks = {
+        "trace_aligned": not any(flag.startswith("construction_trace") for flag in review_flags),
+        "baseline_values": not any(flag in {"post_command_count_below_baseline", "post_command_count_jump",
+                                             "accepted_build_frames_not_ordered"}
+                                    or flag.startswith("construction_trace_negative") for flag in review_flags),
+        "milestone_order": not any(flag.endswith("milestone_order") or flag.endswith("milestone_gap") for flag in review_flags),
+        "gateway_sequence_observed": gateway_sequence_observed if gateway_rows else None,
+    }
+    if missing:
+        review_flags.append("construction_required_fields_missing")
+    if not review_flags:
+        grade = "pass" if rows else "untested"
+    else:
+        grade = "review"
+    score_checks = [value for value in checks.values() if isinstance(value, bool)]
+    return {
+        "generation": "v35",
+        "telemetry_status": "complete" if not missing and not invalid_fields else "partial",
+        "fields_present": present,
+        "missing_fields": missing,
+        "invalid_fields": invalid_fields,
+        "accepted_builds": {
+            "rows": rows,
+            "frames": arrays["accepted_build_frames"],
+            "type_ids": arrays["accepted_build_type_ids"],
+            "pre_command_counts": arrays["accepted_build_pre_command_counts"],
+            "post_command_counts": arrays["accepted_build_post_command_counts"],
+            "gateway_accepted_frames": gateway_accepted_frames,
+            "second_gateway_accepted_frame": second_gateway_accepted_frame,
+        },
+        "timing": timing,
+        "checks": checks,
+        "quantitative_grade": {
+            "score": round(100 * sum(score_checks) / len(score_checks)) if score_checks else 0,
+            "max_score": 100,
+            "grade": grade,
+        },
+        "review_flags": sorted(set(review_flags)),
+        "opportunity_notes": [] if rows else ["construction_acceptance_unobserved"],
+        "note": "v35 accepted-build arrays record public pre/post count observations; current/completed timing fields are the public release evidence.",
+    }
 
 
 def _emergency_batches(frames: list[object], sizes: list[object], ids: list[object]) -> tuple[list[dict[str, object]], list[str]]:
@@ -168,10 +334,229 @@ def _emergency_batches(frames: list[object], sizes: list[object], ids: list[obje
     return batches, flags
 
 
+def _emergency_episode_summary(metadata: dict[str, object], opponent_race: str | None = None) -> dict[str, object]:
+    """Validate v35's cumulative two-Probe emergency threat episodes."""
+    names = (
+        "emergency_episode_current_id",
+        "emergency_episode_current_assignment_count",
+        "emergency_episode_threat_present",
+        "emergency_episode_ids",
+        "emergency_episode_start_frames",
+        "emergency_episode_reset_frames",
+        "emergency_episode_assignment_counts",
+        "emergency_episode_cap_blocks",
+        "emergency_episode_cap_block_frames",
+        "emergency_episode_cap_block_counts",
+        "emergency_assignment_episode_ids",
+    )
+    feature_present = any(name in metadata for name in names)
+    if not feature_present:
+        return {
+            "generation": "legacy",
+            "telemetry_status": "legacy_absent",
+            "fields_present": [],
+            "missing_fields": [],
+            "invalid_fields": [],
+            "assignment_cap": 2,
+            "episodes": [],
+            "assignments": {"episode_ids": [], "batches": []},
+            "cap_blocks": {"total": 0, "frames": [], "counts": []},
+            "current": {"id": 0, "assignment_count": 0, "threat_present": False},
+            "checks": {"episode_trace_aligned": True, "episode_ids_consistent": True,
+                        "episode_reset_order": True, "assignment_episode_alignment": True,
+                        "per_episode_cap": True, "cap_block_alignment": True,
+                        "non_zerg_inactive": None},
+            "quantitative_grade": {"score": 0, "max_score": 100, "grade": "legacy_absent"},
+            "review_flags": [],
+            "opportunity_notes": [],
+        }
+
+    present = [name for name in names if name in metadata]
+    missing = [name for name in names if name not in metadata]
+    list_names = (
+        "emergency_episode_ids", "emergency_episode_start_frames", "emergency_episode_reset_frames",
+        "emergency_episode_assignment_counts", "emergency_episode_cap_block_frames",
+        "emergency_episode_cap_block_counts", "emergency_assignment_episode_ids",
+    )
+    arrays = {name: _metadata_list(metadata, name) for name in list_names}
+    invalid_fields = [name for name in list_names if name in metadata and not isinstance(metadata[name], list)]
+    invalid_scalars = [name for name in ("emergency_episode_current_id", "emergency_episode_current_assignment_count",
+                                         "emergency_episode_cap_blocks")
+                       if name in metadata and (not isinstance(metadata[name], int) or isinstance(metadata[name], bool))]
+    if "emergency_episode_threat_present" in metadata and not isinstance(metadata["emergency_episode_threat_present"], bool):
+        invalid_scalars.append("emergency_episode_threat_present")
+    review_flags: list[str] = []
+    if invalid_fields:
+        review_flags.append("episode_trace_type_mismatch")
+    if invalid_scalars:
+        review_flags.append("episode_scalar_type_mismatch")
+    current_id = _metadata_int(metadata, "emergency_episode_current_id", 0)
+    current_count = _metadata_int(metadata, "emergency_episode_current_assignment_count", 0)
+    threat_present = _metadata_bool(metadata, "emergency_episode_threat_present", False)
+    cap_blocks = _metadata_int(metadata, "emergency_episode_cap_blocks", 0)
+    episode_ids = arrays["emergency_episode_ids"]
+    starts = arrays["emergency_episode_start_frames"]
+    resets = arrays["emergency_episode_reset_frames"]
+    episode_counts = arrays["emergency_episode_assignment_counts"]
+    block_frames = arrays["emergency_episode_cap_block_frames"]
+    block_counts = arrays["emergency_episode_cap_block_counts"]
+    assignment_episode_ids = arrays["emergency_assignment_episode_ids"]
+    if not (len(episode_ids) == len(starts) == len(episode_counts)):
+        review_flags.append("episode_trace_length_mismatch")
+    if len(block_frames) != len(block_counts) or cap_blocks != len(block_frames):
+        review_flags.append("episode_cap_block_length_mismatch")
+
+    row_count = min(len(episode_ids), len(starts), len(episode_counts))
+    episodes = [{"index": index, "id": episode_ids[index], "start_frame": starts[index],
+                 "assignment_count": episode_counts[index]} for index in range(row_count)]
+    for row in episodes:
+        if any(not isinstance(row[key], int) or isinstance(row[key], bool)
+               for key in ("id", "start_frame", "assignment_count")):
+            review_flags.append("episode_value_type_mismatch")
+        if (isinstance(row["id"], int) and row["id"] <= 0) or (isinstance(row["start_frame"], int) and row["start_frame"] < 0) or (isinstance(row["assignment_count"], int) and not 0 <= row["assignment_count"] <= 2):
+            review_flags.append("episode_value_out_of_range")
+    if episode_ids != list(range(1, len(episode_ids) + 1)):
+        review_flags.append("episode_ids_not_sequential")
+    if any(isinstance(previous, int) and isinstance(current, int) and current <= previous
+           for previous, current in zip(starts, starts[1:])):
+        review_flags.append("episode_start_frames_not_ordered")
+    expected_reset_count = len(starts) - (1 if threat_present and starts else 0)
+    if len(resets) != expected_reset_count:
+        review_flags.append("episode_reset_count_mismatch")
+    for index, reset in enumerate(resets):
+        if not isinstance(reset, int) or isinstance(reset, bool):
+            review_flags.append("episode_reset_frame_type_mismatch")
+            continue
+        start = starts[index] if index < len(starts) else None
+        next_start = starts[index + 1] if index + 1 < len(starts) else None
+        if not isinstance(start, int) or reset <= start or (isinstance(next_start, int) and reset >= next_start):
+            review_flags.append("episode_reset_outside_episode_boundary")
+    if any(isinstance(previous, int) and isinstance(current, int) and current <= previous
+           for previous, current in zip(resets, resets[1:])):
+        review_flags.append("episode_reset_frames_not_ordered")
+
+    base_batches, batch_flags = _emergency_batches(
+        _metadata_list(metadata, "emergency_assignment_frames"),
+        _metadata_list(metadata, "emergency_assignment_sizes"),
+        _metadata_list(metadata, "emergency_assigned_probe_ids"),
+    )
+    review_flags.extend(f"episode_{flag}" for flag in batch_flags)
+    assignment_rows: list[dict[str, object]] = []
+    assignment_offset = 0
+    for batch in base_batches:
+        batch_size = batch["size"] if isinstance(batch["size"], int) else 0
+        batch_episode_values = assignment_episode_ids[assignment_offset:assignment_offset + batch_size]
+        if len(batch_episode_values) != batch_size:
+            review_flags.append("assignment_episode_id_count_mismatch")
+        batch_episode = batch_episode_values[0] if batch_episode_values else None
+        if batch_episode_values and any(value != batch_episode for value in batch_episode_values):
+            review_flags.append("assignment_batch_spans_episodes")
+        assignment_rows.append({**batch, "episode_id": batch_episode, "episode_ids": batch_episode_values})
+        assignment_offset += batch_size
+    if assignment_offset != len(assignment_episode_ids):
+        review_flags.append("assignment_episode_id_unconsumed")
+
+    episode_assignment_ids: dict[int, list[object]] = {index: [] for index in range(1, len(episode_ids) + 1)}
+    episode_assignment_frames: dict[int, list[object]] = {index: [] for index in episode_assignment_ids}
+    for batch in assignment_rows:
+        episode_id = batch["episode_id"]
+        if not isinstance(episode_id, int) or episode_id not in episode_assignment_ids:
+            review_flags.append("assignment_unknown_episode_id")
+            continue
+        episode_assignment_ids[episode_id].extend(batch["probe_ids"])
+        episode_assignment_frames[episode_id].append(batch["frame"])
+        start = starts[episode_id - 1] if episode_id - 1 < len(starts) else None
+        end = resets[episode_id - 1] if episode_id - 1 < len(resets) else None
+        if isinstance(batch["frame"], int) and (not isinstance(start, int) or batch["frame"] < start or (isinstance(end, int) and batch["frame"] >= end)):
+            review_flags.append("assignment_frame_outside_episode")
+    for episode_id, ids in episode_assignment_ids.items():
+        valid_ids = [value for value in ids if isinstance(value, int) and not isinstance(value, bool)]
+        if len(valid_ids) != len(ids):
+            review_flags.append("episode_assignment_id_type_mismatch")
+        if len(valid_ids) != len(set(valid_ids)):
+            review_flags.append("episode_assignment_ids_duplicate")
+        if len(ids) > 2:
+            review_flags.append("episode_assignment_cap_exceeded")
+        if episode_id - 1 < len(episode_counts) and episode_counts[episode_id - 1] != len(ids):
+            review_flags.append("episode_assignment_count_mismatch")
+    for index, frame in enumerate(block_frames):
+        count = block_counts[index] if index < len(block_counts) else None
+        if not isinstance(frame, int) or not isinstance(count, int) or isinstance(frame, bool) or isinstance(count, bool):
+            review_flags.append("episode_cap_block_value_type_mismatch")
+            continue
+        if count < 2:
+            review_flags.append("episode_cap_block_below_cap")
+        matching: list[int] = []
+        for episode_id in episode_assignment_frames:
+            if episode_id - 1 >= len(starts) or not isinstance(starts[episode_id - 1], int):
+                continue
+            start = starts[episode_id - 1]
+            end = resets[episode_id - 1] if episode_id - 1 < len(resets) else None
+            if start <= frame and (not isinstance(end, int) or frame < end):
+                matching.append(episode_id)
+        if not matching:
+            review_flags.append("episode_cap_block_outside_episode")
+        elif count != len(episode_assignment_ids[matching[-1]]):
+            review_flags.append("episode_cap_block_count_mismatch")
+    if current_id < 0 or current_id > len(episode_ids) or current_count < 0 or current_count > 2:
+        review_flags.append("episode_current_state_out_of_range")
+    if threat_present and (current_id == 0 or (episode_counts and current_id != len(episode_counts))):
+        review_flags.append("episode_current_id_mismatch")
+    if threat_present and episode_counts and current_count != episode_counts[-1]:
+        review_flags.append("episode_current_count_mismatch")
+    if not threat_present and current_count != 0:
+        review_flags.append("episode_current_count_not_reset")
+    if missing:
+        review_flags.append("episode_required_fields_missing")
+
+    race = _normalise_race(opponent_race)
+    if race is None:
+        known_zerg = metadata.get("known_zerg")
+        if isinstance(known_zerg, bool):
+            race = "zerg" if known_zerg else "non-zerg"
+    expected_inactive = race in {"terran", "protoss", "non-zerg"}
+    if expected_inactive and (episode_ids or starts or resets or episode_counts or block_frames or block_counts or assignment_episode_ids or current_id != 0 or current_count != 0 or threat_present or cap_blocks != 0):
+        review_flags.append("non_zerg_episode_activity")
+    checks = {
+        "episode_trace_aligned": "episode_trace_length_mismatch" not in review_flags and "episode_value_type_mismatch" not in review_flags,
+        "episode_ids_consistent": not any(flag.startswith("episode_ids_") or flag == "episode_start_frames_not_ordered" for flag in review_flags),
+        "episode_reset_order": not any(flag.startswith("episode_reset_") for flag in review_flags),
+        "assignment_episode_alignment": not any(flag.startswith("assignment_") or flag.startswith("episode_assignment_") or flag.startswith("episode_frame") for flag in review_flags),
+        "per_episode_cap": not any(flag.startswith("episode_assignment_cap") or flag in {"episode_assignment_ids_duplicate", "episode_assignment_id_type_mismatch", "episode_assignment_count_mismatch"} for flag in review_flags),
+        "cap_block_alignment": not any(flag.startswith("episode_cap_block") for flag in review_flags),
+        "non_zerg_inactive": expected_inactive and not any(flag.startswith("non_zerg_episode") for flag in review_flags) if expected_inactive else None,
+    }
+    bool_checks = [value for value in checks.values() if isinstance(value, bool)]
+    if expected_inactive:
+        grade = "pass" if checks["non_zerg_inactive"] else "review"
+    elif not episodes and not review_flags:
+        grade = "untested"
+    else:
+        grade = "pass" if not review_flags else "review"
+    return {
+        "generation": "v35",
+        "telemetry_status": "complete" if not missing and not invalid_fields else "partial",
+        "fields_present": present,
+        "missing_fields": missing,
+        "invalid_fields": sorted(set(invalid_fields + invalid_scalars)),
+        "assignment_cap": 2,
+        "episodes": episodes,
+        "assignments": {"episode_ids": assignment_episode_ids, "batches": assignment_rows},
+        "cap_blocks": {"total": cap_blocks, "frames": block_frames, "counts": block_counts},
+        "current": {"id": current_id, "assignment_count": current_count, "threat_present": threat_present},
+        "checks": checks,
+        "quantitative_grade": {"score": round(100 * sum(bool_checks) / len(bool_checks)) if bool_checks else 0,
+                               "max_score": 100, "grade": grade},
+        "review_flags": sorted(set(review_flags)),
+        "opportunity_notes": [] if episodes else ["threat_episode_unobserved"],
+        "note": "v35 episode telemetry is public-threat state; the registered cumulative assignment cap is two unique Probes per episode.",
+    }
+
+
 def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | None = None) -> dict[str, object]:
     """Normalize v33/v34 emergency-worker telemetry and legacy absence."""
     generation = _diagnostic_generation(metadata)
-    army_generation = "three" if generation == "v34" else "two"
+    army_generation = "three" if generation in {"v34", "v35"} else "two"
     army_event_key = f"emergency_army_{army_generation}_release_events"
     army_defender_key = f"emergency_army_{army_generation}_released_defenders"
     first_army_frame_key = f"emergency_first_army_{army_generation}_release_frame"
@@ -321,6 +706,10 @@ def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | 
     if values["emergency_threat_clear_release_events"] + values[army_event_key] > 0 and not release_trace:
         review_flags.append("release_reason_without_release_trace")
 
+    episode_summary = _emergency_episode_summary(metadata, opponent_race) if generation == "v35" else None
+    if episode_summary is not None:
+        review_flags.extend(f"episode:{flag}" for flag in episode_summary.get("review_flags", []))
+
     if expected_inactive:
         inactive_values = [values[name] for name in scalar_defaults if name not in {
             "emergency_trigger_frame",
@@ -352,6 +741,7 @@ def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | 
         "release_trace_consistent": not any(flag.startswith("release_") or flag.startswith("threat_clear_release") or flag.startswith(f"army_{army_generation}_release") for flag in review_flags),
         "non_zerg_sentinels": expected_inactive and not any(flag.startswith("non_zerg_") for flag in review_flags) if expected_inactive else None,
         "recovery": recovery_status,
+        "episode_state_consistent": (not episode_summary.get("review_flags")) if episode_summary is not None else None,
     }
     scored_checks = [value for value in checks.values() if isinstance(value, bool)]
     score = round(100 * sum(scored_checks) / len(scored_checks)) if scored_checks else 0
@@ -426,11 +816,12 @@ def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | 
             "post_release_build_orders": values["emergency_post_release_build_orders"],
         },
         "defender_deaths": values["emergency_defender_deaths"],
+        "episodes": episode_summary,
         "checks": checks,
         "quantitative_grade": {"score": score, "max_score": 100, "grade": grade},
         "review_flags": sorted(set(review_flags)),
         "opportunity_notes": sorted(set(opportunity_notes)),
-        "note": "v33/v34 emergency bridge counters are descriptive telemetry. Assignment totals count probe identities; release totals count released defenders; release reason counters count release events.",
+        "note": "v33/v34 emergency bridge counters are descriptive telemetry. v35 adds cumulative continuous-threat episode checks. Assignment totals count probe identities; release totals count released defenders; release reason counters count release events.",
     }
 
 
@@ -918,6 +1309,7 @@ def _diagnostic_summary(metadata: dict[str, object], root: Path, opponent_race: 
     result["events"] = read_diagnostic_events(metadata, root)
     result["emergency_bridge"] = _emergency_bridge_summary(metadata, opponent_race)
     result["telemetry_generation"] = _diagnostic_generation(metadata)
+    result["construction_pending"] = _construction_pending_summary(metadata, opponent_race)
     result["zerg_offense_stage"] = _zerg_offense_stage_summary(metadata, opponent_race)
     return result
 
@@ -1048,6 +1440,7 @@ def score_kestrel_match(manifest: dict[str, object], manifest_path: Path, screp:
         "short_game": isinstance(manifest.get("elapsed_seconds"), (int, float)) and manifest["elapsed_seconds"] <= 300,
         "diagnostic": diagnostic,
         "emergency_bridge": diagnostic["emergency_bridge"],
+        "construction_pending": diagnostic["construction_pending"],
         "zerg_offense_stage": diagnostic["zerg_offense_stage"],
         "outcome_performance": outcome_performance(diagnostic_metadata),
     })
@@ -1122,6 +1515,7 @@ def score_kestrel_match(manifest: dict[str, object], manifest_path: Path, screp:
     if diagnostic.get("metadata_exists") and diagnostic.get("metadata_file_parse_ok") is not True: integrity_reasons.append("diagnostic_parse")
     if diagnostic.get("metadata_file_mismatches"): integrity_reasons.append("diagnostic_mismatch")
     if (diagnostic.get("emergency_bridge") or {}).get("review_flags"): integrity_reasons.append("emergency_mechanism_review")
+    if (diagnostic.get("construction_pending") or {}).get("review_flags"): integrity_reasons.append("construction_mechanism_review")
     if (diagnostic.get("zerg_offense_stage") or {}).get("review_flags"): integrity_reasons.append("zerg_offense_stage_review")
     if not candidate_parsed: integrity_reasons.append("candidate_replay_missing")
     if candidate_parsed and not candidate_parsed.get("manifest_hash_matches"): integrity_reasons.append("candidate_replay_hash")
@@ -1352,6 +1746,26 @@ def main() -> int:
         "opportunity_notes": dict(sorted(bridge_opportunity_notes.items())),
         "review_flags": dict(sorted(bridge_review_flags.items())),
     }
+    episode_games = [
+        (bridge.get("episodes") or {}) for bridge in bridge_games
+        if isinstance(bridge.get("episodes"), dict) and (bridge.get("episodes") or {}).get("generation") == "v35"
+    ]
+    episode_review_flags: dict[str, int] = {}
+    aggregate["emergency_bridge"]["episodes"] = {
+        "games": len(episode_games),
+        "observed": sum(bool(item.get("episodes")) for item in episode_games),
+        "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade for item in episode_games)
+                    for grade in ("pass", "untested", "review")},
+        "episode_count": sum(len(item.get("episodes", [])) for item in episode_games),
+        "assignments": sum(sum(len(ids) for ids in ((item.get("assignments") or {}).get("episode_ids", {}) or {}).values())
+                            for item in episode_games),
+        "cap_blocks": sum((item.get("cap_blocks") or {}).get("total", 0) for item in episode_games),
+        "review_flags": episode_review_flags,
+    }
+    for item in episode_games:
+        for flag in item.get("review_flags", []):
+            episode_review_flags[flag] = episode_review_flags.get(flag, 0) + 1
+    aggregate["emergency_bridge"]["episodes"]["review_flags"] = dict(sorted(episode_review_flags.items()))
     stage_games = [g.get("zerg_offense_stage") for g in games if isinstance(g.get("zerg_offense_stage"), dict)]
     stage_review_flags: dict[str, int] = {}
     stage_opportunity_notes: dict[str, int] = {}
@@ -1381,6 +1795,22 @@ def main() -> int:
             stage_opportunity_notes[note] = stage_opportunity_notes.get(note, 0) + 1
     aggregate["zerg_offense_stage"]["opportunity_notes"] = dict(sorted(stage_opportunity_notes.items()))
     aggregate["zerg_offense_stage"]["review_flags"] = dict(sorted(stage_review_flags.items()))
+    construction_games = [g.get("construction_pending") for g in games if isinstance(g.get("construction_pending"), dict)]
+    construction_review_flags: dict[str, int] = {}
+    aggregate["construction_pending"] = {
+        "games": len(construction_games),
+        "generations": {generation: sum(item.get("generation") == generation for item in construction_games)
+                         for generation in ("v35", "legacy")},
+        "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade for item in construction_games)
+                   for grade in ("pass", "untested", "review", "legacy_absent")},
+        "accepted_builds": sum(len((item.get("accepted_builds") or {}).get("rows", [])) for item in construction_games),
+        "gateway_sequence_observed": sum((item.get("checks") or {}).get("gateway_sequence_observed") is True for item in construction_games),
+        "review_flags": construction_review_flags,
+    }
+    for item in construction_games:
+        for flag in item.get("review_flags", []):
+            construction_review_flags[flag] = construction_review_flags.get(flag, 0) + 1
+    aggregate["construction_pending"]["review_flags"] = dict(sorted(construction_review_flags.items()))
     output = Path(args.output).resolve() if args.output else experiment_dir / "hillclimb-scorecard.json"
     scorecard = {"schema_version": 1, "experiment_id": args.experiment_id,
                  "candidate_name": candidate_name, "ledger_path": str(ledger_path),

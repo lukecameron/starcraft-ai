@@ -1,0 +1,200 @@
+{
+  "schema_version": 1,
+  "experiment_id": "kestrel-hillclimb-v14",
+  "registered_at": "2026-09-21",
+  "eval_plan_sha256": "1e5532403a508ffc7323c86331c43ec2f03ff0a066e374d70955057df09a1d18",
+  "purpose": "Exploratory five-way Kestrel v35 screen: pre-command construction bookkeeping fix plus a two-unique-Probe cumulative cap per continuous emergency threat episode",
+  "hypothesis": "Capturing construction pending baselines before issue() in build() and buildAssimilator() releases v34's stale pending state and gets the second Gateway current before the first fresh ZZZK threat, while the cumulative episode cap prevents replacement-chain exhaustion without regressing v34 reserve, staged-offense, commandability, provenance, or non-Zerg inactivity gates.",
+  "stop_condition": "Run exactly five fresh attempts concurrently; retain every result and stop after two consecutive infrastructure-invalid attempts, a 900-second cohort cap, or completion. Do not retry, reseed, or replace attempts. Any timeout or missing terminal result is INCONCLUSIVE.",
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "wall_timeout_seconds": 300,
+  "cohort_wall_cap_seconds": 900,
+  "concurrency": 5,
+  "stop_after_consecutive_invalid": 2,
+  "candidate": {
+    "name": "Kestrel-v35-construction-bookkeeping-and-emergency-episode-cap",
+    "path": "artifacts/builds/8e85a4389b18caf7f55d857d81889e1d7ecfa4d41333794a5797f69a10769270/kestrel-opening-v35-candidate/Kestrel.dylib",
+    "race": "Protoss",
+    "sha256": "8e85a4389b18caf7f55d857d81889e1d7ecfa4d41333794a5797f69a10769270",
+    "ownership": "Ours",
+    "origin": "Original",
+    "author": "Luke Cameron",
+    "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel",
+    "source_files": [
+      "third_party/kestrel-opening-v35-candidate/Kestrel.cpp",
+      "third_party/kestrel-opening-v35-candidate/CMakeLists.txt",
+      "third_party/kestrel-opening-v35-candidate/LICENSE"
+    ],
+    "source_sha256": "e81637c5fe1251786bebe9c63aa577aacf8bbd935766d320dbb16574059907af",
+    "source_sha256_scope": "Kestrel.cpp",
+    "source_combo_sha256": "05ac2402858f7765710e95f5c3414fd698857f76afe407c502faa2956a3e025e",
+    "build_sidecar": "artifacts/builds/8e85a4389b18caf7f55d857d81889e1d7ecfa4d41333794a5797f69a10769270/kestrel-opening-v35-candidate/Kestrel.dylib.build.json",
+    "source_patch": "patches/kestrel-v34-to-v35-construction-bookkeeping-and-emergency-episode-cap.patch",
+    "source_patch_sha256": "46e441080a8d599427bbdf111591be2ae47faa77fb99d7d6a8fb4dfd605bb023"
+  },
+  "base_candidate": {
+    "experiment_id": "kestrel-hillclimb-v13",
+    "name": "Kestrel-v34-two-Probe-threshold-and-staged-offense-latch",
+    "binary_path": "artifacts/builds/f71a1dc353a89c1770a05c59b21ae4907aebb7650d87cbb3af9239137a4b763a/kestrel-opening-v34-candidate/Kestrel.dylib",
+    "binary_sha256": "f71a1dc353a89c1770a05c59b21ae4907aebb7650d87cbb3af9239137a4b763a",
+    "source_sha256": "947b64fb0c6510bfbf32024850e9e517842f22349d8ac27a59f61d63897cf8bd",
+    "source_combo_sha256": "9d182a0f6db463bb5a6cf9ee16cd4b157988edd1626ce3d48e5b1630efaa9815",
+    "source_patch": "patches/kestrel-v33-to-v34-two-probe-threshold-and-offense-latch.patch",
+    "source_patch_sha256": "0e0c21d9957c1e9d5d506355a5af357e0b887406de14399e91f8310ab941dca1",
+    "policy": "Exact v34 base; retain the 150-mineral reserve and add only the registered pre-command construction bookkeeping fix and cumulative emergency-episode cap."
+  },
+  "opponents": {
+    "zzzk": {
+      "name": "ZZZKBot",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "race": "Zerg",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748",
+      "ownership": "Ours",
+      "origin": "Port",
+      "author": "Chris Coxe",
+      "source_url": "https://github.com/chriscoxe/ZZZKBot"
+    },
+    "uab-t": {
+      "name": "UAlbertaBot-Terran",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "race": "Terran",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9",
+      "ownership": "Ours",
+      "origin": "Port",
+      "author": "David Churchill",
+      "source_url": "https://github.com/davechurchill/ualbertabot"
+    },
+    "uab-p": {
+      "name": "UAlbertaBot-Protoss",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "race": "Protoss",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9",
+      "ownership": "Ours",
+      "origin": "Port",
+      "author": "David Churchill",
+      "source_url": "https://github.com/davechurchill/ualbertabot"
+    },
+    "mcrave": {
+      "name": "McRave-9Pool-treatment",
+      "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+      "race": "Zerg",
+      "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e",
+      "ownership": "Ours",
+      "origin": "Fork",
+      "author": "Christian McCrave",
+      "source_url": "https://github.com/Cmccrave/McRave"
+    },
+    "stardust": {
+      "name": "Stardust-repaired",
+      "path": "artifacts/builds/1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa/stardust-emptytimer-repair/Stardust.dylib",
+      "race": "Protoss",
+      "sha256": "1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa",
+      "ownership": "Ours",
+      "origin": "Fork",
+      "author": "Bruce Mackenzie Nielsen",
+      "source_url": "https://github.com/bmnielsen/Stardust"
+    }
+  },
+  "games": [
+    {
+      "opponent": "zzzk",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9941,
+      "candidate_player": 1
+    },
+    {
+      "opponent": "uab-t",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9942,
+      "candidate_player": 2
+    },
+    {
+      "opponent": "uab-p",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9943,
+      "candidate_player": 1
+    },
+    {
+      "opponent": "mcrave",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9944,
+      "candidate_player": 2
+    },
+    {
+      "opponent": "stardust",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9945,
+      "candidate_player": 1
+    }
+  ],
+  "required_files": [
+    {
+      "path": "docs/evaluations/kestrel-hillclimb-v14/EVAL_PLAN.md",
+      "sha256": "1e5532403a508ffc7323c86331c43ec2f03ff0a066e374d70955057df09a1d18"
+    },
+    {
+      "path": "patches/kestrel-v33-to-v34-two-probe-threshold-and-offense-latch.patch",
+      "sha256": "0e0c21d9957c1e9d5d506355a5af357e0b887406de14399e91f8310ab941dca1"
+    },
+    {
+      "path": "patches/kestrel-v34-to-v35-construction-bookkeeping-and-emergency-episode-cap.patch",
+      "sha256": "46e441080a8d599427bbdf111591be2ae47faa77fb99d7d6a8fb4dfd605bb023"
+    }
+  ],
+  "policy_base_experiment_id": "kestrel-hillclimb-v13",
+  "diagnostic_motivation_experiment_id": "kestrel-hillclimb-v13",
+  "replaces_candidate": "Kestrel-v34-two-Probe-threshold-and-staged-offense-latch",
+  "mechanism_reference": {
+    "v34_zzzk_diagnostic_second_gateway_frames": {
+      "accepted": 2172,
+      "current": 2328,
+      "completed": 3299
+    },
+    "v34_zzzk_diagnostic_first_gateway": {
+      "accepted": 1392,
+      "current": 1768
+    },
+    "construction_fix": "capture pendingBuildBaseline=count(type) before issue(), store the pre-command count on accepted builds in build() and buildAssimilator(), release pending only when count(type)>baseline, and reject overlapping construction",
+    "target": "fresh ZZZK second Gateway current before first qualifying home threat and two completed combat units at that threat; report accepted/current/completed and first follow-on Zealot",
+    "emergency_episode_unique_probe_cap": 2,
+    "episode_reset": "only after the public qualifying threat predicate becomes false",
+    "non_zerg_activity": "all emergency-episode, bridge, reserve, and staged-offense fields empty, zero, or documented sentinel in non-Zerg lanes; accepted-build telemetry remains active for all races"
+  },
+  "notes": [
+    "The v35 candidate must compile against native OpenBW and official BWAPI 4.4 headers before launch.",
+    "Root independently rebuilt the native and official-header targets; the native dylib was byte-identical to the worker build.",
+    "The v34 150-mineral reserve remains unchanged; the treatment is the pre-command construction bookkeeping fix in both build() and buildAssimilator().",
+    "The v34 ZZZK values 2172 accepted, 2328 current, 3299 complete, with first Gateway accepted1392/current1768, are diagnostic references and not universal cross-seed timing bars.",
+    "The emergency episode cap is cumulative across unique Probe identities, not merely simultaneous defenders; defender death does not replenish capacity.",
+    "Use the exact v13 opponent paths, hashes, maps, slots, and provenance labels above. Do not infer or replace them.",
+    "No fixed 384-fps gate applies; report durable logical FPS and callback performance descriptively while enforcing wall caps and lifecycle gates.",
+    "This exploratory screen cannot update Elo; advancement requires every gate plus at least one verified win."
+  ],
+  "diagnostic_schema": {
+    "bridge_release_prefix": "emergency_army_three",
+    "offense_stage_prefix": "zerg_offense_stage",
+    "episode_prefix": "emergency_episode",
+    "episode_assignment_cap_field": "emergency_episode_assignment_cap",
+    "construction_prefix": "accepted_build",
+    "construction_fields": [
+      "accepted_build_frames",
+      "accepted_build_type_ids",
+      "accepted_build_pre_command_counts",
+      "accepted_build_post_command_counts",
+      "first_gateway_accepted_frame",
+      "first_gateway_current_frame",
+      "first_gateway_completed_frame",
+      "second_gateway_current_frame",
+      "second_gateway_completed_frame"
+    ],
+    "construction_release_rule": "source-reviewed constructionPending releases when count(type)>stored pre-command baseline; ordered telemetry and current/completed frames must agree",
+    "construction_paths": [
+      "build",
+      "buildAssimilator"
+    ],
+    "legacy_compatibility": "Scorer retains v34 and earlier field extraction for archived candidates."
+  },
+  "provenance_registry": "config/bot-identities.json"
+}
