@@ -25,7 +25,7 @@ Checkpoint: 20 September 2026, 11:45 UTC. Latest user scope: **finish the curren
 - The five-way Kestrel hill-climb loop has now preserved v19 recovery, v22, v23, v24 and v25 screens. Each candidate screen has zero verified wins; v23's three-local hold and v24's shared-target focus were rejected, and v25's combat-target priority was inconclusive after one unverified UAlberta-Terran attempt. No screen changes Elo or canonical v13.
 - v22 remains the strongest exploratory base: its five games were valid losses with zero Kestrel command rejections, and it improved early tech/Protoss local-overlap signals. v25's invalid attempt is explicitly excluded from evidence.
 - The scorecard separates descriptive replay coverage from outcome performance grades and includes command-regression and unverified states. Dashboard experiment cards publish those grades with the preserved replay links.
-- Latest dashboard deployment: https://9f8a1b75.starcraft-ai.pages.dev.
+- Latest dashboard deployment: https://763dbc0d.starcraft-ai.pages.dev.
 
 ## Current engine
 
