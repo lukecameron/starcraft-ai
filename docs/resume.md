@@ -25,7 +25,7 @@ Checkpoint: 20 September 2026, 11:45 UTC. Latest user scope: **finish the curren
 - The five-way Kestrel hill-climb loop has now preserved v19 recovery and v22 through v28. Each candidate screen has zero verified wins. v28 verified a completed sixth Pylon in three lanes, but all five games were losses and Stardust failed the zero build-`Unit_Busy` gate. No screen changes Elo or canonical v13.
 - v22 remains the exploratory base. v26-v28 retain positive mechanism signals for diagnosis but are rejected for advancement. Latest result: `docs/evaluations/kestrel-hillclimb-v8/RESULT.md`; runs `20260920T141053-f3eefa170da8`, `20260920T141053-bd51e9256990`, `20260920T141053-cdc7e770a603`, `20260920T141053-0190fa923801`, `20260920T141053-75a159ca939e`.
 - The scorecard separates descriptive replay coverage from outcome performance grades and includes command-regression and unverified states. Dashboard experiment cards publish those grades with the preserved replay links.
-- Latest dashboard deployment: https://041913fc.starcraft-ai.pages.dev (395 runs, 88 experiments; v27 scorecard and provenance verified).
+- Latest dashboard deployment: https://d63bd913.starcraft-ai.pages.dev (400 runs, 89 experiments; v28 scorecard and provenance verified).
 
 ## Current engine
 
