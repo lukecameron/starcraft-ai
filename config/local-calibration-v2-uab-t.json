@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "experiment_id": "local-calibration-v2-uab-t",
+  "title": "Local league on repaired engine: uab-t",
+  "hypothesis": "The five frozen build/race nodes form a clean connected graph across four maps on the repaired engine; exact-regime estimates and uncertainty are displayed without BASIL transfer.",
+  "stop_condition": "Exactly eight scheduled games, no replacements/retries. Existing stop after two consecutive infrastructure failures. No outcome-dependent stopping.",
+  "purpose": "Preregistered fresh four-map local league on corrected engine",
+  "wall_timeout_seconds": 180,
+  "candidate": {
+    "name": "UAlbertaBot-T",
+    "race": "Terran",
+    "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+    "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+  },
+  "opponents": {
+    "uab-p": {
+      "name": "UAlbertaBot-P",
+      "race": "Protoss",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+    },
+    "zzzk": {
+      "name": "ZZZKBot",
+      "race": "Zerg",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+    }
+  },
+  "games": [
+    {
+      "opponent": "uab-p",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 7201,
+      "candidate_player": 1
+    },
+    {
+      "opponent": "uab-p",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 7201,
+      "candidate_player": 2
+    },
+    {
+      "opponent": "zzzk",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 7202,
+      "candidate_player": 1
+    },
+    {
+      "opponent": "zzzk",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 7202,
+      "candidate_player": 2
+    },
+    {
+      "opponent": "uab-p",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 7301,
+      "candidate_player": 1
+    },
+    {
+      "opponent": "uab-p",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 7301,
+      "candidate_player": 2
+    },
+    {
+      "opponent": "zzzk",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 7302,
+      "candidate_player": 1
+    },
+    {
+      "opponent": "zzzk",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 7302,
+      "candidate_player": 2
+    }
+  ],
+  "execution": {
+    "concurrency": 2,
+    "learning_state": "fresh empty isolated read/write",
+    "performance_scope": "Development overlap allowed; timings observational only, no throughput adoption claim"
+  },
+  "publish_hook": "scripts/publish_dashboard.sh"
+}

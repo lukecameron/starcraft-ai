@@ -1,0 +1,20 @@
+--- /tmp/mcrave-support-jps-memo-candidate-src/Source/McRave/Builds/All/Learning.cpp	2026-09-20 16:14:06
++++ /tmp/mcrave-zvz-9pool-candidate-src/Source/McRave/Builds/All/Learning.cpp	2026-09-20 16:44:35
+@@ -513,8 +513,15 @@
+         getBestBuild();
+         getPermanentBuild();
+ 
++        // Experimental ZvZ PoolLair treatment: preserve normal learning and its
++        // RNG consumption, then vary only the selected opener.
++        if (Players::ZvZ() && BuildOrder::getCurrentBuild() == Z_PoolLair) {
++            LOG("Experimental ZvZ opener override: ", BuildOrder::getCurrentOpener(), " -> ", Z_9Pool);
++            BuildOrder::setLearnedBuild(BuildOrder::getCurrentBuild(), Z_9Pool, BuildOrder::getCurrentTransition());
++        }
++
+         initialBuild      = BuildOrder::getCurrentBuild();
+         initialOpener     = BuildOrder::getCurrentOpener();
+         initialTransition = BuildOrder::getCurrentTransition();
+     }
+-} // namespace McRave::Learning
+\ No newline at end of file
++} // namespace McRave::Learning

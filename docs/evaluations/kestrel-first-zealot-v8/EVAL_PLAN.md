@@ -1,0 +1,14 @@
+# Kestrel v8 first-zealot priority plan
+
+- Registered: `2026-09-20T06:40:45Z`, before any Kestrel v8 game was launched.
+- Observation: in v7's ZZZK loss (`20260920T063735-568f09f7d3a0`), ZZZK began zergling morphs at frame 2,087. Kestrel issued gas at 2,528 and another gateway command at 3,068 before its first zealot train at 3,416, then lost at frame 6,327 locally after producing three zealots.
+- Hypothesis: reserving minerals after the first gateway begins until the first zealot is queued will advance the first combat unit enough to improve early exposure without changing micro or the rest of the build.
+- Change: while at least one gateway exists and no zealot or dragoon exists, pause probe training and return from construction planning after supply and the first gateway. As soon as the first zealot enters the unit count, normal probe, second-gateway, gas, core, and production priorities resume. Targeting, combat, supply cap, and public-information boundaries match v7.
+- Candidate: frozen Kestrel v8 SHA-256 `fd799d9e2a3f69186045d1bbcae78de8d5cf07259dd75344c931fd0de1474c11`; combined source identity `2b2ef5bc4fc788c0c342d390ecd3360f2949f987d2bcecb96ac6abf3240801f5`.
+- Control: reuse frozen v7 run `20260920T063735-568f09f7d3a0` only for the exact Benzene/seed-6103 timing comparison. It used the same adopted engine `eee406…`, opponent artifact, race, slot, latency, and empty learning state. Opponent RNG/address effects remain uncontrolled, so the comparison is matched-input rather than deterministic.
+- New fixed schedule, serial and no retries: (1) v8 Protoss versus ZZZK Zerg on Benzene seed `6103`; (2) held-out v8 Protoss versus ZZZK Zerg on Heartbreak Ridge seed `6105`. Adopted engine `eee406…`, LF3, empty learning state, 120-second cap.
+- Infrastructure/lifecycle guard: both new games have zero launcher exits, opposing callbacks, no state-hash mismatch, two parsed replays, at least 384 durable frames/s, at least 12 probes, a pylon, a gateway, at least three zealots or a win, scouting and combat, under 5% command rejection, and no wrong-race production.
+- Mechanism gate on exact row: first zealot train occurs by frame 3,116, at least 300 frames before v7's frame 3,416. No assimilator command may precede that train. Telemetry must record a completed combat-unit frame and public first-enemy-contact frame; report both without inventing a v7 completion time.
+- Directional defense gate on exact row: candidate terminal frame exceeds v7's local 6,327 or candidate wins, and candidate records its own probe losses. This is a trajectory-sensitive signal, not sufficient evidence of strength.
+- Held-out gate: the second game passes lifecycle and produces its first combat unit before terminal defeat. Its outcome is descriptive.
+- Decision: mechanism plus both lifecycle guards passing retains the policy for a later multi-seed Zerg-defense comparison. Failure rejects it. Even two wins do not promote strength or establish Elo.

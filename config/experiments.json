@@ -479,6 +479,164 @@
       "evidence_run_ids": [
         "20260920T060444-344951b48e0f"
       ]
+    },
+    {
+      "id": "openbw-terminal-drain-v1",
+      "title": "Repair conflicting results after natural defeat",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "ADOPT",
+      "hypothesis": "Retaining a defeated peer until explicit leave or ordinary transport cleanup avoids early-EOF reciprocal winners.",
+      "notes": "Six of six preregistered games completed cleanly. All four targets exercised the repair; both controls passed. Twelve replays parsed, with matching common action streams and no state-hash mismatch.",
+      "conclusion": "Adopt the frozen engine for new development experiments. Preserve older engine regimes and leave previous invalid games unscored.",
+      "evidence_run_ids": [
+        "20260920T061624-ba5464b864bb",
+        "20260920T061624-e26a9a2af1dc",
+        "20260920T061703-19c325d3ac49",
+        "20260920T061707-9c7d0c281740",
+        "20260920T062025-0d5aa3b26f11",
+        "20260920T062029-aa953d404b20"
+      ]
+    },
+    {
+      "id": "kestrel-command-state-v5",
+      "title": "Kestrel command cooldown probe",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Per-unit request state and cooldowns reduce rejected combat requests while retaining production and legal combat.",
+      "notes": "Both benchmark games completed cleanly with two parsed replay copies each. Rejected-command fractions were43.5% against ZZZK and42.4% against UAlberta Terran.",
+      "conclusion": "Both command-quality gates failed. Target changes can bypass per-target cooldowns; test stable target retention with attributed command telemetry. No strength promotion.",
+      "evidence_run_ids": [
+        "20260920T062152-c192464ca3eb",
+        "20260920T062203-44a429a08fed"
+      ]
+    },
+    {
+      "id": "kestrel-target-persistence-v6b",
+      "title": "Kestrel retains legal combat targets",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Stable public target retention lowers rejected requests without suppressing production or combat.",
+      "notes": "Both real-opponent games completed and were losses. Attack requests became mostly clean, but rejected training requests dominated: busy buildings and supply shortages.",
+      "conclusion": "The overall command-quality gate failed. Preserve the targeting finding, then check public BWAPI training legality before issuing requests.",
+      "evidence_run_ids": [
+        "20260920T063024-a3ed1c2ff9ee",
+        "20260920T063038-89385dcfc1ed"
+      ]
+    },
+    {
+      "id": "mcrave-support-jps-memo-shadow-v1",
+      "title": "Check Support path-search memoization equivalence",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "ADOPT",
+      "hypothesis": "A fresh per-search callback memo preserves reachability, exact distance and ordered path results in real Support searches.",
+      "notes": "16,773 comparisons produced zero mismatches. Callback evaluations fell65.65%; most unreachable cases really searched rather than returning cheaply.",
+      "conclusion": "Proceed to the separate production gate only. Diagnostic timing does not establish full-match speed or playing strength.",
+      "evidence_run_ids": [
+        "20260920T061222-aea159a208bb"
+      ]
+    },
+    {
+      "id": "quick-mcrave-support-jps-memo-v1",
+      "title": "McRave Support memo: full-match performance gate",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "notes": "Nine clean wins, one unscored old-engine terminal conflict. All20 replay copies parse. Four valid games missed384fps; clean aggregate366.7fps.",
+      "conclusion": "Reject engineering acceptance. The invalid result separately leaves integrity evidence incomplete; it cannot erase the valid slow-tail failures. Retain the isolated candidate for diagnosis, with no strength promotion."
+    },
+    {
+      "id": "local-calibration-v2",
+      "title": "Four-map local league on the repaired engine",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "The same five frozen build/race nodes form a clean connected comparison graph across four maps on the repaired engine.",
+      "notes": "24 of24 registered games clean;48 SHA-matching replay copies parsed with race/frame checks. Five exact build/race nodes connect across four maps. Current and historical engines remain separate.",
+      "conclusion": "Adopt the complete local rating display cohort, with wide conditional intervals and prior sensitivity. No bot promotion or BASIL-scale claim. Next compare Stardust directly with ZZZK and McRave with both UAlberta races.",
+      "decision": "ADOPT",
+      "evidence_run_ids": [
+        "20260920T063136-5f8ff6d7da4d",
+        "20260920T063136-7f6d5111fe05",
+        "20260920T063208-c15bede430b1",
+        "20260920T063213-3a096e556398",
+        "20260920T063217-51d841eb760a",
+        "20260920T063228-846893e87f9f",
+        "20260920T063245-dd637b59e1a1",
+        "20260920T063256-db12c5d571e3",
+        "20260920T063341-af1748e0af9e",
+        "20260920T063341-ce2cd376a8a5",
+        "20260920T063346-5f6752db49ba",
+        "20260920T063347-95cc1dbdd567",
+        "20260920T063347-d25601518800",
+        "20260920T063349-f6b7a9cfd71a",
+        "20260920T063353-e3145e33c76f",
+        "20260920T063353-747adf47cc02",
+        "20260920T063449-a12675f664cb",
+        "20260920T063449-92673050d114",
+        "20260920T063455-131bdf15a88c",
+        "20260920T063457-1132dd807f78",
+        "20260920T063529-ee689e3701cd",
+        "20260920T063555-213ea13916af",
+        "20260920T063557-d006d13d59cf",
+        "20260920T063602-5fd2a038785f"
+      ]
+    },
+    {
+      "id": "local-calibration-v2-stardust",
+      "title": "Current-engine calibration: stardust",
+      "date": "2026-09-20",
+      "status": "completed",
+      "notes": "Part of the24-game four-map local-calibration-v2 cohort. All eight games in this sub-batch passed review.",
+      "conclusion": "See the parent cohort for the complete graph and uncertainty; this sub-batch does not promote a bot."
+    },
+    {
+      "id": "local-calibration-v2-uab-t",
+      "title": "Current-engine calibration: uab-t",
+      "date": "2026-09-20",
+      "status": "completed",
+      "notes": "Part of the24-game four-map local-calibration-v2 cohort. All eight games in this sub-batch passed review.",
+      "conclusion": "See the parent cohort for the complete graph and uncertainty; this sub-batch does not promote a bot."
+    },
+    {
+      "id": "local-calibration-v2-mcrave",
+      "title": "Current-engine calibration: mcrave",
+      "date": "2026-09-20",
+      "status": "completed",
+      "notes": "Part of the24-game four-map local-calibration-v2 cohort. All eight games in this sub-batch passed review.",
+      "conclusion": "See the parent cohort for the complete graph and uncertainty; this sub-batch does not promote a bot."
+    },
+    {
+      "id": "kestrel-train-legality-v7",
+      "title": "Kestrel passes training and combat command checks",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "ADOPT",
+      "hypothesis": "Public BWAPI training checks remove avoidable busy/supply requests while preserving production and combat.",
+      "notes": "Two clean benchmark losses with parsed replays. Zero train/attack rejections in both; overall rejection0% against ZZZK and4% against UAlberta Terran.",
+      "conclusion": "Adopt as the first command-quality baseline. It remains strategically weak; next prioritize the first combat unit against early Zerg pressure. No win-rate or Elo promotion.",
+      "evidence_run_ids": [
+        "20260920T063735-568f09f7d3a0",
+        "20260920T063750-d32c98d8cbcc"
+      ]
+    },
+    {
+      "id": "mcrave-zvz-opening-probe-v1",
+      "title": "Explain McRave\u2019s delayed Zerg opening",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "ADOPT",
+      "hypothesis": "Crossing fixed seeds with two maps distinguishes opener selection from map-dependent production delay.",
+      "notes": "All four games clean with paired replays. Seed1001 chose9Pool and seed6301 choseGaspool on both maps. Opener choice shifted first Zergling timing about559 frames; within-opener map differences were51\u201362 frames.",
+      "conclusion": "Adopt the diagnosis: selected opening explains the observed delay in these cells. Preregister a separate strategy comparison; this diagnostic does not establish a stronger bot.",
+      "evidence_run_ids": [
+        "20260920T063857-4d53d8292099",
+        "20260920T063934-d495601949d7",
+        "20260920T064006-320cd0c4815e",
+        "20260920T064021-77d0cb29d7ec"
+      ]
     }
   ]
 }

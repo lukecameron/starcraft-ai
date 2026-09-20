@@ -212,7 +212,26 @@ def build_league(root, public_runs, fallback=None):
     if not config_path.is_file():
         return fallback or {}
     config = json.loads(config_path.read_text())
-    allowed = set(config.get("experiments", []))
+    cohort_configs = config.get("cohorts") or [{
+        "id": "configured",
+        "label": "Configured local league",
+        "experiment_ids": config.get("experiments", []),
+        "expected_nodes": config.get("expected_nodes"),
+        "expected_games": config.get("expected_games"),
+    }]
+    cohorts = []
+    experiment_cohort = {}
+    for index, cohort in enumerate(cohort_configs):
+        cohort_id = str(cohort.get("id") or f"cohort-{index + 1}")
+        experiment_ids = cohort.get("experiment_ids", cohort.get("experiments", []))
+        cohort = {**cohort, "id": cohort_id, "label": cohort.get("label") or cohort_id,
+                  "experiment_ids": list(experiment_ids)}
+        cohorts.append(cohort)
+        for experiment_id in cohort["experiment_ids"]:
+            if experiment_id in experiment_cohort:
+                raise ValueError(f"experiment assigned to multiple rating cohorts: {experiment_id}")
+            experiment_cohort[experiment_id] = cohort_id
+    allowed = set(experiment_cohort)
     reviewed = config.get("reviewed_runs", {})
     public_by_run = {run["run_id"]: run for run in public_runs if run.get("run_id")}
     paths = sorted((root / "artifacts/runs").glob("*/game-*/manifest.json")) or sorted((root / "artifacts/runs").glob("*/manifest.json"))
@@ -231,6 +250,7 @@ def build_league(root, public_runs, fallback=None):
             continue
         try:
             game, identities = extract_game(manifest, public_by_run.get(manifest.get("run_id"), {}), path)
+            game["cohort_id"] = experiment_cohort.get(game["experiment_id"], "configured")
             if reviewed.get(game["run_id"]) != file_hash(path):
                 raise ValueError("pending replay and manifest review")
             if game["scenario_id"] in seen:
@@ -243,10 +263,12 @@ def build_league(root, public_runs, fallback=None):
     all_games.sort(key=lambda g: (g["date"] or "", g["run_id"]))
     prior_sd = config.get("prior_sd_elo", 400)
     components = []
+    cohort_by_id = {cohort["id"]: cohort for cohort in cohorts}
     for regime in sorted({g["regime_id"] for g in all_games}):
         regime_games = [g for g in all_games if g["regime_id"] == regime]
         for nodes in connected_components(regime_games):
             games = [g for g in regime_games if g["nodes"][0] in nodes]
+            component_cohort_ids = sorted({g["cohort_id"] for g in games})
             reference = next((n for n in nodes if node_data[n]["module_sha256"] == config.get("reference_module_sha256")), nodes[0])
             ri = nodes.index(reference)
             pairs = [(g["winner"], g["loser"]) for g in games]
@@ -278,11 +300,25 @@ def build_league(root, public_runs, fallback=None):
             for a, b in sorted({tuple(sorted(g["nodes"])) for g in games}):
                 pair_games = [g for g in games if set(g["nodes"]) == {a, b}]
                 matchups.append({"a": a, "b": b, "a_wins": sum(g["winner"] == a for g in pair_games), "b_wins": sum(g["winner"] == b for g in pair_games), "games": len(pair_games)})
-            components.append({"id": component_id, "regime_id": regime, "reference_id": reference, "reference_name": node_data[reference]["name"],
+            components.append({"id": component_id, "cohort_ids": component_cohort_ids,
+                               "cohort_labels": [cohort_by_id[c]["label"] for c in component_cohort_ids],
+                               "current": any(cohort_by_id[c].get("current") is True for c in component_cohort_ids),
+                               "regime_id": regime, "reference_id": reference, "reference_name": node_data[reference]["name"],
                                "note": "1000 is an arbitrary reference coordinate, not a BASIL rating. Intervals are approximate and conditional on the model; map and matchup effects are not fitted.",
                                "games": len(games), "map_count": len({g["map_sha256"] for g in games}), "rows": sorted(rows, key=lambda r: (-r["rating"], r["id"])),
                                "matchups": matchups, "run_ids": [g["run_id"] for g in games]})
+    cohort_summaries = []
+    for cohort in cohorts:
+        cohort_games = [g for g in all_games if g["cohort_id"] == cohort["id"]]
+        cohort_summaries.append({"id": cohort["id"], "label": cohort["label"], "current": cohort.get("current") is True,
+                                 "expected_nodes": cohort.get("expected_nodes"),
+                                 "expected_games": cohort.get("expected_games"),
+                                 "reviewed_games": len(cohort_games),
+                                 "reviewed_nodes": len({n for g in cohort_games for n in g["nodes"]}),
+                                 "component_ids": [c["id"] for c in components if cohort["id"] in c["cohort_ids"]]})
+    expected_nodes = config.get("expected_nodes") if len(cohorts) == 1 else None
+    expected_games = config.get("expected_games") if len(cohorts) == 1 else None
     return {"schema_version": 1, "method": "Gaussian-prior Bradley–Terry, Laplace uncertainty", "prior_sd_elo": prior_sd,
             "status": "uncalibrated_local", "interval_note": "Approximate 95% intervals for strength relative to the displayed reference. Sparse sweeps depend strongly on the prior. Repeated map/slot pairs may be correlated; intervals do not measure generalization to new maps or tournaments.",
-            "components": components, "excluded": excluded, "eligible_experiments": sorted(allowed),
-            "expected_nodes": config.get("expected_nodes"), "expected_games": config.get("expected_games"), "reviewed_games": len(all_games)}
+            "cohorts": cohort_summaries, "components": components, "excluded": excluded, "eligible_experiments": sorted(allowed),
+            "expected_nodes": expected_nodes, "expected_games": expected_games, "reviewed_games": len(all_games)}

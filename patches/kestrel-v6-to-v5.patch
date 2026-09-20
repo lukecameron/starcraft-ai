@@ -1,0 +1,147 @@
+--- a/bots/kestrel/Kestrel.cpp
++++ b/bots/kestrel/Kestrel.cpp
+@@ -1,7 +1,6 @@
+ #include <BWAPI.h>
+ 
+ #include <algorithm>
+-#include <array>
+ #include <chrono>
+ #include <cstdio>
+ #include <ctime>
+@@ -25,10 +24,6 @@
+     int builderId_ = -1;
+     int commands_ = 0;
+     int rejected_ = 0;
+-    enum CommandCategory { BuildCommand, TrainCommand, GatherCommand, AttackCommand, CommandCategoryCount };
+-    std::array<int, CommandCategoryCount> attemptedByCategory_{{0, 0, 0, 0}};
+-    std::array<int, CommandCategoryCount> rejectedByCategory_{{0, 0, 0, 0}};
+-    std::array<int, BWAPI::Errors::Enum::MAX> errors_{};
+     int latency_ = -1;
+     int nextStartIndex_ = 0;
+     BWAPI::UnitType pendingBuildType_ = BWAPI::UnitTypes::None;
+@@ -43,6 +38,7 @@
+     struct AttackRequest {
+         int targetId;
+         int frame;
++        bool accepted;
+     };
+     std::unordered_map<int, AttackRequest> attackRequests_;
+     double callbackCpuSeconds_ = 0.0;
+@@ -56,15 +52,9 @@
+         return result;
+     }
+ 
+-    bool issue(bool accepted, CommandCategory category) {
++    bool issue(bool accepted) {
+         ++commands_;
+-        ++attemptedByCategory_[category];
+-        if (!accepted) {
+-            ++rejected_;
+-            ++rejectedByCategory_[category];
+-            const int error = BWAPI::Broodwar->getLastError().getID();
+-            if (error >= 0 && error < BWAPI::Errors::Enum::MAX) ++errors_[static_cast<size_t>(error)];
+-        }
++        if (!accepted) ++rejected_;
+         return accepted;
+     }
+ 
+@@ -82,21 +72,6 @@
+             << ",\"latency_frames\":" << latency_
+             << ",\"command_count\":" << commands_
+             << ",\"rejected_commands\":" << rejected_
+-            << ",\"command_categories\":{\"build\":[" << attemptedByCategory_[BuildCommand] << ',' << rejectedByCategory_[BuildCommand]
+-            << "],\"train\":[" << attemptedByCategory_[TrainCommand] << ',' << rejectedByCategory_[TrainCommand]
+-            << "],\"gather\":[" << attemptedByCategory_[GatherCommand] << ',' << rejectedByCategory_[GatherCommand]
+-            << "],\"attack\":[" << attemptedByCategory_[AttackCommand] << ',' << rejectedByCategory_[AttackCommand] << "]}"
+-            << ",\"command_error_counts\":{"
+-            << "\"unit_busy\":" << errors_[BWAPI::Errors::Enum::Unit_Busy]
+-            << ",\"incompatible_state\":" << errors_[BWAPI::Errors::Enum::Incompatible_State]
+-            << ",\"insufficient_minerals\":" << errors_[BWAPI::Errors::Enum::Insufficient_Minerals]
+-            << ",\"insufficient_gas\":" << errors_[BWAPI::Errors::Enum::Insufficient_Gas]
+-            << ",\"insufficient_supply\":" << errors_[BWAPI::Errors::Enum::Insufficient_Supply]
+-            << ",\"unbuildable_location\":" << errors_[BWAPI::Errors::Enum::Unbuildable_Location]
+-            << ",\"unreachable_location\":" << errors_[BWAPI::Errors::Enum::Unreachable_Location]
+-            << ",\"unable_to_hit\":" << errors_[BWAPI::Errors::Enum::Unable_To_Hit]
+-            << ",\"invalid_parameter\":" << errors_[BWAPI::Errors::Enum::Invalid_Parameter]
+-            << ",\"unknown\":" << errors_[BWAPI::Errors::Enum::Unknown] << "}"
+             << ",\"callback_count\":" << callbackMs_.size()
+             << ",\"callback_cpu_seconds\":" << callbackCpuSeconds_
+             << ",\"callback_wall_p99_ms\":" << p99
+@@ -163,7 +138,7 @@
+         const BWAPI::TilePosition tile = BWAPI::Broodwar->getBuildLocation(type, near, 32, false);
+         if (!tile.isValid()) return false;
+         builderId_ = worker->getID();
+-        const bool accepted = issue(worker->build(type, tile), BuildCommand);
++        const bool accepted = issue(worker->build(type, tile));
+         if (accepted) {
+             pendingBuildType_ = type;
+             pendingBuildBaseline_ = count(type);
+@@ -188,7 +163,7 @@
+         }
+         if (!best || bestDistance > 400) return false;
+         builderId_ = worker->getID();
+-        const bool accepted = issue(worker->build(BWAPI::UnitTypes::Protoss_Assimilator, best->getTilePosition()), BuildCommand);
++        const bool accepted = issue(worker->build(BWAPI::UnitTypes::Protoss_Assimilator, best->getTilePosition()));
+         if (accepted) {
+             pendingBuildType_ = BWAPI::UnitTypes::Protoss_Assimilator;
+             pendingBuildBaseline_ = count(pendingBuildType_);
+@@ -204,13 +179,13 @@
+             if (!unit->exists() || !unit->isCompleted() || unit->isTraining()) continue;
+             const BWAPI::UnitType type = unit->getType();
+             if (type == BWAPI::UnitTypes::Protoss_Nexus && probes < 28 && BWAPI::Broodwar->self()->minerals() >= 50) {
+-                issue(unit->train(BWAPI::UnitTypes::Protoss_Probe), TrainCommand);
++                issue(unit->train(BWAPI::UnitTypes::Protoss_Probe));
+             } else if (type == BWAPI::UnitTypes::Protoss_Gateway) {
+                 if (count(BWAPI::UnitTypes::Protoss_Cybernetics_Core, true) > 0 &&
+                     BWAPI::Broodwar->self()->minerals() >= 125 && BWAPI::Broodwar->self()->gas() >= 50) {
+-                    issue(unit->train(BWAPI::UnitTypes::Protoss_Dragoon), TrainCommand);
++                    issue(unit->train(BWAPI::UnitTypes::Protoss_Dragoon));
+                 } else if (BWAPI::Broodwar->self()->minerals() >= 100) {
+-                    issue(unit->train(BWAPI::UnitTypes::Protoss_Zealot), TrainCommand);
++                    issue(unit->train(BWAPI::UnitTypes::Protoss_Zealot));
+                 }
+             }
+         }
+@@ -265,19 +240,11 @@
+                 const int distance = worker->getDistance(resource);
+                 if (distance < best) { best = distance; target = resource; }
+             }
+-            if (target && issue(worker->gather(target), GatherCommand) && wantGas) ++gasWorkers;
++            if (target && issue(worker->gather(target)) && wantGas) ++gasWorkers;
+         }
+     }
+ 
+     BWAPI::Unit visibleEnemyTarget(BWAPI::Unit from) const {
+-        const auto previous = attackRequests_.find(from->getID());
+-        if (previous != attackRequests_.end()) {
+-            BWAPI::Unit retained = BWAPI::Broodwar->getUnit(previous->second.targetId);
+-            if (retained && retained->exists() && retained->isVisible() && retained->isDetected() && !retained->isFlying() &&
+-                BWAPI::Broodwar->self()->isEnemy(retained->getPlayer())) {
+-                return retained;
+-            }
+-        }
+         BWAPI::Unit target = nullptr;
+         int best = std::numeric_limits<int>::max();
+         for (auto enemy : BWAPI::Broodwar->getAllUnits()) {
+@@ -333,17 +300,17 @@
+                 const int frame = BWAPI::Broodwar->getFrameCount();
+                 const auto previous = attackRequests_.find(unit->getID());
+                 const bool targetChanged = previous == attackRequests_.end() || previous->second.targetId != enemy->getID();
+-                const int retryFrames = 96;
++                const int retryFrames = previous != attackRequests_.end() && previous->second.accepted ? 96 : 24;
+                 if (targetChanged || frame - previous->second.frame >= retryFrames) {
+-                    issue(unit->attack(enemy), AttackCommand);
+-                    attackRequests_[unit->getID()] = {enemy->getID(), frame};
++                    const bool accepted = issue(unit->attack(enemy));
++                    attackRequests_[unit->getID()] = {enemy->getID(), frame, accepted};
+                 }
+                 continue;
+             }
+             attackRequests_.erase(unit->getID());
+             BWAPI::Position target = BWAPI::Positions::None;
+             if (scout || army >= 4) target = unexploredStart(unit);
+-            if (target.isValid() && unit->getTargetPosition() != target) issue(unit->attack(target), AttackCommand);
++            if (target.isValid() && unit->getTargetPosition() != target) issue(unit->attack(target));
+         }
+     }
+ 

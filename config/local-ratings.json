@@ -5,10 +5,13 @@
   "experiments": [
     "local-calibration-v1-stardust",
     "local-calibration-v1-uab-t",
-    "local-calibration-v1-mcrave"
+    "local-calibration-v1-mcrave",
+    "local-calibration-v2-stardust",
+    "local-calibration-v2-uab-t",
+    "local-calibration-v2-mcrave",
+    "local-calibration-v3-stardust",
+    "local-calibration-v3-mcrave"
   ],
-  "expected_nodes": 5,
-  "expected_games": 12,
   "reviewed_runs": {
     "20260920T055755-fa9bfeecf7e3": "cbb786b46f654e4c65edcb119c40c52d8aed6cccd172f44ec1b2dd127c4ba97d",
     "20260920T055806-9849fdd619bb": "a20b64dcf452c38f426db8fb3a64c440a39cd255c36fc0669cc24aa5d5d256bc",
@@ -18,6 +21,67 @@
     "20260920T060003-99301845c9b1": "78ff3289c434bc658255ed7283ce88bddb48f8c937361808bf32d6ebb5a189c5",
     "20260920T060306-47ba9d7473b9": "9331ecb32334131c1875e136cdadeee717779b750db0138a1043c5fc87fdf5d9",
     "20260920T060306-9cf5c734d9b3": "328185f9e2d8c178159a1bb1a55d57f02db33f918095193e29f8e3f1f1d688f3",
-    "20260920T060313-04864e92d9bc": "2593e78f6590647029e9abd1e46bd31b2ea62f5b7e6fd898ba8150f18b9e0a6f"
-  }
+    "20260920T060313-04864e92d9bc": "2593e78f6590647029e9abd1e46bd31b2ea62f5b7e6fd898ba8150f18b9e0a6f",
+    "20260920T063136-5f8ff6d7da4d": "f309f8592c611c20a952c07306f930f47833f7327616d667a394af57d530fcfd",
+    "20260920T063136-7f6d5111fe05": "ffe7d6bcebd91833469f55b51be5f9dc9f7012e54cc1c4fc230ec4c6befc0b96",
+    "20260920T063208-c15bede430b1": "da3f4a56576740568ea86caf7127f5212db07d7506638444ce76461adb05417b",
+    "20260920T063213-3a096e556398": "8c08c09e55ad3e40aad33c97b7febedc559f027d6eb2ae40eb31ceca1d44fc8d",
+    "20260920T063217-51d841eb760a": "d7938813e3adc66bae633eb6c713ca3ea12ea334a2d91854bb61c03fd3f7c464",
+    "20260920T063228-846893e87f9f": "ce7bdd9ed25fabc9257a70e512e0e6b6738aea2906209c605f23fb7ee7b888e5",
+    "20260920T063245-dd637b59e1a1": "5edcc5bd11078e758a78fab0625edef3bec6ca24603266f6f4988d56be3a8e48",
+    "20260920T063256-db12c5d571e3": "a6c43b5368e05aee491c678fe7fbcbe8d8390bb25d4188ee6cefe190b39af177",
+    "20260920T063341-af1748e0af9e": "eb903c0b3193b793b6b5b729f135ab9ae2e2296dfbd3f00fb704e80619f9832c",
+    "20260920T063341-ce2cd376a8a5": "33609fb3ec1c3122eaf7728ef6672738906df3e671ddeb8d9ac126bb9e4fc20d",
+    "20260920T063346-5f6752db49ba": "b238aa20605791364077b1cdaa6728431c33e4400030507b1fb769e5811eee3f",
+    "20260920T063347-95cc1dbdd567": "64deb62d2321466dbe5cc7621bb979964690043b7951d803b6121d27ebd232f2",
+    "20260920T063347-d25601518800": "031c6f8b16ba04fadc816a12b942c45344047877a11262c8026f9d028ab3b4f2",
+    "20260920T063349-f6b7a9cfd71a": "00e74201a9be7ca4c316b6d05c4e6c3d7115e4afbbe42f9a0523763fa4584605",
+    "20260920T063353-e3145e33c76f": "d02b30adc2859983a92119c02e5f947f3fec4ccc7d5556f4443d169e4a983376",
+    "20260920T063353-747adf47cc02": "4a37da1195e87d3148353089e5c1d2e866a245558f6626651da2bc4efb516677",
+    "20260920T063449-a12675f664cb": "4590fe55740554ce0ac785323c60955c40aaf98d1bec2cce57693936da1bc475",
+    "20260920T063449-92673050d114": "aa387480e1249ff97448724de43119e5da2ff63641f599e97987a8e180d42a56",
+    "20260920T063455-131bdf15a88c": "025d4a45a2df6fcec23a81c9d5a690448f6f078fa7ac1ca53ad5f4cec6e45e3f",
+    "20260920T063457-1132dd807f78": "4f5aa16a9efdb99065b66ea6fd7a5260406751f8066663633cac00f2a78e83e3",
+    "20260920T063529-ee689e3701cd": "7ed34e81c5c7684193708b74e963c4d5da9dea0cdd91e95de3ab7f39de8ec586",
+    "20260920T063555-213ea13916af": "82c5659377ea07de8f16d1466d422111098472825eae0e62f9c39af35e48b7a9",
+    "20260920T063557-d006d13d59cf": "9f888c823893e551f757c561c6f1c26c37217c4decbfdf737b9649e1d760aa4e",
+    "20260920T063602-5fd2a038785f": "825080c47580ed536413a0fe02a86947ace515aa0d899ddf2917414f9c16ac53"
+  },
+  "cohorts": [
+    {
+      "id": "local-calibration-v1",
+      "label": "Historical engine \u00b7 initial cohort",
+      "current": false,
+      "experiment_ids": [
+        "local-calibration-v1-stardust",
+        "local-calibration-v1-uab-t",
+        "local-calibration-v1-mcrave"
+      ],
+      "expected_nodes": 5,
+      "expected_games": 12
+    },
+    {
+      "id": "local-calibration-v2",
+      "label": "Current engine \u00b7 four-map cohort",
+      "current": true,
+      "experiment_ids": [
+        "local-calibration-v2-stardust",
+        "local-calibration-v2-uab-t",
+        "local-calibration-v2-mcrave"
+      ],
+      "expected_nodes": 5,
+      "expected_games": 24
+    },
+    {
+      "id": "local-calibration-v3",
+      "label": "Missing-edge extension",
+      "current": true,
+      "experiment_ids": [
+        "local-calibration-v3-stardust",
+        "local-calibration-v3-mcrave"
+      ],
+      "expected_nodes": 5,
+      "expected_games": 12
+    }
+  ]
 }

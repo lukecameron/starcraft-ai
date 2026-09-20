@@ -1,0 +1,85 @@
+--- a/bots/kestrel/Kestrel.cpp
++++ b/bots/kestrel/Kestrel.cpp
+@@ -40,6 +40,9 @@
+     int maxGateways_ = 0;
+     int maxZealots_ = 0;
+     int maxDragoons_ = 0;
++    int firstEnemyContactFrame_ = -1;
++    int firstCombatUnitFrame_ = -1;
++    int workerLosses_ = 0;
+     struct AttackRequest {
+         int targetId;
+         int frame;
+@@ -106,6 +109,9 @@
+             << ",\"max_gateways\":" << maxGateways_
+             << ",\"max_zealots\":" << maxZealots_
+             << ",\"max_dragoons\":" << maxDragoons_
++            << ",\"first_enemy_contact_frame\":" << firstEnemyContactFrame_
++            << ",\"first_combat_unit_frame\":" << firstCombatUnitFrame_
++            << ",\"worker_losses\":" << workerLosses_
+             << "}\n";
+         out.close();
+         if (out) {
+@@ -136,6 +142,12 @@
+                              : BWAPI::Broodwar->self()->allUnitCount(type);
+     }
+ 
++    bool firstArmyPending() const {
++        return count(BWAPI::UnitTypes::Protoss_Gateway) > 0 &&
++               count(BWAPI::UnitTypes::Protoss_Zealot) == 0 &&
++               count(BWAPI::UnitTypes::Protoss_Dragoon) == 0;
++    }
++
+     bool constructionPending() {
+         if (pendingBuildType_ == BWAPI::UnitTypes::None) return false;
+         if (count(pendingBuildType_) > pendingBuildBaseline_) {
+@@ -203,7 +215,7 @@
+         for (auto unit : sorted(BWAPI::Broodwar->self()->getUnits())) {
+             if (!unit->exists() || !unit->isCompleted() || unit->isTraining()) continue;
+             const BWAPI::UnitType type = unit->getType();
+-            if (type == BWAPI::UnitTypes::Protoss_Nexus && probes < 28 && BWAPI::Broodwar->self()->minerals() >= 50 &&
++            if (type == BWAPI::UnitTypes::Protoss_Nexus && probes < 28 && !firstArmyPending() && BWAPI::Broodwar->self()->minerals() >= 50 &&
+                 unit->canTrain(BWAPI::UnitTypes::Protoss_Probe)) {
+                 issue(unit->train(BWAPI::UnitTypes::Protoss_Probe), TrainCommand);
+             } else if (type == BWAPI::UnitTypes::Protoss_Gateway) {
+@@ -233,6 +245,7 @@
+         if (supplyUsed >= 18 && gateways < 1 && self->minerals() >= 150) {
+             if (build(BWAPI::UnitTypes::Protoss_Gateway, home)) return;
+         }
++        if (firstArmyPending()) return;
+         if (supplyUsed >= 26 && gateways < 2 && self->minerals() >= 150) {
+             if (build(BWAPI::UnitTypes::Protoss_Gateway, home)) return;
+         }
+@@ -357,6 +370,18 @@
+         maxGateways_ = std::max(maxGateways_, count(BWAPI::UnitTypes::Protoss_Gateway));
+         maxZealots_ = std::max(maxZealots_, count(BWAPI::UnitTypes::Protoss_Zealot));
+         maxDragoons_ = std::max(maxDragoons_, count(BWAPI::UnitTypes::Protoss_Dragoon));
++        if (firstCombatUnitFrame_ < 0 &&
++            (count(BWAPI::UnitTypes::Protoss_Zealot, true) > 0 || count(BWAPI::UnitTypes::Protoss_Dragoon, true) > 0)) {
++            firstCombatUnitFrame_ = game.getFrameCount();
++        }
++        if (firstEnemyContactFrame_ < 0) {
++            for (auto unit : game.getAllUnits()) {
++                if (unit->exists() && unit->isVisible() && game.self()->isEnemy(unit->getPlayer())) {
++                    firstEnemyContactFrame_ = game.getFrameCount();
++                    break;
++                }
++            }
++        }
+         const int frame = game.getFrameCount();
+         const int cadence = std::max(6, game.getLatencyFrames());
+         if (frame % cadence != 0) return;
+@@ -382,6 +407,13 @@
+     }
+ 
+     void onEnd(bool won) override { writeResult(true, won); }
++
++    void onUnitDestroy(BWAPI::Unit unit) override {
++        if (unit && BWAPI::Broodwar->self() && unit->getPlayer() == BWAPI::Broodwar->self() &&
++            unit->getType() == BWAPI::UnitTypes::Protoss_Probe) {
++            ++workerLosses_;
++        }
++    }
+ };
+ 
+ } // namespace

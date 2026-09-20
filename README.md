@@ -4,11 +4,16 @@ Native OpenBW development and evaluation for a competitive Brood War bot. The [p
 
 ## Current state
 
-Native ARM64 OpenBW runs unattended games with our ports of McRave, ZZZKBot and UAlbertaBot. The first controlled ten-game cross-race batch completed seven games cleanly, with one peer engine shutdown crash and two timeouts. Its operational-reference decision is [inconclusive](docs/evaluations/quick-baseline-v1/RESULT.md); clean-game throughput averaged 380.5 frames/s, below the 384 frames/s target. There is no calibrated Elo, measured strategic improvement, or tournament-ready package yet.
+Native ARM64 OpenBW runs unattended games with our ports/forks of McRave, ZZZKBot, UAlbertaBot and Stardust, plus **Kestrel**, our independently written Protoss bot. Kestrel builds an economy and army and beats a worker-rush diagnostic, but has not yet beaten the real benchmark opponents. Version7 passed its registered command-quality checks; early-defense strategy remains under evaluation.
+
+The [current engine](config/engine.json) fixes a reproduced terminal disconnect race that could report both players as winners. All six registered regression/control games passed, with twelve parsed replays and matching shared command histories. Use the [current-engine build instructions](docs/engine-terminal-drain.md) for new experiments; historical schedules retain their original binaries.
+
+[Local league estimates](docs/local-ratings.md) distinguish exact bot builds and engine/settings regimes, exclude invalid games and report uncertainty. The current-engine cohort has24 valid games across four maps; the older engine retains nine valid games out of twelve separately. Intervals remain wide. These estimates are not BASIL ratings. No strategic improvement or tournament-ready package is claimed yet.
 
 The [progress dashboard](https://starcraft-ai.pages.dev/) publishes experiments, hypotheses, conclusions, provenance and replay downloads. Replay links use the [dgant OpenBW viewer](https://dgant.github.io/openbw-replay-viewer/).
 
-- [Engine build, game data and replay checks](docs/engine-spike.md)
+- [Current engine and regression evidence](docs/engine-terminal-drain.md), [initial setup and game data](docs/engine-spike.md)
+- [Kestrel original bot and build history](docs/kestrel-bot.md), [local rating methodology](docs/local-ratings.md)
 - [Match runner and durable records](docs/match-records.md)
 - [Environment](docs/environment.md), [competition requirements](docs/compliance.md), [official-game compatibility](docs/compatibility-debt.md)
 - [Opponent source/rating manifest](config/opponents.json), [research inventory](docs/research/wiki-inventory.md), [decisions](docs/decisions.md)
@@ -16,7 +21,7 @@ The [progress dashboard](https://starcraft-ai.pages.dev/) publishes experiments,
 
 ## Build and run the native ports
 
-Follow the [engine setup](docs/engine-spike.md) first, including the local game-data layout. The current McRave source includes an optimization candidate under evaluation; the frozen reference in `config/baseline.json` remains separate. Clone the bot and official-header dependencies at their pinned revisions:
+Follow the [engine setup](docs/engine-spike.md) for game data, then the [current-engine build](docs/engine-terminal-drain.md). The current McRave source includes an optimization candidate under evaluation; the frozen reference in `config/baseline.json` remains separate. Clone the bot and official-header dependencies at their pinned revisions:
 
 ```sh
 git clone https://github.com/Cmccrave/McRave.git third_party/mcrave
@@ -28,8 +33,8 @@ git -C third_party/bwapi-official checkout 7687da8abc4726f8366401f11ab648d421385
 scripts/build_mcrave.sh
 scripts/build_zzzkbot.sh
 python3 scripts/run_match.py \
-  --launcher third_party/bwapi/build-arm64/bin/BWAPILauncher \
-  --library-path third_party/bwapi/build-arm64/lib \
+  --launcher third_party/bwapi-terminal-drain/build-arm64/bin/BWAPILauncher \
+  --library-path third_party/bwapi-terminal-drain/build-arm64/lib \
   --bot1 build/zzzkbot/lib/ZZZKBot.dylib --race1 Zerg \
   --bot2 build/mcrave/McRave.dylib --race2 Zerg \
   --game-data-dir third_party/game-data/runtime \
@@ -63,4 +68,4 @@ Run archival lifecycle checks with `python3 -m unittest discover -s tests -v`. T
 
 ## Next milestone
 
-Repair the reproduced engine shutdown lifetime error and profile the slow cross-race scenarios. Controlled seeds, packaged Terran/Protoss opponents, and the first ten-game evaluation are available. Expand representative performance and replay synchronization checks, then restore the Win32 runtime lane. An apparent gain must beat a matched incumbent and survive held-out validation before promotion.
+Collect a fresh connected rating cohort on the repaired engine, improve Kestrel’s early defense, and test McRave’s path-search optimization against the fixed ten-game performance gate. Keep command quality separate from strategic strength. Expand held-out maps and seeds, then restore the Win32 runtime lane. An apparent gain must beat a matched incumbent and survive held-out validation before promotion.

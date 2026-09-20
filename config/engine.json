@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "status": "adopted for new native development experiments",
+  "adopted_at": "2026-09-20",
+  "engine_sha256": "eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b",
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "launcher_sha256": "af1682393f9fe43afe885b35a1637e9c464719ef93c83e799d614beed20316c1",
+  "source_patch": "patches/openbw-terminal-drain.patch",
+  "source_patch_sha256": "787c642705c8181ac814ce68d44709e07a20116a5f02a0ad0950998e4ec5f2a8",
+  "evaluation": "docs/evaluations/openbw-terminal-drain-v1/RESULT.md",
+  "historical_regimes": "Do not rewrite frozen schedules or pool ratings across engines. Old f1a32/27ea packages remain preserved.",
+  "evidence_run_ids": [
+    "20260920T061624-ba5464b864bb",
+    "20260920T061624-e26a9a2af1dc",
+    "20260920T061703-19c325d3ac49",
+    "20260920T061707-9c7d0c281740",
+    "20260920T062025-0d5aa3b26f11",
+    "20260920T062029-aa953d404b20"
+  ]
+}

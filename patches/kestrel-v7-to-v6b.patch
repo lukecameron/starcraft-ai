@@ -1,0 +1,21 @@
+--- a/bots/kestrel/Kestrel.cpp
++++ b/bots/kestrel/Kestrel.cpp
+@@ -203,15 +203,13 @@
+         for (auto unit : sorted(BWAPI::Broodwar->self()->getUnits())) {
+             if (!unit->exists() || !unit->isCompleted() || unit->isTraining()) continue;
+             const BWAPI::UnitType type = unit->getType();
+-            if (type == BWAPI::UnitTypes::Protoss_Nexus && probes < 28 && BWAPI::Broodwar->self()->minerals() >= 50 &&
+-                unit->canTrain(BWAPI::UnitTypes::Protoss_Probe)) {
++            if (type == BWAPI::UnitTypes::Protoss_Nexus && probes < 28 && BWAPI::Broodwar->self()->minerals() >= 50) {
+                 issue(unit->train(BWAPI::UnitTypes::Protoss_Probe), TrainCommand);
+             } else if (type == BWAPI::UnitTypes::Protoss_Gateway) {
+                 if (count(BWAPI::UnitTypes::Protoss_Cybernetics_Core, true) > 0 &&
+-                    BWAPI::Broodwar->self()->minerals() >= 125 && BWAPI::Broodwar->self()->gas() >= 50 &&
+-                    unit->canTrain(BWAPI::UnitTypes::Protoss_Dragoon)) {
++                    BWAPI::Broodwar->self()->minerals() >= 125 && BWAPI::Broodwar->self()->gas() >= 50) {
+                     issue(unit->train(BWAPI::UnitTypes::Protoss_Dragoon), TrainCommand);
+-                } else if (BWAPI::Broodwar->self()->minerals() >= 100 && unit->canTrain(BWAPI::UnitTypes::Protoss_Zealot)) {
++                } else if (BWAPI::Broodwar->self()->minerals() >= 100) {
+                     issue(unit->train(BWAPI::UnitTypes::Protoss_Zealot), TrainCommand);
+                 }
+             }

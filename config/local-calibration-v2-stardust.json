@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "experiment_id": "local-calibration-v2-stardust",
+  "title": "Local league on repaired engine: stardust",
+  "hypothesis": "The five frozen build/race nodes form a clean connected graph across four maps on the repaired engine; exact-regime estimates and uncertainty are displayed without BASIL transfer.",
+  "stop_condition": "Exactly eight scheduled games, no replacements/retries. Existing stop after two consecutive infrastructure failures. No outcome-dependent stopping.",
+  "purpose": "Preregistered fresh four-map local league on corrected engine",
+  "wall_timeout_seconds": 180,
+  "candidate": {
+    "name": "Stardust repaired fork",
+    "race": "Protoss",
+    "path": "artifacts/builds/1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa/stardust-emptytimer-repair/Stardust.dylib",
+    "sha256": "1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa"
+  },
+  "opponents": {
+    "mcrave": {
+      "name": "McRave memo fork",
+      "race": "Zerg",
+      "path": "artifacts/builds/04521befa41bb3873783b215493abf3a071414d2a5315cdea68fc7a67f4415ec/mcrave-as-memo-candidate/McRave.dylib",
+      "sha256": "04521befa41bb3873783b215493abf3a071414d2a5315cdea68fc7a67f4415ec"
+    },
+    "uab-p": {
+      "name": "UAlbertaBot-P",
+      "race": "Protoss",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+    }
+  },
+  "games": [
+    {
+      "opponent": "mcrave",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 7101,
+      "candidate_player": 1,
+      "opponent_bot_seed": 7101
+    },
+    {
+      "opponent": "mcrave",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 7101,
+      "candidate_player": 2,
+      "opponent_bot_seed": 7101
+    },
+    {
+      "opponent": "uab-p",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 7102,
+      "candidate_player": 1
+    },
+    {
+      "opponent": "uab-p",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 7102,
+      "candidate_player": 2
+    },
+    {
+      "opponent": "mcrave",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 7201,
+      "candidate_player": 1,
+      "opponent_bot_seed": 7201
+    },
+    {
+      "opponent": "mcrave",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 7201,
+      "candidate_player": 2,
+      "opponent_bot_seed": 7201
+    },
+    {
+      "opponent": "uab-p",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 7202,
+      "candidate_player": 1
+    },
+    {
+      "opponent": "uab-p",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 7202,
+      "candidate_player": 2
+    }
+  ],
+  "execution": {
+    "concurrency": 2,
+    "learning_state": "fresh empty isolated read/write",
+    "performance_scope": "Development overlap allowed; timings observational only, no throughput adoption claim"
+  },
+  "publish_hook": "scripts/publish_dashboard.sh"
+}

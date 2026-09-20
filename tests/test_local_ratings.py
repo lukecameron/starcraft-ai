@@ -132,6 +132,40 @@ class RatingEvidenceTest(unittest.TestCase):
         self.assertEqual(len(league["components"]), 2)
         self.assertEqual(league["reviewed_games"], 2)
 
+    def test_cohorts_keep_same_nodes_separate_and_report_expected_counts(self):
+        self.run_fixture("v1-run", experiment="v1")
+        self.run_fixture("v2-run", seed=2, experiment="v2")
+        (self.root / "config/local-ratings.json").write_text(json.dumps({
+            "cohorts": [
+                {"id": "v1", "label": "Historical v1", "experiment_ids": ["v1"], "expected_nodes": 5, "expected_games": 12},
+                {"id": "v2", "label": "Current v2", "experiment_ids": ["v2"], "expected_nodes": 5, "expected_games": 24},
+            ],
+            "reviewed_runs": self.reviewed,
+        }))
+        league = build_league(self.root, self.public)
+        self.assertEqual(len(league["components"]), 1)
+        self.assertEqual(set(league["components"][0]["cohort_ids"]), {"v1", "v2"})
+        summaries = {c["id"]: c for c in league["cohorts"]}
+        self.assertEqual(summaries["v1"]["reviewed_games"], 1)
+        self.assertEqual(summaries["v1"]["expected_games"], 12)
+        self.assertEqual(summaries["v2"]["reviewed_games"], 1)
+        self.assertEqual(summaries["v2"]["expected_games"], 24)
+        self.assertEqual(league["expected_games"], None)
+
+    def test_cohort_counts_do_not_merge_different_engine_regimes(self):
+        self.run_fixture("v1-run", experiment="v1")
+        self.run_fixture("v2-run", seed=2, engine="other engine", experiment="v2")
+        (self.root / "config/local-ratings.json").write_text(json.dumps({
+            "cohorts": [
+                {"id": "v1", "label": "Historical v1", "current": False, "experiment_ids": ["v1"], "expected_nodes": 5, "expected_games": 12},
+                {"id": "v2", "label": "Current v2", "current": True, "experiment_ids": ["v2"], "expected_nodes": 5, "expected_games": 24},
+            ],
+            "reviewed_runs": self.reviewed,
+        }))
+        league = build_league(self.root, self.public)
+        self.assertEqual(len(league["components"]), 2)
+        self.assertEqual({c["cohort_ids"][0] for c in league["components"]}, {"v1", "v2"})
+
     def test_conflicting_results_pending_review_and_changed_manifest_excluded(self):
         self.run_fixture("run1", winner=False)
         self.run_fixture("run2", seed=2)

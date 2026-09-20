@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "wall_timeout_seconds": 180,
+  "execution": {
+    "concurrency": 2,
+    "learning_state": "fresh empty isolated read/write",
+    "performance_scope": "Development overlap allowed; timings observational only, no throughput adoption claim"
+  },
+  "publish_hook": "scripts/publish_dashboard.sh",
+  "purpose": "Preregistered missing-edge calibration on current engine",
+  "hypothesis": "Direct Stardust-ZZZK and McRave-UAlberta comparisons add missing edges to the current exact-build rating graph.",
+  "stop_condition": "Exactly scheduled games, no retries/replacement seeds. Stop after two consecutive infrastructure failures; never adapt to wins.",
+  "experiment_id": "local-calibration-v3-mcrave",
+  "title": "Direct McRave cross-race comparisons",
+  "candidate": {
+    "name": "McRave memo fork",
+    "race": "Zerg",
+    "path": "artifacts/builds/04521befa41bb3873783b215493abf3a071414d2a5315cdea68fc7a67f4415ec/mcrave-as-memo-candidate/McRave.dylib",
+    "sha256": "04521befa41bb3873783b215493abf3a071414d2a5315cdea68fc7a67f4415ec"
+  },
+  "opponents": {
+    "uab-p": {
+      "name": "UAlbertaBot-P",
+      "race": "Protoss",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+    },
+    "uab-t": {
+      "name": "UAlbertaBot-T",
+      "race": "Terran",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+    }
+  },
+  "games": [
+    {
+      "opponent": "uab-p",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 8201,
+      "candidate_player": 1,
+      "candidate_bot_seed": 8201
+    },
+    {
+      "opponent": "uab-p",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 8201,
+      "candidate_player": 2,
+      "candidate_bot_seed": 8201
+    },
+    {
+      "opponent": "uab-p",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 8202,
+      "candidate_player": 1,
+      "candidate_bot_seed": 8202
+    },
+    {
+      "opponent": "uab-p",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 8202,
+      "candidate_player": 2,
+      "candidate_bot_seed": 8202
+    },
+    {
+      "opponent": "uab-t",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 8301,
+      "candidate_player": 1,
+      "candidate_bot_seed": 8301
+    },
+    {
+      "opponent": "uab-t",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 8301,
+      "candidate_player": 2,
+      "candidate_bot_seed": 8301
+    },
+    {
+      "opponent": "uab-t",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 8302,
+      "candidate_player": 1,
+      "candidate_bot_seed": 8302
+    },
+    {
+      "opponent": "uab-t",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 8302,
+      "candidate_player": 2,
+      "candidate_bot_seed": 8302
+    }
+  ]
+}

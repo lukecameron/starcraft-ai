@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "status": "accepted development baseline",
+  "name": "Kestrel v7",
+  "ownership": "project",
+  "origin": "original",
+  "race": "Protoss",
+  "binary": "artifacts/builds/2facbf970d4a4fd131564d3d02cd3966bcadc50e13e08256a1a92d3886013d3e/kestrel-v7/Kestrel.dylib",
+  "binary_sha256": "2facbf970d4a4fd131564d3d02cd3966bcadc50e13e08256a1a92d3886013d3e",
+  "source_sha256": "34f43843f762ed32c7052eda64e324db8fe6b4204dd48f94692d84df5d2b18f1",
+  "source_snapshot": "artifacts/builds/2facbf970d4a4fd131564d3d02cd3966bcadc50e13e08256a1a92d3886013d3e/kestrel-v7",
+  "evaluation": "docs/evaluations/kestrel-train-legality-v7/RESULT.md",
+  "notes": "V7 passed its registered lifecycle and command-legality gate. Later candidates remain separate until accepted."
+}

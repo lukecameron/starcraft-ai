@@ -1,0 +1,138 @@
+--- a/bots/kestrel/Kestrel.cpp
++++ b/bots/kestrel/Kestrel.cpp
+@@ -8,6 +8,7 @@
+ #include <fstream>
+ #include <limits>
+ #include <unordered_map>
++#include <unordered_set>
+ #include <vector>
+ 
+ #ifdef _WIN32
+@@ -40,11 +41,17 @@
+     int maxGateways_ = 0;
+     int maxZealots_ = 0;
+     int maxDragoons_ = 0;
++    int firstEnemyContactFrame_ = -1;
++    int firstCombatUnitFrame_ = -1;
++    int defenseTriggerFrame_ = -1;
++    int maxDefenders_ = 0;
++    int workerLosses_ = 0;
+     struct AttackRequest {
+         int targetId;
+         int frame;
+     };
+     std::unordered_map<int, AttackRequest> attackRequests_;
++    std::unordered_set<int> defenders_;
+     double callbackCpuSeconds_ = 0.0;
+     std::vector<double> callbackMs_;
+ 
+@@ -106,6 +113,11 @@
+             << ",\"max_gateways\":" << maxGateways_
+             << ",\"max_zealots\":" << maxZealots_
+             << ",\"max_dragoons\":" << maxDragoons_
++            << ",\"first_enemy_contact_frame\":" << firstEnemyContactFrame_
++            << ",\"first_combat_unit_frame\":" << firstCombatUnitFrame_
++            << ",\"defense_trigger_frame\":" << defenseTriggerFrame_
++            << ",\"max_defenders\":" << maxDefenders_
++            << ",\"worker_losses\":" << workerLosses_
+             << "}\n";
+         out.close();
+         if (out) {
+@@ -256,7 +268,8 @@
+         }
+         for (auto worker : sorted(self->getUnits())) {
+             if (!worker->exists() || !worker->isCompleted() || worker->getType() != BWAPI::UnitTypes::Protoss_Probe) continue;
+-            if (worker->getID() == scoutId_ || worker->getID() == builderId_ || worker->isConstructing() || worker->isGatheringMinerals() || worker->isGatheringGas()) continue;
++            if (worker->getID() == scoutId_ || worker->getID() == builderId_ || defenders_.count(worker->getID()) != 0 ||
++                worker->isConstructing() || worker->isGatheringMinerals() || worker->isGatheringGas()) continue;
+             BWAPI::Unit target = nullptr;
+             int best = std::numeric_limits<int>::max();
+             const bool wantGas = count(BWAPI::UnitTypes::Protoss_Assimilator, true) > 0 && self->gas() < 250 && gasWorkers < 3;
+@@ -289,6 +302,40 @@
+             if (distance < best) { best = distance; target = enemy; }
+         }
+         return target;
++    }
++
++    void updateDefenseAssignments() {
++        defenders_.clear();
++        const int army = count(BWAPI::UnitTypes::Protoss_Zealot, true) + count(BWAPI::UnitTypes::Protoss_Dragoon, true);
++        if (army >= 4) return;
++
++        const BWAPI::TilePosition start = BWAPI::Broodwar->self()->getStartLocation();
++        const BWAPI::Position home(start.x * 32 + 64, start.y * 32 + 48);
++        BWAPI::Unit threat = nullptr;
++        int nearest = 12 * 32 + 1;
++        for (auto enemy : BWAPI::Broodwar->getAllUnits()) {
++            if (!enemy->exists() || !enemy->isVisible() || !enemy->isDetected() || enemy->isFlying() ||
++                !BWAPI::Broodwar->self()->isEnemy(enemy->getPlayer())) continue;
++            const int distance = enemy->getDistance(home);
++            if (distance < nearest) { nearest = distance; threat = enemy; }
++        }
++        if (!threat) return;
++
++        std::vector<BWAPI::Unit> probes;
++        for (auto unit : BWAPI::Broodwar->self()->getUnits()) {
++            if (!unit->exists() || !unit->isCompleted() || unit->getType() != BWAPI::UnitTypes::Protoss_Probe ||
++                unit->getID() == builderId_ || unit->getID() == scoutId_ || unit->isConstructing()) continue;
++            probes.push_back(unit);
++        }
++        std::sort(probes.begin(), probes.end(), [threat](BWAPI::Unit a, BWAPI::Unit b) {
++            const int da = a->getDistance(threat);
++            const int db = b->getDistance(threat);
++            return da != db ? da < db : a->getID() < b->getID();
++        });
++        const int defenderCount = std::min(6, std::max(0, static_cast<int>(probes.size()) - 4));
++        for (int i = 0; i < defenderCount; ++i) defenders_.insert(probes[static_cast<size_t>(i)]->getID());
++        if (!defenders_.empty() && defenseTriggerFrame_ < 0) defenseTriggerFrame_ = BWAPI::Broodwar->getFrameCount();
++        maxDefenders_ = std::max(maxDefenders_, static_cast<int>(defenders_.size()));
+     }
+ 
+     BWAPI::Position unexploredStart(BWAPI::Unit from) {
+@@ -328,7 +375,8 @@
+             if (!unit->exists() || !unit->isCompleted()) continue;
+             const bool combat = unit->getType() == BWAPI::UnitTypes::Protoss_Zealot || unit->getType() == BWAPI::UnitTypes::Protoss_Dragoon;
+             const bool scout = unit->getID() == scoutId_;
+-            if (!combat && !scout) continue;
++            const bool defender = defenders_.count(unit->getID()) != 0;
++            if (!combat && !scout && !defender) continue;
+             if (unit->isAttacking() && unit->getOrderTarget()) continue;
+             BWAPI::Unit enemy = visibleEnemyTarget(unit);
+             if (enemy) {
+@@ -357,9 +405,22 @@
+         maxGateways_ = std::max(maxGateways_, count(BWAPI::UnitTypes::Protoss_Gateway));
+         maxZealots_ = std::max(maxZealots_, count(BWAPI::UnitTypes::Protoss_Zealot));
+         maxDragoons_ = std::max(maxDragoons_, count(BWAPI::UnitTypes::Protoss_Dragoon));
++        if (firstCombatUnitFrame_ < 0 &&
++            (count(BWAPI::UnitTypes::Protoss_Zealot, true) > 0 || count(BWAPI::UnitTypes::Protoss_Dragoon, true) > 0)) {
++            firstCombatUnitFrame_ = game.getFrameCount();
++        }
++        if (firstEnemyContactFrame_ < 0) {
++            for (auto unit : game.getAllUnits()) {
++                if (unit->exists() && unit->isVisible() && game.self()->isEnemy(unit->getPlayer())) {
++                    firstEnemyContactFrame_ = game.getFrameCount();
++                    break;
++                }
++            }
++        }
+         const int frame = game.getFrameCount();
+         const int cadence = std::max(6, game.getLatencyFrames());
+         if (frame % cadence != 0) return;
++        updateDefenseAssignments();
+         assignEconomy();
+         trainUnits();
+         constructOpening();
+@@ -382,6 +443,13 @@
+     }
+ 
+     void onEnd(bool won) override { writeResult(true, won); }
++
++    void onUnitDestroy(BWAPI::Unit unit) override {
++        if (unit && BWAPI::Broodwar->self() && unit->getPlayer() == BWAPI::Broodwar->self() &&
++            unit->getType() == BWAPI::UnitTypes::Protoss_Probe) {
++            ++workerLosses_;
++        }
++    }
+ };
+ 
+ } // namespace

@@ -1,0 +1,174 @@
+{
+  "parser": "screp 1.13.4",
+  "scope": "structural header parsing, not playback validation",
+  "replays": [
+    {
+      "run_id": "20260920T063857-4d53d8292099",
+      "player": 1,
+      "path": "/Users/luke/dev/starcraft-ai/artifacts/replays/2026/09/20/20260920T063857-4d53d8292099/game-0001-player-1-1.rep",
+      "recorded_sha256": "5d4e55059aee29a8c9debaf60872a5d113c7f96c0cbbe73406494f4b6d8f1583",
+      "actual_sha256": "5d4e55059aee29a8c9debaf60872a5d113c7f96c0cbbe73406494f4b6d8f1583",
+      "hash_matches": true,
+      "screp_exit_code": 0,
+      "frames": 16153,
+      "map": "\u0006B\u0005e\u0006n\u0005z\u0006e\u0005n\u0006e\u00051.1",
+      "players": [
+        {
+          "name": "ZZZKBot Zerg",
+          "race": "Zerg"
+        },
+        {
+          "name": "McRaveOpeningDiagnostic ",
+          "race": "Zerg"
+        }
+      ]
+    },
+    {
+      "run_id": "20260920T063857-4d53d8292099",
+      "player": 2,
+      "path": "/Users/luke/dev/starcraft-ai/artifacts/replays/2026/09/20/20260920T063857-4d53d8292099/game-0001-player-2-1.rep",
+      "recorded_sha256": "e4a6ba6104bf67911c7006759d2135fa4132644fabaaa5410177ed544a5a3b40",
+      "actual_sha256": "e4a6ba6104bf67911c7006759d2135fa4132644fabaaa5410177ed544a5a3b40",
+      "hash_matches": true,
+      "screp_exit_code": 0,
+      "frames": 16122,
+      "map": "\u0006B\u0005e\u0006n\u0005z\u0006e\u0005n\u0006e\u00051.1",
+      "players": [
+        {
+          "name": "ZZZKBot Zerg",
+          "race": "Zerg"
+        },
+        {
+          "name": "McRaveOpeningDiagnostic ",
+          "race": "Zerg"
+        }
+      ]
+    },
+    {
+      "run_id": "20260920T063934-d495601949d7",
+      "player": 1,
+      "path": "/Users/luke/dev/starcraft-ai/artifacts/replays/2026/09/20/20260920T063934-d495601949d7/game-0001-player-1-1.rep",
+      "recorded_sha256": "5c8561f772998ba2bb60278b4cf674318e87bb67e569fcae3e728867e91ef433",
+      "actual_sha256": "5c8561f772998ba2bb60278b4cf674318e87bb67e569fcae3e728867e91ef433",
+      "hash_matches": true,
+      "screp_exit_code": 0,
+      "frames": 16060,
+      "map": "\u0007\ub2e8\uc7a5\uc758 \u0006\ub2a5\uc120 \u00051.1",
+      "players": [
+        {
+          "name": "ZZZKBot Zerg",
+          "race": "Zerg"
+        },
+        {
+          "name": "McRaveOpeningDiagnostic ",
+          "race": "Zerg"
+        }
+      ]
+    },
+    {
+      "run_id": "20260920T063934-d495601949d7",
+      "player": 2,
+      "path": "/Users/luke/dev/starcraft-ai/artifacts/replays/2026/09/20/20260920T063934-d495601949d7/game-0001-player-2-1.rep",
+      "recorded_sha256": "814114ae48b633543968e352e6a49354b21785cb301fd3a202320a14c5a3707e",
+      "actual_sha256": "814114ae48b633543968e352e6a49354b21785cb301fd3a202320a14c5a3707e",
+      "hash_matches": true,
+      "screp_exit_code": 0,
+      "frames": 16029,
+      "map": "\u0007\ub2e8\uc7a5\uc758 \u0006\ub2a5\uc120 \u00051.1",
+      "players": [
+        {
+          "name": "ZZZKBot Zerg",
+          "race": "Zerg"
+        },
+        {
+          "name": "McRaveOpeningDiagnostic ",
+          "race": "Zerg"
+        }
+      ]
+    },
+    {
+      "run_id": "20260920T064006-320cd0c4815e",
+      "player": 1,
+      "path": "/Users/luke/dev/starcraft-ai/artifacts/replays/2026/09/20/20260920T064006-320cd0c4815e/game-0001-player-1-1.rep",
+      "recorded_sha256": "02058bce9ec972fe191c5a449c9453ff3b4e4e50b0bdf46049c36ad8a52c7b18",
+      "actual_sha256": "02058bce9ec972fe191c5a449c9453ff3b4e4e50b0bdf46049c36ad8a52c7b18",
+      "hash_matches": true,
+      "screp_exit_code": 0,
+      "frames": 6078,
+      "map": "\u0007\ub2e8\uc7a5\uc758 \u0006\ub2a5\uc120 \u00051.1",
+      "players": [
+        {
+          "name": "ZZZKBot Zerg",
+          "race": "Zerg"
+        },
+        {
+          "name": "McRaveOpeningDiagnostic ",
+          "race": "Zerg"
+        }
+      ]
+    },
+    {
+      "run_id": "20260920T064006-320cd0c4815e",
+      "player": 2,
+      "path": "/Users/luke/dev/starcraft-ai/artifacts/replays/2026/09/20/20260920T064006-320cd0c4815e/game-0001-player-2-1.rep",
+      "recorded_sha256": "1443056fd97837189ff72e60dd4691e7ffe01bccf5f716778e459f25d682ce51",
+      "actual_sha256": "1443056fd97837189ff72e60dd4691e7ffe01bccf5f716778e459f25d682ce51",
+      "hash_matches": true,
+      "screp_exit_code": 0,
+      "frames": 6109,
+      "map": "\u0007\ub2e8\uc7a5\uc758 \u0006\ub2a5\uc120 \u00051.1",
+      "players": [
+        {
+          "name": "ZZZKBot Zerg",
+          "race": "Zerg"
+        },
+        {
+          "name": "McRaveOpeningDiagnostic ",
+          "race": "Zerg"
+        }
+      ]
+    },
+    {
+      "run_id": "20260920T064021-77d0cb29d7ec",
+      "player": 1,
+      "path": "/Users/luke/dev/starcraft-ai/artifacts/replays/2026/09/20/20260920T064021-77d0cb29d7ec/game-0001-player-1-1.rep",
+      "recorded_sha256": "0a7bf3096cfe312659ee0110cba2c9f0e41c30ee6ae7d0ece1a3fa0279bc1828",
+      "actual_sha256": "0a7bf3096cfe312659ee0110cba2c9f0e41c30ee6ae7d0ece1a3fa0279bc1828",
+      "hash_matches": true,
+      "screp_exit_code": 0,
+      "frames": 7256,
+      "map": "\u0006B\u0005e\u0006n\u0005z\u0006e\u0005n\u0006e\u00051.1",
+      "players": [
+        {
+          "name": "ZZZKBot Zerg",
+          "race": "Zerg"
+        },
+        {
+          "name": "McRaveOpeningDiagnostic ",
+          "race": "Zerg"
+        }
+      ]
+    },
+    {
+      "run_id": "20260920T064021-77d0cb29d7ec",
+      "player": 2,
+      "path": "/Users/luke/dev/starcraft-ai/artifacts/replays/2026/09/20/20260920T064021-77d0cb29d7ec/game-0001-player-2-1.rep",
+      "recorded_sha256": "b11608212663acff152eeac24a5381c30f0fd2f299833020b8a63cb86e9ef6b1",
+      "actual_sha256": "b11608212663acff152eeac24a5381c30f0fd2f299833020b8a63cb86e9ef6b1",
+      "hash_matches": true,
+      "screp_exit_code": 0,
+      "frames": 7287,
+      "map": "\u0006B\u0005e\u0006n\u0005z\u0006e\u0005n\u0006e\u00051.1",
+      "players": [
+        {
+          "name": "ZZZKBot Zerg",
+          "race": "Zerg"
+        },
+        {
+          "name": "McRaveOpeningDiagnostic ",
+          "race": "Zerg"
+        }
+      ]
+    }
+  ]
+}

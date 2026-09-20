@@ -17,3 +17,7 @@ The model assumes transitive strength and conditionally independent outcomes. Ma
 Method references: [Whelan, Prior Distributions for the Bradley–Terry Model of Paired Comparisons](https://arxiv.org/abs/1712.05311) discusses independent Gaussian priors on log strengths; [Mattos and Ramos, Bayesian paired comparison with the bpcs package](https://pmc.ncbi.nlm.nih.gov/articles/PMC9374650/) describes Bayesian paired comparisons and uncertainty. Our small standard-library solver and Laplace approximation are project implementation choices, not use of the bpcs package.
 
 Validation includes balanced outcomes, sweeps, label/order invariance, disconnected graphs, an independent dense one-dimensional MAP grid and finite-difference curvature, evidence deduplication and build/regime separation. Validation of a numerical model does not validate the quality of a bot port or calibrate it to BASIL.
+
+## Cohort coverage
+
+The current-engine four-map cohort has24/24 reviewed games and five exact build/race nodes. The historical engine retains9/12 valid games in a separate regime. Cohort labels and expected counts are display metadata: additional cohorts in the same exact regime pool cumulative evidence, while actual engine/settings changes create separate components. Each configured cohort has an explicit `current` flag; labels do not determine statistical inclusion. See [the current result](evaluations/local-calibration-v2/RESULT.md).
