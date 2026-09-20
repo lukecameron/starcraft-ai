@@ -1,0 +1,53 @@
+diff --git a/src/StardustAIModule.cpp b/src/StardustAIModule.cpp
+index 039f7b99..af0515de 100644
+--- a/src/StardustAIModule.cpp
++++ b/src/StardustAIModule.cpp
+@@ -17,6 +17,7 @@
+ #include "Bullets.h"
+ #include "Players.h"
+ #include "Geo.h"
++#include <fstream>
+ 
+ int currentFrame;
+ 
+@@ -53,6 +54,15 @@ namespace
+ {
+     bool gameFinished;
+ 
++    void writeResult(bool ended, bool winner)
++    {
++        std::ofstream out("bwapi-data/write/diagnostic.json", std::ios::trunc);
++        out << "{\"frame_count\":" << BWAPI::Broodwar->getFrameCount()
++            << ",\"winner\":" << (ended ? (winner ? "true" : "false") : "null")
++            << ",\"ended\":" << (ended ? "true" : "false")
++            << ",\"latency_frames\":" << BWAPI::Broodwar->getLatencyFrames() << "}\n";
++    }
++
+     void handleUnitDiscover(BWAPI::Unit unit)
+     {
+         Map::onUnitDiscover(unit);
+@@ -69,6 +79,7 @@ void StardustAIModule::onStart()
+ {
+     gameFinished = false;
+     currentFrame = 0;
++    writeResult(false, false);
+ 
+     // Initialize globals that just need to make sure their global data is reset
+     Log::initialize();
+@@ -143,6 +154,7 @@ void StardustAIModule::onStart()
+ 
+ void StardustAIModule::onEnd(bool isWinner)
+ {
++    writeResult(true, isWinner);
+     if (testOnEnd) testOnEnd(isWinner);
+ 
+ #if LOGGING_ENABLED
+@@ -156,6 +168,8 @@ void StardustAIModule::onEnd(bool isWinner)
+ 
+ void StardustAIModule::onFrame()
+ {
++    if (BWAPI::Broodwar->getFrameCount() % 240 == 0) writeResult(false, false);
++
+     if (currentFrame < frameSkip)
+     {
+         currentFrame++;

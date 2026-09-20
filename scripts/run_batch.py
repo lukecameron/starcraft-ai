@@ -112,6 +112,10 @@ def classify(match, candidate_player, runner_return_code=0):
         return "timeout"
     if any(code not in (0, None) for code in codes):
         return "crash"
+    # run_match also returns nonzero when clean child exits have unusable results.
+    # Preserve that specific evidence instead of calling it a launcher failure.
+    if reason == "children_exited" and codes == [0, 0] and not match.get("outcome_verified"):
+        return "missing_or_inconsistent_metadata"
     if runner_return_code != 0:
         return "launcher_failure"
     if match.get("status") != "completed" or not match.get("outcome_verified"):

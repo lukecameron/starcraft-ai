@@ -1,0 +1,29 @@
+diff --git a/bwapi/BWAPILauncher/Source/Main.cpp b/bwapi/BWAPILauncher/Source/Main.cpp
+index c9f7fc35..504bf3d8 100644
+--- a/bwapi/BWAPILauncher/Source/Main.cpp
++++ b/bwapi/BWAPILauncher/Source/Main.cpp
+@@ -33,9 +33,24 @@ int main() {
+             return 1;
+           }
+         }
++        auto logTerminal = [&](const char* event) {
++          auto self = h->self();
++          std::fprintf(stderr,
++                       "{\"openbw_sync_diagnostic\":1,\"event\":\"%s\",\"game_frame\":%d,\"self_id\":%d,\"self_victorious\":%s,\"self_defeated\":%s}\n",
++                       event,
++                       h->getFrameCount(),
++                       self ? self->getID() : -1,
++                       self && self->isVictorious() ? "true" : "false",
++                       self && self->isDefeated() ? "true" : "false");
++          std::fflush(stderr);
++        };
++        logTerminal("launcher_game_over_observed");
+         h->update();
++        logTerminal("launcher_match_end_dispatched");
+         h->onGameEnd();
++        logTerminal("launcher_on_game_end_complete");
+         h->bwgame.leaveGame();
++        logTerminal("launcher_leave_game_sent");
+       } while (!h->bwgame.gameClosed() && h->autoMenuManager.autoMenuRestartGame != "" && h->autoMenuManager.autoMenuRestartGame != "OFF");
+       return 0;
+     } catch (const std::exception& e) {

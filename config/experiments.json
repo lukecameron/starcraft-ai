@@ -186,11 +186,94 @@
       "id": "mcrave-goal-shadow-large-v1",
       "title": "Exercise goal caching with the profiled opening",
       "date": "2026-09-20",
-      "status": "in_progress",
+      "status": "completed",
       "hypothesis": "Reusing the opening from the profiled slow game will expose large real goal-selection calls and allow both algorithms to be compared on identical states.",
-      "notes": "One isolated diagnostic forces the existing HatchPool / 11Hatch / 3HatchMuta opening. The original zero-divergence and large-state requirements remain unchanged; no production throughput or strength claim is planned.",
-      "conclusion": null,
-      "evidence_run_ids": []
+      "notes": "The targeted diagnostic compared 53,828 real calls and 352,160 actual selections with zero divergences. First qualifying state: 48 eligible units, 10 requested; largest recorded state: 154 eligible, 22 requested. It hit its 180-second instrumentation cap and emitted no final result or replay.",
+      "conclusion": "The registered large-state equivalence gate passed. Cached selection made 1,243,302 distance calls versus 15,122,188 original calls (91.78% fewer). Accept this evidence for a release-build quick check; these timings and the partial game establish no production speed or strength gain.",
+      "evidence_run_ids": [
+        "20260920T035048-f48d925aaecb"
+      ],
+      "decision": "ADOPT"
+    },
+    {
+      "id": "quick-mcrave-coordinate-cache-v1",
+      "title": "McRave coordinate repair and goal-cache quick check",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "The frozen coordinate-repair and invocation-cache build completes the ten-game suite cleanly and sustains at least 384 durable frames per second.",
+      "notes": "Nine verified games: eight wins and one loss. All 20 replays retained. The final game had two winner=true callbacks despite zero exits, and remains unscored. Overall 403.0 fps; five games below 384, slowest 322.5. Failure subtype corrected with raw collection preserved.",
+      "conclusion": "The registered reliability and per-match performance requirements failed. Resolve the outcome conflict and profile the remaining slow cases before adoption. Results are uncalibrated and do not establish a causal strength improvement.",
+      "evidence_run_ids": [],
+      "decision": "INCONCLUSIVE"
+    },
+    {
+      "id": "stardust-native-smoke",
+      "title": "Stardust native compatibility smoke",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "The pinned Stardust source can run its normal Protoss gameplay path as a native ARM64 module against this project's OpenBW ABI.",
+      "notes": "Frozen package b6097c9a5d972afc4d687ed51f0d001af36f50a93dc625d66eb546bd02f6080c ran against WorkerRush Zerg on Benzene with engine seed 5201 and a 120-second limit. Both processes exited zero, results opposed, LF3 held, stderr was empty, and both replays were retained.",
+      "conclusion": "Native ABI interoperability and one complete smoke game are established. This single match does not estimate strength, timing representativeness, broader matchup/map compatibility, or tournament eligibility.",
+      "limitations": "Uncalibrated; one game; Stardust wall-clock and address-dependent behavior uncontrolled; derivative competition use requires written author permission.",
+      "evidence_run_ids": [
+        "20260920T040347-2c639d48312b"
+      ],
+      "related_game_ids": [
+        "20260920T040347-2c639d48312b"
+      ],
+      "candidate": {
+        "name": "Stardust",
+        "upstream_name": "Stardust",
+        "race": "Protoss",
+        "sha256": "b6097c9a5d972afc4d687ed51f0d001af36f50a93dc625d66eb546bd02f6080c",
+        "ownership": "project",
+        "origin": "port",
+        "author": "Bruce Mackenzie Nielsen",
+        "author_url": "https://github.com/bmnielsen",
+        "source_url": "https://github.com/bmnielsen/Stardust"
+      },
+      "docs_url": "docs/stardust-port.md",
+      "retrospective": true
+    },
+    {
+      "id": "mcrave-post-cache-profile-v1",
+      "title": "Profile McRave after goal caching",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "A remaining cohesive subsystem accounts for at least 20% of main-thread samples after goal caching.",
+      "notes": "One preregistered 10-second sample after frame 10,080: 7,843 main-thread samples. BWEB path generation appears in at least 22.08%; goal-distance work in 0.24%; visual work in at most 0.13%. The game completed with opposing results.",
+      "conclusion": "Investigate flying-navigation path generation. This sampled interval identifies CPU work; it does not establish a speedup or playing-strength improvement.",
+      "evidence_run_ids": [
+        "20260920T041522-64a197b0b35f"
+      ]
+    },
+    {
+      "id": "openbw-mutual-winner-repro-v1",
+      "title": "Investigate conflicting engine winners",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "One attempt with the failing scenario inputs may reproduce reciprocal winner callbacks and identify the terminal event ordering.",
+      "notes": "The original game has contradictory local replays with reciprocal Dropped events. The one registered reproduction completed with opposing results on a different trajectory. Source review shows several engine paths produce the same drop code.",
+      "conclusion": "The cause is unresolved. Preserve the original as unscored and identify the drop source with an isolated diagnostic build before changing engine behavior.",
+      "decision": "INCONCLUSIVE",
+      "evidence_run_ids": [
+        "20260920T035743-5518317f90cd",
+        "20260920T040129-096a092f98d9"
+      ]
+    },
+    {
+      "id": "openbw-kill-path-diagnostic-v1",
+      "title": "Identify engine drop causes",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "Logging the first engine drop source and terminal callback ordering will distinguish routine cleanup from the historical conflicting-winner failure.",
+      "notes": "One WorkerRush/Idle control and one competitive attempt both completed normally. Both showed defeat, then victory 31 frames later. Their first drop followed an action from an already-defeated player; neither logged a state-hash mismatch.",
+      "conclusion": "The original failure remains unclassified. Retain diagnostic logging for subsequent experiments; no shutdown-protocol change is justified by these runs.",
+      "decision": "INCONCLUSIVE",
+      "evidence_run_ids": [
+        "20260920T041950-ef7fd1a4b7a0",
+        "20260920T042014-eaa6bbea4b79"
+      ]
     }
   ]
 }

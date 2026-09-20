@@ -36,6 +36,9 @@
         },
         "98df26327cba498ac6ea1759d00b748f63870c655b34ecad6e24eb0e6851f1df": {
           "origin": "fork"
+        },
+        "3b75098fa1b7460faad21d6f2a678c7d9fad09e2faaaddd87716a948606481ce": {
+          "origin": "fork"
         }
       }
     },
@@ -56,6 +59,11 @@
       "author": "David Churchill",
       "author_url": "https://davechurchill.ca/",
       "source_url": "https://github.com/davechurchill/ualbertabot"
+    },
+    "Stardust.dylib": {
+      "name": "Stardust", "ownership": "project", "origin": "port", "upstream_name": "Stardust",
+      "author": "Bruce Mackenzie Nielsen", "author_url": "https://github.com/bmnielsen", "source_url": "https://github.com/bmnielsen/Stardust",
+      "sha256_overrides": {"b6097c9a5d972afc4d687ed51f0d001af36f50a93dc625d66eb546bd02f6080c": {"origin": "port"}}
     },
     "WorkerRush.dylib": {
       "name": "WorkerRush",

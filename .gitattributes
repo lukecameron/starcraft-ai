@@ -5,3 +5,4 @@ ports/ualbertabot/UAlbertaBot_Config.txt -text -whitespace
 ports/zzzkbot/COPYING.LESSER.txt -text -whitespace
 ports/zzzkbot/COPYING.txt -text -whitespace
 ports/zzzkbot/LICENSE.txt -text -whitespace
+ports/stardust/LICENSE -text -whitespace

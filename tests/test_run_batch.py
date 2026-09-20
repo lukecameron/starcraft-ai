@@ -46,6 +46,13 @@ class BatchSummaryTests(unittest.TestCase):
         match["result"] = [{"winner": True}, {"winner": True}]
         self.assertEqual(run_batch.classify(match, 1), "missing_or_inconsistent_metadata")
 
+    def test_conflicting_results_survive_nonzero_runner_exit_classification(self):
+        match = {"status": "incomplete", "outcome_verified": False,
+                 "termination_reason": "children_exited", "players": [{"return_code": 0}, {"return_code": 0}],
+                 "result": [{"winner": True}, {"winner": True}]}
+        self.assertEqual(run_batch.classify(match, 2, 1), "missing_or_inconsistent_metadata")
+        self.assertEqual(run_batch.classify({}, 2, 1), "launcher_failure")
+
     def test_bot_seed_command_mapping_follows_swapped_player_assignment(self):
         args = argparse.Namespace(runner="runner.py", artifacts_dir="artifacts")
         schedule = {"launcher": "launcher", "library_path": "lib", "game_data_dir": "data",

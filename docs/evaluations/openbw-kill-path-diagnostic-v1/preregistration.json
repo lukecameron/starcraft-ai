@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "experiment_id": "openbw-kill-path-diagnostic-v1",
+  "created_at": "2026-09-20T04:18:13.844977+00:00",
+  "question": "Which exact kill_client(false) caller first creates each reason-6 replay action near terminal play?",
+  "treatment": "Logging-only isolated build from pinned BWAPI/OpenBW plus accepted engine patch; no gameplay or synchronization semantic changes.",
+  "trials": [
+    {
+      "order": 1,
+      "scenario": "WorkerRush Protoss player1 vs Idle Protoss player2 on Benzene",
+      "seed": 4101,
+      "wall_timeout_seconds": 120,
+      "role": "natural-completion control"
+    },
+    {
+      "order": 2,
+      "scenario": "UAlbertaBot Terran player1 vs McRave Zerg player2 on Destination",
+      "seed": 3003,
+      "bot_seed2": 3003,
+      "wall_timeout_seconds": 120,
+      "role": "one exact competitive attempt"
+    }
+  ],
+  "measurements": [
+    "first kill source per client stderr stream",
+    "frame/sync frame/local and peer slot/controller/victory",
+    "hash ring index and local/remote hash for insync mismatch",
+    "launcher terminal observation and cleanup markers",
+    "callback results and parsed replay terminal commands"
+  ],
+  "stopping_rule": "Run each registered trial once in order and preserve every result. No retry or seed sweep.",
+  "interpretation": "Classify the observed path only. Logging timing does not support FPS claims; non-reproduction remains evidence."
+}

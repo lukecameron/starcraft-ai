@@ -361,7 +361,7 @@
       "style": "strong tournament-style Protoss",
       "role": "benchmark_only_pending_consent",
       "source_url": "https://github.com/bmnielsen/Stardust",
-      "author": "Stardust project",
+      "author": "Bruce Mackenzie Nielsen",
       "author_url": "https://github.com/bmnielsen",
       "license": "MIT with written-consent condition for competition forks",
       "version": {
@@ -393,9 +393,10 @@
         "basil_last_updated": "2026-08-22"
       },
       "bucket": "q5_strong",
-      "openbw_status": "untested",
-      "native_openbw": "unknown",
-      "notes": "Do not submit a fork without written consent. Benchmark use is separate from derivative submission permission."
+      "openbw_status": "native_arm64_completed_smoke; calibration_pending",
+      "native_openbw": "verified_local",
+      "local_evidence_runs": ["20260920T040347-2c639d48312b"],
+      "notes": "One native compatibility smoke only; no ladder calibration or strength claim. Do not submit a fork without written consent. Benchmark use is separate from derivative submission permission."
     }
   ],
   "low_quintile_research_leads": [
