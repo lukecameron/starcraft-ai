@@ -1554,6 +1554,47 @@
       },
       "matched_parent_experiment": "kestrel-hillclimb-v16",
       "result_path": "docs/evaluations/kestrel-hillclimb-v17/RESULT.md"
+    },
+    {
+      "id": "kestrel-hillclimb-v18",
+      "title": "Kestrel v38 shared-target held-out confirmation",
+      "date": "2026-09-21",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "The v38 shared-target candidate retains legal coordination and v37 opening and scaling gates while producing at least two verified wins in ten fresh games, including at least one ZZZKBot win.",
+      "notes": "Ten registered attempts produced two wins, seven losses, one preserved ZZZKBot timeout, eighteen verified replay copies, 5,673/5,673 accepted shared-target commands, and zero shared-target rejects or illegal selections. The valid second ZZZKBot lane won but reached its qualifying home threat with only one completed combat unit.",
+      "conclusion": "Rejected under the registered observed-regression clause because the valid second ZZZKBot lane failed the retained two-combat-unit opening gate. The separate first-lane timeout remains preserved and prevents a complete ten-terminal confirmation. No promotion or Elo update.",
+      "evidence_run_ids": [
+        "20260920T190743-0b7a42f81163",
+        "20260920T190743-eaeb4a294d8c",
+        "20260920T190743-2d59beaee0a4",
+        "20260920T190743-ec974d7985a3",
+        "20260920T190743-df0f84e78179",
+        "20260920T190747-00cbb042f206",
+        "20260920T190751-79d02c147453",
+        "20260920T190754-018398c237bc",
+        "20260920T190756-ae9596c94ab4",
+        "20260920T190756-39c146c880fe"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v18",
+      "candidate_binary_sha256": "7fdc4f9ad61152e7758318e7d35d04fbda0746a4e2f85a48b3bc664577e0c160",
+      "candidate_source_sha256": "f105ab5073ec3d586807478c74838900ed02fa2d812c3ac4d94081c36c3217ab",
+      "candidate_source_combo_sha256": "ce744d7adcd3dc0a051c68a7162d975b40284c014a9b7e1eae785b59da9b8f7b",
+      "candidate_patch_sha256": "2d84b98d3288d4ac922c22c71647f29492925138ee1ec757ee36512b9786b61a",
+      "candidate_build_sidecar_sha256": "75f2f2fd236bdd71cb64102f8286c0358cd39a1c1a8ffbccf69fb7578a53a1b4",
+      "plan_sha256": "6a450005eb3c40e0b2ba623a70927beef66bb02abeabede1f8ae092a17873c13",
+      "registered_schedule_sha256": "bc754c4d6defbee209bcad81f5c43f972d4b09d86859e9e80ad6d7b87e65500d",
+      "schedule_sha256": "6b01686ddc30405ab0fb796209c6cf9f382379f7201810fe17658a4e7b4a4a08",
+      "ledger_sha256": "4792f3674734e86a056bcfe7dc0090b036c4857255e755f8ed372f5416c247ba",
+      "scorecard_sha256": "ffe471f42cf107e7444e795770a4b4aec5ab986de60de29a33795b9e850976ac",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "author": "Luke Cameron",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      },
+      "matched_parent_experiment": "kestrel-hillclimb-v17",
+      "result_path": "docs/evaluations/kestrel-hillclimb-v18/RESULT.md"
     }
   ]
 }
