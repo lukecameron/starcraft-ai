@@ -1,0 +1,176 @@
+diff --git a/third_party/kestrel-opening-v29-candidate/Kestrel.cpp b/third_party/kestrel-opening-v31-candidate/Kestrel.cpp
+index 8a593c9..7c8650e 100644
+--- a/third_party/kestrel-opening-v29-candidate/Kestrel.cpp
++++ b/third_party/kestrel-opening-v31-candidate/Kestrel.cpp
+@@ -69,6 +69,22 @@ class Kestrel final : public BWAPI::AIModule {
+     int acceptedStructuresAfterFirstZealot_ = 0;
+     int zealotLossPositionMissing_ = 0;
+     std::unordered_map<int, BWAPI::Position> lastZealotPositions_;
++    std::unordered_map<int, int> earlyZergSuppressedTargets_;
++    int earlyZergStageRemoteTargetEvents_ = 0;
++    int firstEarlyZergStageSuppressionFrame_ = -1;
++    int earlyZergStageHomeMoveAttempts_ = 0;
++    int earlyZergStageHomeMoveOrders_ = 0;
++    int earlyZergStageHomeTargetOrders_ = 0;
++    int earlyZergStageRemoteAttackOrders_ = 0;
++    int earlyZergStageReleaseAttackOrders_ = 0;
++    int firstEarlyZergStageReleaseFrame_ = -1;
++    int earlyZergStageMaxArmy_ = 0;
++    int earlyZergStageReleaseArmy_ = -1;
++    int earlyZergStageMaxLocalCombat_ = 0;
++    int firstEarlyZergStageLocalTwoFrame_ = -1;
++    int firstHomeArmyThreatFrame_ = -1;
++    int localCombatAtFirstHomeArmyThreat_ = -1;
++    int globalCombatAtFirstHomeArmyThreat_ = -1;
+     struct AttackRequest {
+         int targetId;
+         int frame;
+@@ -162,6 +178,22 @@ class Kestrel final : public BWAPI::AIModule {
+             << ",\"max_local_completed_zealots_before_loss\":" << maxLocalCompletedZealotsBeforeLoss_
+             << ",\"accepted_structures_after_first_zealot\":" << acceptedStructuresAfterFirstZealot_
+             << ",\"zealot_loss_position_missing\":" << zealotLossPositionMissing_
++            << ",\"early_zerg_stage_remote_target_events\":" << earlyZergStageRemoteTargetEvents_
++            << ",\"early_zerg_stage_unique_units\":" << earlyZergSuppressedTargets_.size()
++            << ",\"first_early_zerg_stage_suppression_frame\":" << firstEarlyZergStageSuppressionFrame_
++            << ",\"early_zerg_stage_home_move_attempts\":" << earlyZergStageHomeMoveAttempts_
++            << ",\"early_zerg_stage_home_move_orders\":" << earlyZergStageHomeMoveOrders_
++            << ",\"early_zerg_stage_home_target_orders\":" << earlyZergStageHomeTargetOrders_
++            << ",\"early_zerg_stage_remote_attack_orders\":" << earlyZergStageRemoteAttackOrders_
++            << ",\"early_zerg_stage_release_attack_orders\":" << earlyZergStageReleaseAttackOrders_
++            << ",\"first_early_zerg_stage_release_frame\":" << firstEarlyZergStageReleaseFrame_
++            << ",\"early_zerg_stage_max_army\":" << earlyZergStageMaxArmy_
++            << ",\"early_zerg_stage_release_army\":" << earlyZergStageReleaseArmy_
++            << ",\"early_zerg_stage_max_local_combat\":" << earlyZergStageMaxLocalCombat_
++            << ",\"first_early_zerg_stage_local_two_frame\":" << firstEarlyZergStageLocalTwoFrame_
++            << ",\"first_home_army_threat_frame\":" << firstHomeArmyThreatFrame_
++            << ",\"local_combat_at_first_home_army_threat\":" << localCombatAtFirstHomeArmyThreat_
++            << ",\"global_combat_at_first_home_army_threat\":" << globalCombatAtFirstHomeArmyThreat_
+             << "}\n";
+         out.close();
+         if (out) {
+@@ -438,11 +470,20 @@ class Kestrel final : public BWAPI::AIModule {
+         const int army = count(BWAPI::UnitTypes::Protoss_Zealot, true) + count(BWAPI::UnitTypes::Protoss_Dragoon, true);
+         const BWAPI::TilePosition start = BWAPI::Broodwar->self()->getStartLocation();
+         const BWAPI::Position home(start.x * 32 + 64, start.y * 32 + 48);
++        const int homeRadius = 12 * 32;
+         int localCompletedZealots = 0;
++        int localCompletedCombat = 0;
+         for (auto homeUnit : BWAPI::Broodwar->self()->getUnits()) {
+-            if (homeUnit->exists() && homeUnit->isCompleted() &&
+-                homeUnit->getType() == BWAPI::UnitTypes::Protoss_Zealot &&
+-                homeUnit->getDistance(home) < 12 * 32) ++localCompletedZealots;
++            if (!homeUnit->exists() || !homeUnit->isCompleted() || homeUnit->getDistance(home) >= homeRadius) continue;
++            if (homeUnit->getType() == BWAPI::UnitTypes::Protoss_Zealot) ++localCompletedZealots;
++            if (homeUnit->getType() == BWAPI::UnitTypes::Protoss_Zealot ||
++                homeUnit->getType() == BWAPI::UnitTypes::Protoss_Dragoon) ++localCompletedCombat;
++        }
++        if (knownZerg_ && army < 4) {
++            earlyZergStageMaxArmy_ = std::max(earlyZergStageMaxArmy_, army);
++            earlyZergStageMaxLocalCombat_ = std::max(earlyZergStageMaxLocalCombat_, localCompletedCombat);
++            if (localCompletedCombat >= 2 && firstEarlyZergStageLocalTwoFrame_ < 0)
++                firstEarlyZergStageLocalTwoFrame_ = BWAPI::Broodwar->getFrameCount();
+         }
+         if (scoutId_ < 0 && count(BWAPI::UnitTypes::Protoss_Probe) >= 9) {
+             for (auto probe : sorted(BWAPI::Broodwar->self()->getUnits())) {
+@@ -458,29 +499,71 @@ class Kestrel final : public BWAPI::AIModule {
+             const bool combat = unit->getType() == BWAPI::UnitTypes::Protoss_Zealot || unit->getType() == BWAPI::UnitTypes::Protoss_Dragoon;
+             const bool scout = unit->getID() == scoutId_;
+             if (!combat && !scout) continue;
+-            if (firstHomeThreatFrame_ >= 0 && combat && unit->getType() == BWAPI::UnitTypes::Protoss_Zealot &&
+-                localCompletedZealots < 2) {
++            BWAPI::Unit enemy = visibleEnemyTarget(unit);
++            if (knownZerg_ && combat && army < 4) {
++                if (!enemy || enemy->getDistance(home) >= homeRadius) {
++                    if (enemy) {
++                        const auto previous = earlyZergSuppressedTargets_.find(unit->getID());
++                        if (previous == earlyZergSuppressedTargets_.end() || previous->second != enemy->getID()) {
++                            earlyZergSuppressedTargets_[unit->getID()] = enemy->getID();
++                            ++earlyZergStageRemoteTargetEvents_;
++                            if (firstEarlyZergStageSuppressionFrame_ < 0)
++                                firstEarlyZergStageSuppressionFrame_ = BWAPI::Broodwar->getFrameCount();
++                        }
++                    }
++                    attackRequests_.erase(unit->getID());
++                    if ((unit->getDistance(home) > 4 * 32 ||
++                         (unit->isMoving() && unit->getTargetPosition() != home)) &&
++                        unit->getTargetPosition() != home) {
++                        ++earlyZergStageHomeMoveAttempts_;
++                        if (issue(unit->move(home), AttackCommand)) ++earlyZergStageHomeMoveOrders_;
++                    }
++                    continue;
++                }
++            }
++            if (!knownZerg_ && firstHomeThreatFrame_ >= 0 && combat &&
++                unit->getType() == BWAPI::UnitTypes::Protoss_Zealot && localCompletedZealots < 2) {
+                 if (unit->getDistance(home) > 4 * 32 && !unit->isMoving()) issue(unit->move(home), AttackCommand);
+                 attackRequests_.erase(unit->getID());
+                 continue;
+             }
+             if (unit->isAttacking() && unit->getOrderTarget()) continue;
+-            BWAPI::Unit enemy = visibleEnemyTarget(unit);
+             if (enemy) {
+                 const int frame = BWAPI::Broodwar->getFrameCount();
+                 const auto previous = attackRequests_.find(unit->getID());
+                 const bool targetChanged = previous == attackRequests_.end() || previous->second.targetId != enemy->getID();
+                 const int retryFrames = 96;
+                 if (targetChanged || frame - previous->second.frame >= retryFrames) {
+-                    issue(unit->attack(enemy), AttackCommand);
++                    const bool accepted = issue(unit->attack(enemy), AttackCommand);
+                     attackRequests_[unit->getID()] = {enemy->getID(), frame};
++                    if (accepted && knownZerg_ && combat) {
++                        if (army < 4) {
++                            if (enemy->getDistance(home) < homeRadius) ++earlyZergStageHomeTargetOrders_;
++                            else ++earlyZergStageRemoteAttackOrders_;
++                        } else {
++                            ++earlyZergStageReleaseAttackOrders_;
++                            if (firstEarlyZergStageReleaseFrame_ < 0) {
++                                firstEarlyZergStageReleaseFrame_ = frame;
++                                earlyZergStageReleaseArmy_ = army;
++                            }
++                        }
++                    }
+                 }
+                 continue;
+             }
+             attackRequests_.erase(unit->getID());
+             BWAPI::Position target = BWAPI::Positions::None;
+             if (scout || army >= 4) target = unexploredStart(unit);
+-            if (target.isValid() && unit->getTargetPosition() != target) issue(unit->attack(target), AttackCommand);
++            if (target.isValid() && unit->getTargetPosition() != target) {
++                const bool accepted = issue(unit->attack(target), AttackCommand);
++                if (accepted && knownZerg_ && combat && army >= 4) {
++                    ++earlyZergStageReleaseAttackOrders_;
++                    if (firstEarlyZergStageReleaseFrame_ < 0) {
++                        firstEarlyZergStageReleaseFrame_ = BWAPI::Broodwar->getFrameCount();
++                        earlyZergStageReleaseArmy_ = army;
++                    }
++                }
++            }
+         }
+     }
+ 
+@@ -516,6 +599,24 @@ class Kestrel final : public BWAPI::AIModule {
+                 }
+             }
+         }
++        if (knownZerg_ && firstHomeArmyThreatFrame_ < 0) {
++            for (auto enemy : game.getAllUnits()) {
++                if (!enemy->exists() || !enemy->isVisible() || !enemy->isDetected() || enemy->isFlying() ||
++                    enemy->getType().isWorker() || !enemy->getType().canAttack() ||
++                    !game.self()->isEnemy(enemy->getPlayer()) || enemy->getDistance(home) >= 12 * 32) continue;
++                firstHomeArmyThreatFrame_ = frame;
++                globalCombatAtFirstHomeArmyThreat_ =
++                    count(BWAPI::UnitTypes::Protoss_Zealot, true) + count(BWAPI::UnitTypes::Protoss_Dragoon, true);
++                localCombatAtFirstHomeArmyThreat_ = 0;
++                for (auto unit : game.self()->getUnits()) {
++                    if (unit->exists() && unit->isCompleted() &&
++                        (unit->getType() == BWAPI::UnitTypes::Protoss_Zealot ||
++                         unit->getType() == BWAPI::UnitTypes::Protoss_Dragoon) &&
++                        unit->getDistance(home) < 12 * 32) ++localCombatAtFirstHomeArmyThreat_;
++                }
++                break;
++            }
++        }
+         if (firstHomeThreatFrame_ >= 0 && firstHomeZealotLossFrame_ < 0) {
+             int local = 0;
+             for (auto unit : game.self()->getUnits())
