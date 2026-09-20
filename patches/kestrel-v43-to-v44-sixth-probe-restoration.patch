@@ -1,0 +1,93 @@
+--- third_party/kestrel-opening-v43-candidate/Kestrel.cpp	2026-09-21 07:34:14
++++ third_party/kestrel-opening-v44-candidate/Kestrel.cpp	2026-09-21 08:08:25
+@@ -87,6 +87,11 @@
+     int zergSecondZealotProbeReserveBlockCount_ = 0;
+     std::vector<int> zergSecondZealotProbeReserveBlockFrames_;
+     std::vector<int> zergSecondZealotProbeReserveBlockMinerals_;
++    std::vector<int> zergSecondZealotProbeReserveBlockPreAcceptFlags_;
++    int zergSixthProbeRestorationActiveFrames_ = 0;
++    int zergSixthProbeAcceptedFrame_ = -1;
++    int zergSixthProbeAcceptedCount_ = 0;
++    int zergPostPylonPreSecondGatewayProbeTrainCount_ = 0;
+     int firstProbeReserveWindowFrame_ = -1;
+     int probeReserveWindowEndFrame_ = -1;
+     int probeReserveBlockCount_ = 0;
+@@ -573,8 +578,17 @@
+             if (index) out << ',';
+             out << zergSecondZealotProbeReserveBlockMinerals_[index];
+         }
++        out << "],\"zerg_second_zealot_probe_reserve_block_pre_accept_flags\":[";
++        for (size_t index = 0; index < zergSecondZealotProbeReserveBlockPreAcceptFlags_.size(); ++index) {
++            if (index) out << ',';
++            out << zergSecondZealotProbeReserveBlockPreAcceptFlags_[index];
++        }
+         out << "],\"zerg_second_zealot_probe_reserve_block_count\":" << zergSecondZealotProbeReserveBlockCount_
+             << ",\"zerg_second_zealot_probe_reserve\":100"
++            << ",\"zerg_sixth_probe_restoration_active_frames\":" << zergSixthProbeRestorationActiveFrames_
++            << ",\"zerg_sixth_probe_accepted_frame\":" << zergSixthProbeAcceptedFrame_
++            << ",\"zerg_sixth_probe_accepted_count\":" << zergSixthProbeAcceptedCount_
++            << ",\"zerg_post_pylon_pre_second_gateway_probe_train_count\":" << zergPostPylonPreSecondGatewayProbeTrainCount_
+             << ",\"first_probe_reserve_window_frame\":" << firstProbeReserveWindowFrame_
+             << ",\"probe_reserve_window_end_frame\":" << probeReserveWindowEndFrame_
+             << ",\"probe_reserve_block_count\":" << probeReserveBlockCount_
+@@ -1429,8 +1443,14 @@
+             knownZerg_ && completedProbes >= 5 && firstPylonCurrentFrame_ < 0;
+         const bool zergPrePylonProbeReserve =
+             knownZerg_ && completedProbes >= 6 && firstPylonCurrentFrame_ < 0;
++        const bool zergSixthProbeRestorationActive =
++            knownZerg_ && firstPylonAcceptedFrame_ >= 0 && secondGatewayCurrentFrame_ < 0 && probes < 6;
++        const bool zergPostPylonPreSecondGatewayProbeWindow =
++            knownZerg_ && firstPylonAcceptedFrame_ >= 0 && secondGatewayCurrentFrame_ < 0;
+         if (zergFiveProbePolicyActive) {
+             openingReserve = kZergTwoGatewayProbeReserve;
++        } else if (zergSixthProbeRestorationActive) {
++            openingReserve = 0;
+         } else if (knownZerg_ && firstPylonAcceptedFrame_ >= 0) {
+             // Bank minerals for the second Gateway before adding another
+             // Probe.  In v35 the second Gateway completed at 3242 while the
+@@ -1448,6 +1468,7 @@
+         if (zergFiveProbePolicyActive) ++zergFiveProbePolicyActiveFrames_;
+         const bool zergSecondZealotProbeReserve =
+             knownZerg_ && secondGatewayCurrentFrame_ >= 0 && acceptedZealotTrains_ < 2;
++        if (zergSixthProbeRestorationActive) ++zergSixthProbeRestorationActiveFrames_;
+         if (zergSecondZealotProbeReserve) ++zergSecondZealotProbeReserveActiveFrames_;
+         if (zergPrePylonProbeReserve) ++zergPrePylonProbeReserveFrames_;
+         maxOpeningProbeReserve_ = std::max(maxOpeningProbeReserve_, openingProbeReserve_);
+@@ -1473,10 +1494,21 @@
+                     ++zergSecondZealotProbeReserveBlockCount_;
+                     zergSecondZealotProbeReserveBlockFrames_.push_back(frame);
+                     zergSecondZealotProbeReserveBlockMinerals_.push_back(minerals);
++                    zergSecondZealotProbeReserveBlockPreAcceptFlags_.push_back(acceptedZealotTrains_ < 2 ? 1 : 0);
+                 }
+-                if (minerals >= 50 + openingReserve + (rangeUpgradeBankActive() ? kSingularityChargeMineralCost : 0) && canTrainProbe) {
+-                    if (issue(unit->train(BWAPI::UnitTypes::Protoss_Probe), TrainCommand))
++                if (minerals >= 50 + openingReserve + (rangeUpgradeBankActive() ? kSingularityChargeMineralCost : 0) && canTrainProbe &&
++                    (!zergPostPylonPreSecondGatewayProbeWindow ||
++                     (zergSixthProbeRestorationActive && zergSixthProbeAcceptedCount_ == 0))) {
++                    if (issue(unit->train(BWAPI::UnitTypes::Protoss_Probe), TrainCommand)) {
+                         if (knownZerg_) acceptedProbeTrainFrames_.push_back(frame);
++                        if (knownZerg_ && firstPylonAcceptedFrame_ >= 0 && secondGatewayCurrentFrame_ < 0) {
++                            ++zergPostPylonPreSecondGatewayProbeTrainCount_;
++                            if (zergSixthProbeRestorationActive && zergSixthProbeAcceptedCount_ == 0) {
++                                ++zergSixthProbeAcceptedCount_;
++                                zergSixthProbeAcceptedFrame_ = frame;
++                            }
++                        }
++                    }
+                 }
+             } else if (type == BWAPI::UnitTypes::Protoss_Gateway) {
+                 if (count(BWAPI::UnitTypes::Protoss_Cybernetics_Core, true) > 0 &&
+@@ -1488,7 +1520,12 @@
+                         ++acceptedZealotTrains_;
+                         firstZealotQueued_ = true;
+                         if (firstZealotTrainFrame_ < 0) firstZealotTrainFrame_ = BWAPI::Broodwar->getFrameCount();
+-                        if (acceptedZealotTrains_ == 2) secondZealotTrainFrame_ = BWAPI::Broodwar->getFrameCount();
++                        if (acceptedZealotTrains_ == 2) {
++                            secondZealotTrainFrame_ = BWAPI::Broodwar->getFrameCount();
++                            for (size_t index = 0; index < zergSecondZealotProbeReserveBlockFrames_.size(); ++index)
++                                if (zergSecondZealotProbeReserveBlockFrames_[index] == secondZealotTrainFrame_)
++                                    zergSecondZealotProbeReserveBlockPreAcceptFlags_[index] = 0;
++                        }
+                     }
+                 }
+             }
