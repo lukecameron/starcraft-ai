@@ -1,0 +1,44 @@
+--- third_party/kestrel-opening-v40-candidate/Kestrel.cpp
++++ third_party/kestrel-opening-v41-candidate/Kestrel.cpp
+@@ -79,10 +79,15 @@
+     std::vector<int> probeReserveBlockMinerals_;
+     int openingProbeReserve_ = 0;
+     int maxOpeningProbeReserve_ = 0;
++    int zergTwoGatewayReserveFrames_ = 0;
+     int firstProbeReserveWindowFrame_ = -1;
+     int probeReserveWindowEndFrame_ = -1;
+     int probeReserveBlockCount_ = 0;
+     static constexpr int kPylonCap = 10;
++    // Zerg-only opening bank: after six completed Probes, defer the next
++    // Probe until the second Gateway is current so its 50 minerals remain
++    // available for the second 150-mineral Gateway.
++    static constexpr int kZergTwoGatewayProbeReserve = 250;
+     static constexpr int kPostCoreGatewayCap = 6;
+     static constexpr int kSingularityChargeMineralCost = 150;
+     static constexpr int kSingularityChargeGasCost = 150;
+@@ -544,6 +549,8 @@
+         }
+         out << "],\"opening_probe_reserve\":" << openingProbeReserve_
+             << ",\"max_opening_probe_reserve\":" << maxOpeningProbeReserve_
++            << ",\"zerg_two_gateway_probe_reserve\":" << kZergTwoGatewayProbeReserve
++            << ",\"zerg_two_gateway_reserve_frames\":" << zergTwoGatewayReserveFrames_
+             << ",\"first_probe_reserve_window_frame\":" << firstProbeReserveWindowFrame_
+             << ",\"probe_reserve_window_end_frame\":" << probeReserveWindowEndFrame_
+             << ",\"probe_reserve_block_count\":" << probeReserveBlockCount_
+@@ -1391,7 +1398,7 @@
+         const int completedProbes = count(BWAPI::UnitTypes::Protoss_Probe, true);
+         int openingReserve = 0;
+         if (knownZerg_ && completedProbes >= 6 && firstPylonCurrentFrame_ < 0) {
+-            openingReserve = 100;
++            openingReserve = kZergTwoGatewayProbeReserve;
+         } else if (knownZerg_ && firstPylonAcceptedFrame_ >= 0) {
+             // Bank minerals for the second Gateway before adding another
+             // Probe.  In v35 the second Gateway completed at 3242 while the
+@@ -1406,6 +1413,7 @@
+         }
+         const int frame = BWAPI::Broodwar->getFrameCount();
+         openingProbeReserve_ = knownZerg_ ? openingReserve : 0;
++        if (knownZerg_ && openingReserve == kZergTwoGatewayProbeReserve) ++zergTwoGatewayReserveFrames_;
+         maxOpeningProbeReserve_ = std::max(maxOpeningProbeReserve_, openingProbeReserve_);
+         if (knownZerg_ && firstPylonAcceptedFrame_ >= 0 && secondGatewayCurrentFrame_ < 0) {
+             if (firstProbeReserveWindowFrame_ < 0) firstProbeReserveWindowFrame_ = frame;
