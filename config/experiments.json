@@ -360,10 +360,24 @@
       "id": "quick-mcrave-as-memo-v1",
       "title": "McRave pathfinding memoization throughput check",
       "date": "2026-09-20",
-      "status": "running",
+      "status": "completed",
       "hypothesis": "The frozen per-search A* memoization candidate completes ten fixed games cleanly with at least 384 durable logical frames per wall second in every game and in aggregate.",
-      "notes": "Ten fixed scenarios, two concurrent games, 120-second cap. The prior shadow matched all observed paths; this production trial must reach 384 fps in every game and in aggregate.",
-      "conclusion": "Pending the registered performance and integrity checks."
+      "notes": "Ten clean wins, with opposing results, no state-hash mismatch and 20 hash-checked, parsed replays. Aggregate throughput reached 413.1 fps, but games 6\u20139 fell below 384; the slowest ran at 269.5 fps.",
+      "conclusion": "The registered per-game performance gate failed. Preserve this candidate and profile the slowest scenario later in the game before choosing another optimization. These reused scenarios do not establish a causal speedup or strength improvement.",
+      "decision": "REJECT"
+    },
+    {
+      "id": "mcrave-memo-late-profile-v1",
+      "title": "Profile McRave late in the game",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "INCONCLUSIVE",
+      "hypothesis": "A complete ten-second sample after frame 15,000 identifies a cohesive subsystem occupying at least 20% of main-thread observations.",
+      "notes": "The match completed normally. The sample retained 7,165 stacks: Combat 23.8%, grid updates 18.9%, Support 11.8%. Its timestamp precedes game completion by only 9.110 seconds, so the required ten seconds of live sampling could not be established.",
+      "conclusion": "Keep these counts as partial diagnostic evidence. Investigate repeated ground-path and Support path generation with a separately registered diagnostic; this sample does not pass its original gate.",
+      "run_ids": [
+        "20260920T050142-3662b2986e1a"
+      ]
     }
   ]
 }
