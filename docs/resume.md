@@ -25,7 +25,7 @@ Checkpoint: 20 September 2026, 11:45 UTC. Latest user scope: **finish the curren
 - The five-way Kestrel hill-climb loop has now preserved v19 recovery and v22 through v29. Each candidate screen has zero verified wins. v29 exercised its build-commandability guard once, recorded zero rejected build commands, accepted later construction and completed a sixth Pylon in three lanes. All five games were losses and McRave ran at 340.17 fps below the registered 384 fps gate. No screen changes Elo or canonical v13.
 - v22 remains the exploratory base. v26-v29 retain positive mechanism signals for diagnosis but are rejected for advancement. Latest result: `docs/evaluations/kestrel-hillclimb-v9/RESULT.md`; runs `20260920T142655-6bc36872dba3`, `20260920T142655-bccc4436f910`, `20260920T142655-ff5b6e5c8997`, `20260920T142655-1ed1af13bac4`, `20260920T142655-58e4feb4e739`.
 - The scorecard separates descriptive replay coverage from outcome performance grades and includes command-regression and unverified states. Dashboard experiment cards publish those grades with the preserved replay links.
-- Latest dashboard deployment: https://d63bd913.starcraft-ai.pages.dev (400 runs, 89 experiments; v28 scorecard and provenance verified).
+- Latest dashboard deployment: https://255a638b.starcraft-ai.pages.dev (405 runs, 90 experiments; v29 scorecard, provenance and replay download verified).
 
 ## Current engine
 
