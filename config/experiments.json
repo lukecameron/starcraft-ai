@@ -1707,6 +1707,41 @@
         "author": "Luke Cameron",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
       }
+    },
+    {
+      "id": "kestrel-hillclimb-v21",
+      "title": "Kestrel v41 pre-Pylon Probe-bank diagnostic",
+      "date": "2026-09-21",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Deferring a pre-Pylon Probe against known Zerg feeds 50 minerals into the existing two-Gateway bank and yields two local defenders on the two failed P2 ZZZK lanes without treatment leakage or retained-policy regression.",
+      "notes": "Five concurrent fixed rows produced two wins and three losses. All five terminals and ten replay copies passed integrity review; treatment scope and retained diagnostics passed. Treatment-active frames were positive in all four Zerg games, but three had zero reserve-block opportunities.",
+      "conclusion": "Rejected because both primary P2 ZZZK lanes still had only one completed global/local defender at first pressure. The treatment became active after the Probe queue decisions it was meant to change, so it was a null intervention. No promotion or Elo update.",
+      "evidence_run_ids": [
+        "20260920T205151-05ea8962d510",
+        "20260920T205151-125a9dd54ec6",
+        "20260920T205151-7bdec05a70ef",
+        "20260920T205151-edfea79dc797",
+        "20260920T205151-b040256742bf"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v21",
+      "candidate_binary_sha256": "2e39f690e1ec598dd03d0bbfe35de75f282ab626d7b6b0c135a6fb9947ed984d",
+      "candidate_source_sha256": "fec0f4f6c1a1a37924827be427fabe9ce695cad84ef17f5bde23e77d754218ad",
+      "candidate_source_combo_sha256": "a6d9a19debf32131aabb16b57f6726e09c9312917be83e25362e2aeafa340d3a",
+      "candidate_patch_sha256": "446a560f4aab5c4bb167118ee82bd2fe7bb41702ef7b7c415a853eb25466ae07",
+      "plan_sha256": "00cb18186a8fbb52c159f7cbff4cfdefabae72a9b2b05d9d25ade59987cae849",
+      "registered_schedule_sha256": "c9e8a9b88a793b6ea0afef7e8eadfbffebb59bf65067e2e16403afbe48260d6d",
+      "schedule_sha256": "891ac80754a12ad4c7a62fdeb4d69e2aa9e0ddfaf1a85917ac5a9ddca07b1c09",
+      "ledger_sha256": "789dc4a1ff0c9227a2be97b53c1fcbad92a9452d344d4b906bb3a80b0c302367",
+      "scorecard_sha256": "eebe508201f08d48694f4863c986cee67b7b4285f3ba1d3d0bb017566587d67c",
+      "result_sha256": "f0c3d72bcc1f8dee62693eb7b24a2c9e19dac4aa24f5a8d643e93878d20a4b73",
+      "result_path": "docs/evaluations/kestrel-hillclimb-v21/RESULT.md",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "author": "Luke Cameron",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      }
     }
   ]
 }
