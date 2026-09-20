@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "experiment_id": "kestrel-local-anchor-v2",
+  "registered_at": "2026-09-20T09:16:00Z",
+  "eval_plan_sha256": "00a8dcf9c2afa08f13cbf7f5405e4a41d72e0849d4d5f62ee35a26f2969d5806",
+  "schedule_sha256": "cbb9ff46ce5dd389b78306b64d0686c78b33165465f174639829763ea42d7c5f",
+  "status": "INCONCLUSIVE",
+  "stop_rule": "stopped after one consecutive invalid attempt",
+  "attempts": [
+    {"run_id": "20260920T091629-94ed2c02ee7a", "status": "valid", "manifest_sha256": "050f08b90b3d7af79993bd1c7dd55511f22f15c801d03087e47a75b9f1038d99"},
+    {"run_id": "20260920T091639-16fed6a67ab7", "status": "invalid", "manifest_sha256": "1a622bcc75d6c31d03cf9758cc5590419fd5d98b4ea8d80d7841e6948f64a0c0"}
+  ],
+  "rating_inclusion": "excluded pending a separately preregistered valid repeat"
+}

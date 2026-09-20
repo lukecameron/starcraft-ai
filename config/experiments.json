@@ -1051,6 +1051,20 @@
         "20260920T091041-1f8ba26a1a2a",
         "20260920T091043-37c859020c1e"
       ]
+    },
+    {
+      "id": "kestrel-local-anchor-v2",
+      "title": "Kestrel v13 local Elo anchor repeat",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "INCONCLUSIVE",
+      "hypothesis": "A fresh matched-seed repeat will place Kestrel v13 in the same local strength region as the first exact-build anchor while narrowing the conditional interval.",
+      "notes": "The preregistered stop rule halted after attempt 2: attempt 1 completed validly, while attempt 2 returned before a verified terminal result with no replay copies. No retry or replacement was used, and no repeat games entered the rating cohort.",
+      "conclusion": "Inconclusive. Preserve both attempts and leave the v1 local anchor unchanged; a separately preregistered valid repeat is required before narrowing the rating interval.",
+      "evidence_run_ids": [
+        "20260920T091629-94ed2c02ee7a",
+        "20260920T091639-16fed6a67ab7"
+      ]
     }
   ]
 }
