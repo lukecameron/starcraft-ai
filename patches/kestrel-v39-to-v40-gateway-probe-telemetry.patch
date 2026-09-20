@@ -1,0 +1,211 @@
+diff --git a/third_party/kestrel-opening-v39-candidate/Kestrel.cpp b/third_party/kestrel-opening-v40-candidate/Kestrel.cpp
+index 495b488..2619832 100644
+--- a/third_party/kestrel-opening-v39-candidate/Kestrel.cpp
++++ b/third_party/kestrel-opening-v40-candidate/Kestrel.cpp
+@@ -122,6 +122,34 @@ class Kestrel final : public BWAPI::AIModule {
+     std::vector<int> sharedTargetAttemptCounts_;
+     std::vector<int> sharedTargetAcceptedCounts_;
+     std::vector<int> sharedTargetParticipantIds_;
++    // Bounded public-self-state evidence for the first two accepted Gateway
++    // selections. Candidate reason codes are 0 eligible, 1 incomplete,
++    // 2 scout, 3 emergency defender, 4 gas worker and 5 constructing.
++    static constexpr int kGatewayProbeEvidenceCap = 32;
++    int pendingGatewayProbeSelectionFrame_ = -1;
++    int pendingGatewayProbeSelectionBuilderId_ = -1;
++    int pendingGatewayProbeSelectionTileX_ = -1;
++    int pendingGatewayProbeSelectionTileY_ = -1;
++    int pendingGatewayProbeSelectionBuilderDistance_ = -1;
++    int pendingGatewayProbeSelectionEligibleCount_ = 0;
++    int pendingGatewayProbeSelectionMinEligibleDistance_ = -1;
++    bool pendingGatewayProbeCandidateTruncated_ = false;
++    std::vector<int> pendingGatewayProbeCandidateIds_;
++    std::vector<int> pendingGatewayProbeCandidateDistances_;
++    std::vector<int> pendingGatewayProbeCandidateReasonCodes_;
++    std::vector<int> gatewayProbeSelectionFrames_;
++    std::vector<int> gatewayProbeSelectionOrdinals_;
++    std::vector<int> gatewayProbeSelectionBuilderIds_;
++    std::vector<int> gatewayProbeSelectionTileXs_;
++    std::vector<int> gatewayProbeSelectionTileYs_;
++    std::vector<int> gatewayProbeSelectionBuilderDistances_;
++    std::vector<int> gatewayProbeSelectionEligibleCounts_;
++    std::vector<int> gatewayProbeSelectionMinEligibleDistances_;
++    std::vector<int> gatewayProbeSelectionCandidateCounts_;
++    std::vector<int> gatewayProbeSelectionCandidateTruncated_;
++    std::vector<int> gatewayProbeCandidateIds_;
++    std::vector<int> gatewayProbeCandidateDistances_;
++    std::vector<int> gatewayProbeCandidateReasonCodes_;
+     std::unordered_map<int, BWAPI::Position> lastZealotPositions_;
+     std::unordered_map<int, int> zergOffenseStageSuppressedTargets_;
+     std::unordered_map<int, int> zergOffenseStageHomeMoveLastFrame_;
+@@ -413,6 +441,71 @@ class Kestrel final : public BWAPI::AIModule {
+             if (index) out << ',';
+             out << sharedTargetParticipantIds_[index];
+         }
++        out << "],\"gateway_probe_selection_frames\":[";
++        for (size_t index = 0; index < gatewayProbeSelectionFrames_.size(); ++index) {
++            if (index) out << ',';
++            out << gatewayProbeSelectionFrames_[index];
++        }
++        out << "],\"gateway_probe_selection_ordinals\":[";
++        for (size_t index = 0; index < gatewayProbeSelectionOrdinals_.size(); ++index) {
++            if (index) out << ',';
++            out << gatewayProbeSelectionOrdinals_[index];
++        }
++        out << "],\"gateway_probe_selection_builder_ids\":[";
++        for (size_t index = 0; index < gatewayProbeSelectionBuilderIds_.size(); ++index) {
++            if (index) out << ',';
++            out << gatewayProbeSelectionBuilderIds_[index];
++        }
++        out << "],\"gateway_probe_selection_tile_xs\":[";
++        for (size_t index = 0; index < gatewayProbeSelectionTileXs_.size(); ++index) {
++            if (index) out << ',';
++            out << gatewayProbeSelectionTileXs_[index];
++        }
++        out << "],\"gateway_probe_selection_tile_ys\":[";
++        for (size_t index = 0; index < gatewayProbeSelectionTileYs_.size(); ++index) {
++            if (index) out << ',';
++            out << gatewayProbeSelectionTileYs_[index];
++        }
++        out << "],\"gateway_probe_selection_builder_distances\":[";
++        for (size_t index = 0; index < gatewayProbeSelectionBuilderDistances_.size(); ++index) {
++            if (index) out << ',';
++            out << gatewayProbeSelectionBuilderDistances_[index];
++        }
++        out << "],\"gateway_probe_selection_eligible_counts\":[";
++        for (size_t index = 0; index < gatewayProbeSelectionEligibleCounts_.size(); ++index) {
++            if (index) out << ',';
++            out << gatewayProbeSelectionEligibleCounts_[index];
++        }
++        out << "],\"gateway_probe_selection_min_eligible_distances\":[";
++        for (size_t index = 0; index < gatewayProbeSelectionMinEligibleDistances_.size(); ++index) {
++            if (index) out << ',';
++            out << gatewayProbeSelectionMinEligibleDistances_[index];
++        }
++        out << "],\"gateway_probe_selection_candidate_counts\":[";
++        for (size_t index = 0; index < gatewayProbeSelectionCandidateCounts_.size(); ++index) {
++            if (index) out << ',';
++            out << gatewayProbeSelectionCandidateCounts_[index];
++        }
++        out << "],\"gateway_probe_selection_candidate_truncated\":[";
++        for (size_t index = 0; index < gatewayProbeSelectionCandidateTruncated_.size(); ++index) {
++            if (index) out << ',';
++            out << gatewayProbeSelectionCandidateTruncated_[index];
++        }
++        out << "],\"gateway_probe_candidate_ids\":[";
++        for (size_t index = 0; index < gatewayProbeCandidateIds_.size(); ++index) {
++            if (index) out << ',';
++            out << gatewayProbeCandidateIds_[index];
++        }
++        out << "],\"gateway_probe_candidate_distances\":[";
++        for (size_t index = 0; index < gatewayProbeCandidateDistances_.size(); ++index) {
++            if (index) out << ',';
++            out << gatewayProbeCandidateDistances_[index];
++        }
++        out << "],\"gateway_probe_candidate_reason_codes\":[";
++        for (size_t index = 0; index < gatewayProbeCandidateReasonCodes_.size(); ++index) {
++            if (index) out << ',';
++            out << gatewayProbeCandidateReasonCodes_[index];
++        }
+         out << "]"
+             << ",\"accepted_build_frames\":[";
+         for (size_t index = 0; index < acceptedBuildFrames_.size(); ++index) {
+@@ -1045,25 +1138,61 @@ class Kestrel final : public BWAPI::AIModule {
+         BWAPI::Unit best = nullptr;
+         int bestDistance = std::numeric_limits<int>::max();
+         int bestId = std::numeric_limits<int>::max();
++        const bool capture = gatewayProbeSelectionFrames_.size() < 2;
++        if (capture) {
++            pendingGatewayProbeSelectionFrame_ = BWAPI::Broodwar->getFrameCount();
++            pendingGatewayProbeSelectionBuilderId_ = -1;
++            pendingGatewayProbeSelectionTileX_ = tile.x;
++            pendingGatewayProbeSelectionTileY_ = tile.y;
++            pendingGatewayProbeSelectionBuilderDistance_ = -1;
++            pendingGatewayProbeSelectionEligibleCount_ = 0;
++            pendingGatewayProbeSelectionMinEligibleDistance_ = -1;
++            pendingGatewayProbeCandidateTruncated_ = false;
++            pendingGatewayProbeCandidateIds_.clear();
++            pendingGatewayProbeCandidateDistances_.clear();
++            pendingGatewayProbeCandidateReasonCodes_.clear();
++        }
+         for (auto unit : BWAPI::Broodwar->self()->getUnits()) {
+-            if (!unit->exists() || !unit->isCompleted() || unit->getType() != BWAPI::UnitTypes::Protoss_Probe) continue;
+-            if (unit->getID() == scoutId_) continue;
+-            if (isEmergencyDefender(unit->getID())) {
++            if (!unit->exists() || unit->getType() != BWAPI::UnitTypes::Protoss_Probe) continue;
++            const int distance = unit->getDistance(target);
++            int reason = 0;
++            if (!unit->isCompleted()) {
++                reason = 1;
++            } else if (unit->getID() == scoutId_) {
++                reason = 2;
++            } else if (isEmergencyDefender(unit->getID())) {
+                 ++emergencyBuildSelectionExclusions_;
+-                continue;
+-            }
+-            if (unit->isGatheringGas()) {
++                reason = 3;
++            } else if (unit->isGatheringGas()) {
+                 recordGasWorkerGuard(unit, "gateway_probe");
+-                continue;
++                reason = 4;
++            } else if (unit->isConstructing()) {
++                reason = 5;
++            }
++            if (capture && pendingGatewayProbeCandidateIds_.size() < kGatewayProbeEvidenceCap) {
++                pendingGatewayProbeCandidateIds_.push_back(unit->getID());
++                pendingGatewayProbeCandidateDistances_.push_back(distance);
++                pendingGatewayProbeCandidateReasonCodes_.push_back(reason);
++            } else if (capture) {
++                pendingGatewayProbeCandidateTruncated_ = true;
++            }
++            if (reason != 0) continue;
++            if (capture) {
++                ++pendingGatewayProbeSelectionEligibleCount_;
++                if (pendingGatewayProbeSelectionMinEligibleDistance_ < 0 ||
++                    distance < pendingGatewayProbeSelectionMinEligibleDistance_)
++                    pendingGatewayProbeSelectionMinEligibleDistance_ = distance;
+             }
+-            if (unit->isConstructing()) continue;
+-            const int distance = unit->getDistance(target);
+             if (distance < bestDistance || (distance == bestDistance && unit->getID() < bestId)) {
+                 best = unit;
+                 bestDistance = distance;
+                 bestId = unit->getID();
+             }
+         }
++        if (capture && best) {
++            pendingGatewayProbeSelectionBuilderId_ = best->getID();
++            pendingGatewayProbeSelectionBuilderDistance_ = bestDistance;
++        }
+         return best;
+     }
+ 
+@@ -1169,6 +1298,28 @@ class Kestrel final : public BWAPI::AIModule {
+         const int preCommandStructureCount = count(type);
+         const bool accepted = issue(worker->build(type, tile), BuildCommand);
+         if (accepted) {
++            if (earlyGateway && gatewayProbeSelectionFrames_.size() < 2 &&
++                pendingGatewayProbeSelectionBuilderId_ == worker->getID()) {
++                gatewayProbeSelectionFrames_.push_back(pendingGatewayProbeSelectionFrame_);
++                gatewayProbeSelectionOrdinals_.push_back(static_cast<int>(gatewayProbeSelectionFrames_.size()));
++                gatewayProbeSelectionBuilderIds_.push_back(worker->getID());
++                gatewayProbeSelectionTileXs_.push_back(pendingGatewayProbeSelectionTileX_);
++                gatewayProbeSelectionTileYs_.push_back(pendingGatewayProbeSelectionTileY_);
++                gatewayProbeSelectionBuilderDistances_.push_back(pendingGatewayProbeSelectionBuilderDistance_);
++                gatewayProbeSelectionEligibleCounts_.push_back(pendingGatewayProbeSelectionEligibleCount_);
++                gatewayProbeSelectionMinEligibleDistances_.push_back(pendingGatewayProbeSelectionMinEligibleDistance_);
++                gatewayProbeSelectionCandidateCounts_.push_back(static_cast<int>(pendingGatewayProbeCandidateIds_.size()));
++                gatewayProbeSelectionCandidateTruncated_.push_back(pendingGatewayProbeCandidateTruncated_ ? 1 : 0);
++                gatewayProbeCandidateIds_.insert(gatewayProbeCandidateIds_.end(),
++                                                 pendingGatewayProbeCandidateIds_.begin(),
++                                                 pendingGatewayProbeCandidateIds_.end());
++                gatewayProbeCandidateDistances_.insert(gatewayProbeCandidateDistances_.end(),
++                                                       pendingGatewayProbeCandidateDistances_.begin(),
++                                                       pendingGatewayProbeCandidateDistances_.end());
++                gatewayProbeCandidateReasonCodes_.insert(gatewayProbeCandidateReasonCodes_.end(),
++                                                         pendingGatewayProbeCandidateReasonCodes_.begin(),
++                                                         pendingGatewayProbeCandidateReasonCodes_.end());
++            }
+             if (wasEmergencyDefender(worker->getID())) {
+                 ++emergencyPostReleaseBuildOrders_;
+                 forgetPendingEmergencyGather(worker->getID());
