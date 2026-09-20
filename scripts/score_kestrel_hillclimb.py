@@ -134,7 +134,7 @@ def _candidate_generation(candidate_name: object) -> str | None:
     """Resolve a policy generation from the schedule's candidate display name."""
     if not isinstance(candidate_name, str):
         return None
-    match = re.search(r"(?:^|[^a-z0-9])v(38|37|36)(?:[^a-z0-9]|$)", candidate_name.lower())
+    match = re.search(r"(?:^|[^a-z0-9])v(40|38|37|36)(?:[^a-z0-9]|$)", candidate_name.lower())
     return f"v{match.group(1)}" if match else None
 
 
@@ -146,8 +146,10 @@ def _diagnostic_generation(metadata: dict[str, object], candidate_name: object =
     field-based detection remains the fallback for archived diagnostics.
     """
     candidate_generation = _candidate_generation(candidate_name)
-    if candidate_generation in {"v36", "v37", "v38"}:
+    if candidate_generation in {"v36", "v37", "v38", "v40"}:
         return candidate_generation
+    if any(name.startswith("gateway_probe_") for name in metadata):
+        return "v40"
     if any(name in metadata for name in (
         "shared_target_selections", "shared_target_frames", "shared_target_ids",
     )):
@@ -313,7 +315,7 @@ def _construction_pending_summary(metadata: dict[str, object], opponent_race: st
         grade = "review"
     score_checks = [value for value in checks.values() if isinstance(value, bool)]
     return {
-        "generation": generation if generation in {"v35", "v36", "v37", "v38"} else "v35",
+        "generation": generation if generation in {"v35", "v36", "v37", "v38", "v40"} else "v35",
         "telemetry_status": "complete" if not missing and not invalid_fields else "partial",
         "fields_present": present,
         "missing_fields": missing,
@@ -353,7 +355,7 @@ def _probe_reserve_summary(metadata: dict[str, object], opponent_race: str | Non
     )
     feature_present = any(name in metadata for name in names)
     if not feature_present:
-        if generation in {"v36", "v37", "v38"}:
+        if generation in {"v36", "v37", "v38", "v40"}:
             return {
                 "generation": generation,
                 "telemetry_status": "partial",
@@ -486,7 +488,7 @@ def _probe_reserve_summary(metadata: dict[str, object], opponent_race: str | Non
     else:
         grade = "review"
     return {
-        "generation": generation if generation in {"v36", "v37", "v38"} else "legacy" if not feature_present else "v36",
+        "generation": generation if generation in {"v36", "v37", "v38", "v40"} else "legacy" if not feature_present else "v36",
         "telemetry_status": "complete" if not missing and not invalid_fields and not invalid_scalars else "partial",
         "fields_present": present,
         "missing_fields": missing,
@@ -729,7 +731,7 @@ def _emergency_episode_summary(metadata: dict[str, object], opponent_race: str |
     else:
         grade = "pass" if not review_flags else "review"
     return {
-        "generation": generation if generation in {"v35", "v36", "v37", "v38"} else "v35",
+        "generation": generation if generation in {"v35", "v36", "v37", "v38", "v40"} else "v35",
         "telemetry_status": "complete" if not missing and not invalid_fields else "partial",
         "fields_present": present,
         "missing_fields": missing,
@@ -774,7 +776,7 @@ def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | 
                               generation: str | None = None) -> dict[str, object]:
     """Normalize v33/v34 emergency-worker telemetry and legacy absence."""
     generation = generation or _diagnostic_generation(metadata)
-    army_generation = "three" if generation in {"v34", "v35", "v36", "v37", "v38"} else "two"
+    army_generation = "three" if generation in {"v34", "v35", "v36", "v37", "v38", "v40"} else "two"
     army_event_key = f"emergency_army_{army_generation}_release_events"
     army_defender_key = f"emergency_army_{army_generation}_released_defenders"
     first_army_frame_key = f"emergency_first_army_{army_generation}_release_frame"
@@ -924,7 +926,7 @@ def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | 
     if values["emergency_threat_clear_release_events"] + values[army_event_key] > 0 and not release_trace:
         review_flags.append("release_reason_without_release_trace")
 
-    episode_summary = _emergency_episode_summary(metadata, opponent_race, generation) if generation in {"v35", "v36", "v37", "v38"} else None
+    episode_summary = _emergency_episode_summary(metadata, opponent_race, generation) if generation in {"v35", "v36", "v37", "v38", "v40"} else None
     if episode_summary is not None:
         review_flags.extend(f"episode:{flag}" for flag in episode_summary.get("review_flags", []))
 
@@ -1307,7 +1309,7 @@ def _zerg_offense_stage_summary(metadata: dict[str, object], opponent_race: str 
         grade = "review" if review_flags else "pass"
         telemetry_status = "complete" if not missing else "partial"
     return {
-        "generation": generation if feature_present and generation in {"v34", "v35", "v36", "v37", "v38"} else "v34" if feature_present else "legacy",
+        "generation": generation if feature_present and generation in {"v34", "v35", "v36", "v37", "v38", "v40"} else "v34" if feature_present else "legacy",
         "opponent_race": race,
         "expected_active": expected_active,
         "expected_inactive": expected_inactive,
@@ -1433,7 +1435,7 @@ def _scaling_summary(metadata: dict[str, object], generation: str | None = None)
         "seventh_pylon_completed_frame", "fifth_gateway_accepted_frame",
         "fifth_gateway_current_frame", "fifth_gateway_completed_frame",
     )
-    feature_present = generation in {"v37", "v38"} or any(name in metadata for name in required)
+    feature_present = generation in {"v37", "v38", "v40"} or any(name in metadata for name in required)
     if not feature_present:
         return {
             "generation": "legacy_absent", "telemetry_status": "legacy_absent",
@@ -1544,7 +1546,7 @@ def _scaling_summary(metadata: dict[str, object], generation: str | None = None)
     else:
         grade = "pass"
     return {
-        "generation": generation if generation in {"v37", "v38"} else "v37", "telemetry_status": "complete" if not missing and not invalid else "partial",
+        "generation": generation if generation in {"v37", "v38", "v40"} else "v37", "telemetry_status": "complete" if not missing and not invalid else "partial",
         "fields_present": [name for name in required if name in metadata],
         "missing_fields": missing, "invalid_fields": invalid, "review_flags": sorted(set(flags)),
         "opportunity_notes": opportunity_notes, "checks": checks,
@@ -1574,7 +1576,7 @@ def _shared_target_summary(metadata: dict[str, object], opponent_race: str | Non
         "shared_target_accepted_counts", "shared_target_participant_ids",
     )
     required = scalar_names + list_names
-    feature_present = generation == "v38" or any(name in metadata for name in required)
+    feature_present = generation in {"v38", "v40"} or any(name in metadata for name in required)
     if not feature_present:
         return {
             "generation": "legacy_absent", "telemetry_status": "legacy_absent",
@@ -1702,7 +1704,7 @@ def _shared_target_summary(metadata: dict[str, object], opponent_race: str | Non
         opportunity_notes.append("shared_target_accepted_command_unobserved")
     grade = "review" if flags else "pass" if coordinated_accepted_selections else "untested"
     return {
-        "generation": "v38", "telemetry_status": "complete" if not missing and not invalid else "partial",
+        "generation": generation if generation in {"v38", "v40"} else "v38", "telemetry_status": "complete" if not missing and not invalid else "partial",
         "fields_present": [name for name in required if name in metadata],
         "missing_fields": missing, "invalid_fields": invalid,
         "review_flags": sorted(set(flags)), "opportunity_notes": opportunity_notes,
@@ -1725,6 +1727,239 @@ def _shared_target_summary(metadata: dict[str, object], opponent_race: str | Non
             "no_invalid": values["shared_target_illegal_selections"] == 0 and values["shared_target_rejects"] == 0,
         },
         "quantitative_grade": {"grade": grade, "score": 100 if grade in {"pass", "untested"} else 0, "max_score": 100},
+    }
+
+
+def _gateway_probe_summary(metadata: dict[str, object], generation: str | None = None) -> dict[str, object]:
+    """Validate v40's bounded nearest-Gateway-Probe selection proof.
+
+    The candidate writes one row only after an accepted Gateway command, so a
+    complete row can prove the public candidate set, nearest-distance choice,
+    deterministic ID tie-break, and the corresponding accepted build frame.
+    Flat candidate arrays are partitioned by the per-row candidate counts.
+    """
+    generation = generation or _diagnostic_generation(metadata)
+    selection_names = (
+        "gateway_probe_selection_frames",
+        "gateway_probe_selection_ordinals",
+        "gateway_probe_selection_builder_ids",
+        "gateway_probe_selection_tile_xs",
+        "gateway_probe_selection_tile_ys",
+        "gateway_probe_selection_builder_distances",
+        "gateway_probe_selection_eligible_counts",
+        "gateway_probe_selection_min_eligible_distances",
+        "gateway_probe_selection_candidate_counts",
+        "gateway_probe_selection_candidate_truncated",
+    )
+    candidate_names = (
+        "gateway_probe_candidate_ids",
+        "gateway_probe_candidate_distances",
+        "gateway_probe_candidate_reason_codes",
+    )
+    required = selection_names + candidate_names
+    feature_present = generation == "v40" or any(name in metadata for name in required)
+    if not feature_present:
+        return {
+            "generation": "legacy_absent", "telemetry_status": "legacy_absent",
+            "fields_present": [], "missing_fields": [], "invalid_fields": [],
+            "selections": [], "trace": {name: [] for name in required},
+            "proof_sufficient": False, "review_flags": [], "opportunity_notes": [],
+            "checks": {},
+            "quantitative_grade": {"grade": "legacy_absent", "score": 0, "max_score": 0},
+        }
+
+    missing = [name for name in required if name not in metadata]
+    invalid = [name for name in required if name in metadata and not isinstance(metadata[name], list)]
+    arrays = {name: _metadata_list(metadata, name) for name in required}
+    flags: list[str] = []
+    if missing:
+        flags.append("gateway_probe_required_fields_missing")
+    if invalid:
+        flags.append("gateway_probe_field_type_mismatch")
+
+    selection_lengths = {name: len(arrays[name]) for name in selection_names}
+    selection_rows = min(selection_lengths.values(), default=0)
+    if len(set(selection_lengths.values())) > 1:
+        flags.append("gateway_probe_selection_trace_length_mismatch")
+    if any(len(arrays[name]) != selection_rows for name in selection_names):
+        flags.append("gateway_probe_selection_trace_incomplete")
+
+    def is_non_bool_int(value: object) -> bool:
+        return isinstance(value, int) and not isinstance(value, bool)
+
+    for name in selection_names:
+        if any(not is_non_bool_int(value) for value in arrays[name][:selection_rows]):
+            flags.append(f"gateway_probe_selection_{name.removeprefix('gateway_probe_selection_')}_type_mismatch")
+    for name in candidate_names:
+        if any(not is_non_bool_int(value) for value in arrays[name]):
+            flags.append(f"gateway_probe_{name.removeprefix('gateway_probe_')}_type_mismatch")
+
+    candidate_counts = arrays["gateway_probe_selection_candidate_counts"]
+    counts_valid = all(is_non_bool_int(value) and value >= 0 for value in candidate_counts[:selection_rows])
+    if any(is_non_bool_int(value) and value < 0 for value in candidate_counts[:selection_rows]):
+        flags.append("gateway_probe_candidate_count_negative")
+    expected_candidates = sum(candidate_counts[:selection_rows]) if counts_valid else None
+    candidate_lengths = {name: len(arrays[name]) for name in candidate_names}
+    if len(set(candidate_lengths.values())) > 1:
+        flags.append("gateway_probe_candidate_trace_length_mismatch")
+    if expected_candidates is not None and any(length != expected_candidates for length in candidate_lengths.values()):
+        flags.append("gateway_probe_candidate_trace_partition_mismatch")
+
+    allowed_reason_codes = {0, 1, 2, 3, 4, 5}
+    reason_codes = arrays["gateway_probe_candidate_reason_codes"]
+    if any(is_non_bool_int(value) and value not in allowed_reason_codes for value in reason_codes):
+        flags.append("gateway_probe_reason_code_invalid")
+    if any(is_non_bool_int(value) and value < 0 for value in arrays["gateway_probe_candidate_ids"]):
+        flags.append("gateway_probe_candidate_id_invalid")
+    if any(is_non_bool_int(value) and value < 0 for value in arrays["gateway_probe_candidate_distances"]):
+        flags.append("gateway_probe_candidate_distance_invalid")
+
+    truncation = arrays["gateway_probe_selection_candidate_truncated"]
+    if any(is_non_bool_int(value) and value not in {0, 1} for value in truncation[:selection_rows]):
+        flags.append("gateway_probe_truncation_flag_invalid")
+
+    frames = arrays["gateway_probe_selection_frames"]
+    ordinals = arrays["gateway_probe_selection_ordinals"]
+    builder_ids = arrays["gateway_probe_selection_builder_ids"]
+    builder_distances = arrays["gateway_probe_selection_builder_distances"]
+    eligible_counts = arrays["gateway_probe_selection_eligible_counts"]
+    minimum_distances = arrays["gateway_probe_selection_min_eligible_distances"]
+    rows: list[dict[str, object]] = []
+    candidate_offset = 0
+    for index in range(selection_rows):
+        count = candidate_counts[index] if is_non_bool_int(candidate_counts[index]) and candidate_counts[index] >= 0 else 0
+        end = candidate_offset + count
+        row_candidates = [
+            {"id": candidate_id, "distance": candidate_distance, "reason_code": reason}
+            for candidate_id, candidate_distance, reason in zip(
+                arrays["gateway_probe_candidate_ids"][candidate_offset:end],
+                arrays["gateway_probe_candidate_distances"][candidate_offset:end],
+                arrays["gateway_probe_candidate_reason_codes"][candidate_offset:end],
+            )
+        ]
+        candidate_offset = end
+        row = {
+            "index": index,
+            "frame": frames[index],
+            "ordinal": ordinals[index],
+            "builder_id": builder_ids[index],
+            "tile_x": arrays["gateway_probe_selection_tile_xs"][index],
+            "tile_y": arrays["gateway_probe_selection_tile_ys"][index],
+            "builder_distance": builder_distances[index],
+            "eligible_count": eligible_counts[index],
+            "minimum_eligible_distance": minimum_distances[index],
+            "candidate_count": count,
+            "candidate_truncated": truncation[index],
+            "candidates": row_candidates,
+        }
+        rows.append(row)
+
+        row_values = (frames[index], ordinals[index], builder_ids[index],
+                      arrays["gateway_probe_selection_tile_xs"][index],
+                      arrays["gateway_probe_selection_tile_ys"][index],
+                      builder_distances[index], eligible_counts[index],
+                      minimum_distances[index], count, truncation[index])
+        if any(not is_non_bool_int(value) for value in row_values):
+            continue
+        if any(value < 0 for value in row_values[:8]) or row_values[8] < 0:
+            flags.append(f"gateway_probe_selection_row_{index}_negative_value")
+        if row_values[9] != 0:
+            flags.append(f"gateway_probe_selection_row_{index}_truncated")
+        if row_values[6] <= 0:
+            flags.append(f"gateway_probe_selection_row_{index}_no_eligible_builder")
+
+        candidate_ids = [item["id"] for item in row_candidates]
+        eligible = [item for item in row_candidates if item["reason_code"] == 0]
+        if len(eligible) != row_values[6]:
+            flags.append(f"gateway_probe_selection_row_{index}_eligible_count_mismatch")
+        selected = [item for item in eligible if item["id"] == row_values[2]]
+        if len(selected) != 1:
+            flags.append(f"gateway_probe_selection_row_{index}_selected_builder_occurrence")
+        elif selected[0]["distance"] != row_values[5]:
+            flags.append(f"gateway_probe_selection_row_{index}_selected_distance_mismatch")
+        if eligible:
+            nearest_distance = min(item["distance"] for item in eligible)
+            nearest_ids = [item["id"] for item in eligible if item["distance"] == nearest_distance]
+            if row_values[7] != nearest_distance:
+                flags.append(f"gateway_probe_selection_row_{index}_minimum_distance_mismatch")
+            if row_values[5] != nearest_distance:
+                flags.append(f"gateway_probe_selection_row_{index}_nearest_distance_failure")
+            if row_values[2] != min(nearest_ids):
+                flags.append(f"gateway_probe_selection_row_{index}_builder_tie_break_failure")
+        elif row_values[6] > 0:
+            flags.append(f"gateway_probe_selection_row_{index}_eligible_trace_missing")
+        if len(candidate_ids) != len(set(candidate_ids)):
+            flags.append(f"gateway_probe_selection_row_{index}_candidate_id_duplicate")
+
+    if any(not is_non_bool_int(value) or value < 0 for value in frames[:selection_rows]):
+        flags.append("gateway_probe_selection_frame_invalid")
+    if any(not is_non_bool_int(value) or value < 1 for value in ordinals[:selection_rows]):
+        flags.append("gateway_probe_selection_ordinal_invalid")
+    if ordinals[:selection_rows] != list(range(1, selection_rows + 1)):
+        flags.append("gateway_probe_selection_ordinals_not_sequential")
+    if any(is_non_bool_int(previous) and is_non_bool_int(current) and current <= previous
+           for previous, current in zip(frames[:selection_rows], frames[1:selection_rows])):
+        flags.append("gateway_probe_selection_frames_not_ordered")
+    if selection_rows > 2:
+        flags.append("gateway_probe_selection_count_exceeds_cap")
+
+    # v40's accepted-build trace records type IDs and frames for all accepted
+    # structures. The first Gateway rows must correspond one-for-one to the
+    # bounded selection rows, using the same command frame.
+    build_frames = _metadata_list(metadata, "accepted_build_frames")
+    build_type_ids = _metadata_list(metadata, "accepted_build_type_ids")
+    gateway_build_frames = [
+        frame for frame, type_id in zip(build_frames, build_type_ids)
+        if type_id == 160
+    ]
+    if selection_rows and (not build_frames or not build_type_ids):
+        flags.append("gateway_probe_gateway_build_trace_missing")
+    elif selection_rows and len(gateway_build_frames) < selection_rows:
+        flags.append("gateway_probe_gateway_build_trace_incomplete")
+    elif selection_rows:
+        for index, frame in enumerate(frames[:selection_rows]):
+            if gateway_build_frames[index] != frame:
+                flags.append(f"gateway_probe_gateway_build_frame_mismatch_{index}")
+
+    checks = {
+        "required_fields": not missing and not invalid,
+        "selection_arrays_aligned": "gateway_probe_selection_trace_length_mismatch" not in flags
+        and "gateway_probe_selection_trace_incomplete" not in flags,
+        "candidate_trace_partitioned": not any(flag.startswith("gateway_probe_candidate_trace") for flag in flags),
+        "candidate_trace_complete": expected_candidates is not None and not any(
+            flag.startswith("gateway_probe_candidate_trace") for flag in flags
+        ),
+        "untruncated": not any(flag.endswith("_truncated") for flag in flags),
+        "reason_codes_legal": "gateway_probe_reason_code_invalid" not in flags,
+        "nearest_distance_and_tie_break": not any(
+            "nearest_distance_failure" in flag or "tie_break_failure" in flag for flag in flags
+        ),
+        "ordinal_frame_order": not any(
+            flag.startswith("gateway_probe_selection_ordinal") or flag.startswith("gateway_probe_selection_frame")
+            or flag == "gateway_probe_selection_frames_not_ordered" for flag in flags
+        ),
+        "accepted_gateway_alignment": not any(flag.startswith("gateway_probe_gateway_build") for flag in flags),
+    }
+    proof_sufficient = selection_rows >= 2 and not flags
+    checks["two_selection_proof"] = proof_sufficient
+    opportunity_notes = [] if selection_rows else ["gateway_probe_opportunity_unobserved"]
+    grade = "review" if flags else "pass" if proof_sufficient else "untested"
+    return {
+        "generation": "v40",
+        "telemetry_status": "complete" if not missing and not invalid else "partial",
+        "fields_present": [name for name in required if name in metadata],
+        "missing_fields": missing, "invalid_fields": invalid,
+        "selections": rows,
+        "trace": {name: arrays[name] for name in required},
+        "selection_count": selection_rows,
+        "candidate_count": len(arrays["gateway_probe_candidate_ids"]),
+        "proof_sufficient": proof_sufficient,
+        "checks": checks,
+        "review_flags": sorted(set(flags)),
+        "opportunity_notes": opportunity_notes,
+        "quantitative_grade": {"grade": grade, "score": 100 if grade in {"pass", "untested"} else 0,
+                                "max_score": 100},
+        "note": "v40 gateway-probe telemetry proves only the first two accepted public Gateway selections; it does not expose hidden state or prove causal strength.",
     }
 
 
@@ -1845,6 +2080,7 @@ def _diagnostic_summary(metadata: dict[str, object], root: Path, opponent_race: 
     result["zerg_offense_stage"] = _zerg_offense_stage_summary(metadata, opponent_race, generation)
     result["scaling"] = _scaling_summary(metadata, generation)
     result["shared_target"] = _shared_target_summary(metadata, opponent_race, generation)
+    result["gateway_probe"] = _gateway_probe_summary(metadata, generation)
     return result
 
 
@@ -1978,6 +2214,7 @@ def score_kestrel_match(manifest: dict[str, object], manifest_path: Path, screp:
         "construction_pending": diagnostic["construction_pending"],
         "probe_reserve": diagnostic["probe_reserve"],
         "zerg_offense_stage": diagnostic["zerg_offense_stage"],
+        "gateway_probe": diagnostic["gateway_probe"],
         "outcome_performance": outcome_performance(diagnostic_metadata),
     })
     parsed_replays: list[dict[str, object]] = []
@@ -2056,6 +2293,7 @@ def score_kestrel_match(manifest: dict[str, object], manifest_path: Path, screp:
     if (diagnostic.get("zerg_offense_stage") or {}).get("review_flags"): integrity_reasons.append("zerg_offense_stage_review")
     if (diagnostic.get("scaling") or {}).get("review_flags"): integrity_reasons.append("scaling_review")
     if (diagnostic.get("shared_target") or {}).get("review_flags"): integrity_reasons.append("shared_target_review")
+    if (diagnostic.get("gateway_probe") or {}).get("review_flags"): integrity_reasons.append("gateway_probe_review")
     if not candidate_parsed: integrity_reasons.append("candidate_replay_missing")
     if candidate_parsed and not candidate_parsed.get("manifest_hash_matches"): integrity_reasons.append("candidate_replay_hash")
     if any(not item["fidelity"].get("hash_matches") for item in game["replays"]): integrity_reasons.append("replay_hash")
@@ -2200,6 +2438,36 @@ def parse_replay(path: Path, screp: Path, player_id: int | None = None) -> dict[
     return result
 
 
+def _aggregate_gateway_probe(gateway_probe_games: list[dict[str, object]]) -> dict[str, object]:
+    """Aggregate v40 proof without collapsing per-game review flags."""
+    review_flags: dict[str, int] = {}
+    opportunity_notes: dict[str, int] = {}
+    aggregate: dict[str, object] = {
+        "games": len(gateway_probe_games),
+        "generations": {generation: sum(item.get("generation") == generation for item in gateway_probe_games)
+                         for generation in ("v40", "legacy_absent")},
+        "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade
+                               for item in gateway_probe_games)
+                   for grade in ("pass", "untested", "review", "legacy_absent")},
+        "selection_rows": sum(item.get("selection_count", 0) for item in gateway_probe_games),
+        "complete_two_selection_games": sum(item.get("proof_sufficient") is True for item in gateway_probe_games),
+        "untruncated_games": sum((item.get("checks") or {}).get("untruncated") is True
+                                  for item in gateway_probe_games),
+        "nearest_tie_break_passes": sum((item.get("checks") or {}).get("nearest_distance_and_tie_break") is True
+                                         for item in gateway_probe_games),
+        "review_flags": review_flags,
+        "opportunity_notes": opportunity_notes,
+    }
+    for item in gateway_probe_games:
+        for flag in item.get("review_flags", []):
+            review_flags[flag] = review_flags.get(flag, 0) + 1
+        for note in item.get("opportunity_notes", []):
+            opportunity_notes[note] = opportunity_notes.get(note, 0) + 1
+    aggregate["review_flags"] = dict(sorted(review_flags.items()))
+    aggregate["opportunity_notes"] = dict(sorted(opportunity_notes.items()))
+    return aggregate
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--experiment-id", required=True)
@@ -2289,7 +2557,7 @@ def main() -> int:
     }
     episode_games = [
         (bridge.get("episodes") or {}) for bridge in bridge_games
-        if isinstance(bridge.get("episodes"), dict) and (bridge.get("episodes") or {}).get("generation") in {"v35", "v36", "v37", "v38"}
+        if isinstance(bridge.get("episodes"), dict) and (bridge.get("episodes") or {}).get("generation") in {"v35", "v36", "v37", "v38", "v40"}
     ]
     aggregate["emergency_bridge"]["episodes"] = _aggregate_emergency_episode_summaries(episode_games)
     stage_games = [g.get("zerg_offense_stage") for g in games if isinstance(g.get("zerg_offense_stage"), dict)]
@@ -2298,7 +2566,7 @@ def main() -> int:
     aggregate["zerg_offense_stage"] = {
         "games": len(stage_games),
         "generations": {generation: sum(stage.get("generation") == generation for stage in stage_games)
-                         for generation in ("v34", "v35", "v36", "v37", "v38", "legacy")},
+                         for generation in ("v34", "v35", "v36", "v37", "v38", "v40", "legacy")},
         "grades": {grade: sum((stage.get("quantitative_grade") or {}).get("grade") == grade for stage in stage_games)
                    for grade in ("pass", "untested", "review", "legacy_absent")},
         "threshold_observed": sum((stage.get("peak_surplus") or 0) >= 6 for stage in stage_games),
@@ -2326,7 +2594,7 @@ def main() -> int:
     aggregate["construction_pending"] = {
         "games": len(construction_games),
         "generations": {generation: sum(item.get("generation") == generation for item in construction_games)
-                         for generation in ("v35", "v36", "v37", "v38", "legacy")},
+                         for generation in ("v35", "v36", "v37", "v38", "v40", "legacy")},
         "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade for item in construction_games)
                    for grade in ("pass", "untested", "review", "legacy_absent")},
         "accepted_builds": sum(len((item.get("accepted_builds") or {}).get("rows", [])) for item in construction_games),
@@ -2342,7 +2610,7 @@ def main() -> int:
     aggregate["probe_reserve"] = {
         "games": len(reserve_games),
         "generations": {generation: sum(item.get("generation") == generation for item in reserve_games)
-                         for generation in ("v36", "v37", "v38", "legacy")},
+                         for generation in ("v36", "v37", "v38", "v40", "legacy")},
         "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade for item in reserve_games)
                    for grade in ("pass", "untested", "review", "legacy_absent")},
         "reserve_blocks": sum((item.get("reserve_blocks") or {}).get("count", 0) for item in reserve_games),
@@ -2359,7 +2627,7 @@ def main() -> int:
     aggregate["scaling"] = {
         "games": len(scaling_games),
         "generations": {generation: sum(item.get("generation") == generation for item in scaling_games)
-                         for generation in ("v37", "v38", "legacy_absent")},
+                         for generation in ("v37", "v38", "v40", "legacy_absent")},
         "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade for item in scaling_games)
                    for grade in ("pass", "partial", "untested", "review", "legacy_absent")},
         "eligible": sum((item.get("upgrade") or {}).get("range_upgrade_eligibility_frame", -1) >= 0 for item in scaling_games),
@@ -2383,7 +2651,7 @@ def main() -> int:
     aggregate["shared_target"] = {
         "games": len(shared_target_games),
         "generations": {generation: sum(item.get("generation") == generation for item in shared_target_games)
-                         for generation in ("v38", "legacy_absent")},
+                         for generation in ("v38", "v40", "legacy_absent")},
         "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade for item in shared_target_games)
                    for grade in ("pass", "untested", "review", "legacy_absent")},
         "selections": sum((item.get("counters") or {}).get("shared_target_selections", 0) for item in shared_target_games),
@@ -2407,6 +2675,8 @@ def main() -> int:
             shared_target_opportunity_notes[note] = shared_target_opportunity_notes.get(note, 0) + 1
     aggregate["shared_target"]["review_flags"] = dict(sorted(shared_target_review_flags.items()))
     aggregate["shared_target"]["opportunity_notes"] = dict(sorted(shared_target_opportunity_notes.items()))
+    gateway_probe_games = [g.get("gateway_probe") for g in games if isinstance(g.get("gateway_probe"), dict)]
+    aggregate["gateway_probe"] = _aggregate_gateway_probe(gateway_probe_games)
     output = Path(args.output).resolve() if args.output else experiment_dir / "hillclimb-scorecard.json"
     scorecard = {"schema_version": 1, "experiment_id": args.experiment_id,
                  "candidate_name": candidate_name, "ledger_path": str(ledger_path),

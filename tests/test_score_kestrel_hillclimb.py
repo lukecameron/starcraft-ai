@@ -224,6 +224,91 @@ class KestrelScorecardTests(TestCase):
         })
         return metadata
 
+    @staticmethod
+    def v40_metadata() -> dict[str, object]:
+        metadata = KestrelScorecardTests.v38_metadata()
+        metadata.update({
+            "gateway_probe_selection_frames": [50, 75],
+            "gateway_probe_selection_ordinals": [1, 2],
+            "gateway_probe_selection_builder_ids": [101, 101],
+            "gateway_probe_selection_tile_xs": [12, 13],
+            "gateway_probe_selection_tile_ys": [20, 20],
+            "gateway_probe_selection_builder_distances": [30, 25],
+            "gateway_probe_selection_eligible_counts": [2, 2],
+            "gateway_probe_selection_min_eligible_distances": [30, 25],
+            "gateway_probe_selection_candidate_counts": [3, 3],
+            "gateway_probe_selection_candidate_truncated": [0, 0],
+            "gateway_probe_candidate_ids": [101, 102, 103, 101, 102, 104],
+            "gateway_probe_candidate_distances": [30, 30, 35, 25, 25, 31],
+            "gateway_probe_candidate_reason_codes": [0, 0, 4, 0, 0, 5],
+        })
+        return metadata
+
+    def test_v40_generation_and_gateway_probe_summary_prove_two_selections(self):
+        metadata = self.v40_metadata()
+        self.assertEqual(scorer._candidate_generation("Kestrel-v40-nearest-gateway-probe"), "v40")
+        self.assertEqual(scorer._diagnostic_generation(metadata, "Kestrel-v40-nearest-gateway-probe"), "v40")
+
+        summary = scorer._gateway_probe_summary(metadata, "v40")
+
+        self.assertEqual(summary["quantitative_grade"]["grade"], "pass")
+        self.assertTrue(summary["proof_sufficient"])
+        self.assertEqual(summary["selection_count"], 2)
+        self.assertTrue(summary["checks"]["nearest_distance_and_tie_break"])
+        self.assertEqual(summary["selections"][1]["builder_id"], 101)
+        self.assertEqual(summary["review_flags"], [])
+
+    def test_v40_gateway_probe_rejects_tie_break_and_truncation(self):
+        metadata = self.v40_metadata()
+        metadata["gateway_probe_selection_builder_ids"] = [102, 101]
+        metadata["gateway_probe_selection_candidate_truncated"] = [1, 0]
+
+        summary = scorer._gateway_probe_summary(metadata, "v40")
+
+        self.assertEqual(summary["quantitative_grade"]["grade"], "review")
+        self.assertIn("gateway_probe_selection_row_0_truncated", summary["review_flags"])
+        self.assertIn("gateway_probe_selection_row_0_builder_tie_break_failure", summary["review_flags"])
+
+    def test_v40_gateway_probe_requires_complete_aligned_arrays_and_build_frames(self):
+        metadata = self.v40_metadata()
+        metadata["gateway_probe_candidate_distances"] = [30]
+        metadata["accepted_build_frames"] = [20, 51, 75]
+
+        summary = scorer._gateway_probe_summary(metadata, "v40")
+
+        self.assertEqual(summary["quantitative_grade"]["grade"], "review")
+        self.assertIn("gateway_probe_candidate_trace_partition_mismatch", summary["review_flags"])
+        self.assertIn("gateway_probe_gateway_build_frame_mismatch_0", summary["review_flags"])
+
+    def test_v40_score_match_and_aggregate_retain_generation_and_proof(self):
+        metadata = self.v40_metadata()
+        metadata.update({"ended": True, "winner": False, "frame_count": 1000,
+                         "command_categories": {}, "rejected_commands": 0})
+        candidate_name = "Kestrel-v40-nearest-gateway-probe"
+        manifest = {
+            "run_id": "v40-gateway-probe-propagation",
+            "status": "completed",
+            "outcome_verified": True,
+            "players": [
+                {"player": 1, "name": candidate_name, "return_code": 0, "result_metadata": metadata},
+                {"player": 2, "name": "Opponent", "return_code": 0,
+                 "environment": {"BWAPI_CONFIG_AUTO_MENU__RACE": "Zerg"},
+                 "result_metadata": {"winner": True}},
+            ],
+            "replays": [],
+        }
+        result = scorer.score_kestrel_match(manifest, Path("manifest.json"), Path("screp"),
+                                            candidate_name=candidate_name)
+
+        self.assertEqual(result["diagnostic"]["telemetry_generation"], "v40")
+        self.assertEqual(result["gateway_probe"]["generation"], "v40")
+        self.assertTrue(result["gateway_probe"]["proof_sufficient"])
+        self.assertEqual(result["gateway_probe"]["quantitative_grade"]["grade"], "pass")
+        aggregate = scorer._aggregate_gateway_probe([result["gateway_probe"]])
+        self.assertEqual(aggregate["generations"]["v40"], 1)
+        self.assertEqual(aggregate["complete_two_selection_games"], 1)
+        self.assertEqual(aggregate["selection_rows"], 2)
+
     def test_v37_scaling_summary_validates_upgrade_caps_and_milestones(self):
         summary = scorer._scaling_summary(self.v37_metadata(), "v37")
         self.assertEqual(summary["quantitative_grade"]["grade"], "pass")
