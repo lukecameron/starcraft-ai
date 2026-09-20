@@ -1367,6 +1367,30 @@
         "origin": "Original",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
       }
+    },
+    {
+      "id": "kestrel-hillclimb-v11",
+      "title": "Kestrel v32 stable three-unit Zerg reserve hill-climb",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "A stable three-unit reserve against Zerg will preserve local defense, eliminate repeated home-move traffic and retain surplus offense.",
+      "notes": "Five concurrent games completed validly with ten hash- and frame-verified replays. The reserve mechanism passed: McRave had three of three reserve units local at first real pressure, reserve remote attacks stayed zero, and surplus offense released at army four. Kestrel lost all five games.",
+      "conclusion": "Reject v32 for advancement because the frozen screen recorded zero wins. Retain its reserve and command-state improvements as measured evidence; the next bounded candidate should bridge ZZZK\u2019s one-defender pressure window. No Elo update.",
+      "evidence_run_ids": [
+        "20260920T155249-f10d4c5796a5",
+        "20260920T155249-6b174c7d4dcb",
+        "20260920T155249-1df24b730444",
+        "20260920T155249-561366d52347",
+        "20260920T155249-8e9baecf77fe"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v11",
+      "candidate_binary_sha256": "3809371159c53fee4b761227d0d4d91d5b45bb5342ddda0be3ab73eba0a9899d",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      }
     }
   ]
 }
