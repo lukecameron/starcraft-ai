@@ -1519,6 +1519,41 @@
       },
       "matched_parent_experiment": "kestrel-hillclimb-v15",
       "result_path": "docs/evaluations/kestrel-hillclimb-v16/RESULT.md"
+    },
+    {
+      "id": "kestrel-hillclimb-v17",
+      "title": "Kestrel v38 shared-target held-out confirmation eligibility screen",
+      "date": "2026-09-21",
+      "status": "completed",
+      "decision": "ADOPT",
+      "hypothesis": "A shared visible legal ground target for eligible Kestrel combat units will improve attack coordination while preserving the v37 opening, scaling, reserve, emergency, construction, staged-offense, commandability and non-Zerg mechanisms.",
+      "notes": "Five concurrent games completed with five valid short terminal games, ten verified replays, one verified Kestrel win and four losses, and all shared-target integrity gates passing. Eligible for a separately preregistered held-out confirmation only. No Elo update.",
+      "conclusion": "Adopt only to a separately preregistered held-out confirmation. The matched screen reproduces the v16 1-4 result and verifies 1,914 accepted shared-target commands with zero illegal selections, but five games cannot establish causal or general strength improvement. No promotion or Elo update.",
+      "evidence_run_ids": [
+        "20260920T184731-21d81fdc506e",
+        "20260920T184731-0d0592b849ec",
+        "20260920T184731-5a708d51551f",
+        "20260920T184731-9f0835a34183",
+        "20260920T184731-69772d6f50e9"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v17",
+      "candidate_binary_sha256": "7fdc4f9ad61152e7758318e7d35d04fbda0746a4e2f85a48b3bc664577e0c160",
+      "candidate_source_sha256": "f105ab5073ec3d586807478c74838900ed02fa2d812c3ac4d94081c36c3217ab",
+      "candidate_source_combo_sha256": "ce744d7adcd3dc0a051c68a7162d975b40284c014a9b7e1eae785b59da9b8f7b",
+      "candidate_patch_sha256": "2d84b98d3288d4ac922c22c71647f29492925138ee1ec757ee36512b9786b61a",
+      "candidate_build_sidecar_sha256": "75f2f2fd236bdd71cb64102f8286c0358cd39a1c1a8ffbccf69fb7578a53a1b4",
+      "plan_sha256": "9559d89008377c1323335b17962ddebc4bcf68b34745a430e96cf711016ddebf",
+      "schedule_sha256": "5f72d1f1f36e9708f806c8deaf4477fab729d3854477b6ee444d3851454ce6d2",
+      "ledger_sha256": "7ee523aab65afbb7e7837c44720b7738328e858946944dfb26d66d38853fe90c",
+      "scorecard_sha256": "24d15faaa6c1345080eceec6a25e236bbc3555949705e18bcbb30d4dcecf9c16",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "author": "Luke Cameron",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      },
+      "matched_parent_experiment": "kestrel-hillclimb-v16",
+      "result_path": "docs/evaluations/kestrel-hillclimb-v17/RESULT.md"
     }
   ]
 }

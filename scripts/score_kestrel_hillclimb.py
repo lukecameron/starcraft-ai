@@ -2087,6 +2087,7 @@ def score_kestrel_match(manifest: dict[str, object], manifest_path: Path, screp:
     game["defense"] = defense
     game["reserve_offense"] = diagnostic["reserve_offense"]
     game["scaling"] = diagnostic["scaling"]
+    game["shared_target"] = diagnostic["shared_target"]
     return game
 
 

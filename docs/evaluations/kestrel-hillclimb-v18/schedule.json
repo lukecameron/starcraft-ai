@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "experiment_id": "kestrel-hillclimb-v18",
+  "registered_at": "2026-09-21",
+  "eval_plan": "docs/evaluations/kestrel-hillclimb-v18/EVAL_PLAN.md",
+  "eval_plan_sha256": "6a450005eb3c40e0b2ba623a70927beef66bb02abeabede1f8ae092a17873c13",
+  "purpose": "Ten-game held-out confirmation of Kestrel v38 shared-target treatment in two analysis blocks of five",
+  "hypothesis": "Kestrel v38 retains legal shared-target coordination and v37 scaling while achieving at least two wins in ten fresh games, including one ZZZK win",
+  "stop_condition": "Run exactly ten ordered attempts with concurrency five; wave labels are analysis metadata, not barriers; retain every result; stop after two consecutive infrastructure-invalid attempts, a 1200-second cohort cap, or completion; do not retry, reseed, replace, or rerun",
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "launcher_sha256": "af1682393f9fe43afe885b35a1637e9c464719ef93c83e799d614beed20316c1",
+  "launcher_sidecar": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher.build.json",
+  "launcher_sidecar_sha256": "0beebdd3bb6221a5e6143c015763d14fa20330a8976ede3f997062660b3e7390",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "game_data_files": [
+    {"path": "third_party/game-data/runtime/BrooDat.mpq", "sha256": "c6d810981e24b947b36d531ab047e143fec0284a581fdaad6fc431e1e75e21df"},
+    {"path": "third_party/game-data/runtime/Patch_rt.mpq", "sha256": "a063f069f1abe202b142b08a9dab878eba8ba033bf13a818024a72631c4452be"},
+    {"path": "third_party/game-data/runtime/StarDat.mpq", "sha256": "8845fd871b4f8f242cc5c2b6f6b8b319d86bbbd02bc836356b51f81b5ba8203f"},
+    {"path": "third_party/game-data/runtime/sscai/(2)Benzene.scx", "sha256": "45764b9baa72f83a5eb2eab49ddea46c6af21da75bc42e687e6dab93e4e4044e"},
+    {"path": "third_party/game-data/runtime/sscai/(2)Destination.scx", "sha256": "0241ae7e8b43632e3421444aa3ca3bb10d28b4796f4ccc138103c3b75e5158a5"},
+    {"path": "third_party/game-data/runtime/sscai/(2)Heartbreak Ridge.scx", "sha256": "64527ae691307756dbc2700c68ab5878476eed27c3dfc9a64411955f4107f50b"},
+    {"path": "third_party/game-data/runtime/sscai/(4)Circuit Breaker.scx", "sha256": "ba956f73d18342f3f329741b684fd569e6bcf718b1fcebd86c2d965481260bc0"}
+  ],
+  "wall_timeout_seconds": 300,
+  "cohort_wall_cap_seconds": 1200,
+  "concurrency": 5,
+  "stop_after_consecutive_invalid": 2,
+  "candidate": {
+    "name": "Kestrel-v38-shared-target",
+    "path": "artifacts/builds/7fdc4f9ad61152e7758318e7d35d04fbda0746a4e2f85a48b3bc664577e0c160/kestrel-opening-v38-shared-target/Kestrel.dylib",
+    "race": "Protoss",
+    "sha256": "7fdc4f9ad61152e7758318e7d35d04fbda0746a4e2f85a48b3bc664577e0c160",
+    "ownership": "Ours",
+    "origin": "Original",
+    "author": "Luke Cameron",
+    "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel",
+    "source_files": [
+      "third_party/kestrel-opening-v38-candidate/Kestrel.cpp",
+      "third_party/kestrel-opening-v38-candidate/CMakeLists.txt",
+      "third_party/kestrel-opening-v38-candidate/LICENSE"
+    ],
+    "source_sha256": "f105ab5073ec3d586807478c74838900ed02fa2d812c3ac4d94081c36c3217ab",
+    "source_sha256_scope": "Kestrel.cpp",
+    "source_combo_sha256": "ce744d7adcd3dc0a051c68a7162d975b40284c014a9b7e1eae785b59da9b8f7b",
+    "build_sidecar": "artifacts/builds/7fdc4f9ad61152e7758318e7d35d04fbda0746a4e2f85a48b3bc664577e0c160/kestrel-opening-v38-shared-target/Kestrel.dylib.build.json",
+    "build_sidecar_sha256": "75f2f2fd236bdd71cb64102f8286c0358cd39a1c1a8ffbccf69fb7578a53a1b4",
+    "source_patch": "patches/kestrel-v37-to-v38-shared-target.patch",
+    "source_patch_sha256": "2d84b98d3288d4ac922c22c71647f29492925138ee1ec757ee36512b9786b61a"
+  },
+  "base_candidate": {
+    "experiment_id": "kestrel-hillclimb-v17",
+    "name": "Kestrel-v38-shared-target",
+    "binary_path": "artifacts/builds/7fdc4f9ad61152e7758318e7d35d04fbda0746a4e2f85a48b3bc664577e0c160/kestrel-opening-v38-shared-target/Kestrel.dylib",
+    "binary_sha256": "7fdc4f9ad61152e7758318e7d35d04fbda0746a4e2f85a48b3bc664577e0c160",
+    "policy": "Exact frozen v38 candidate from the v17 screen; no source changes are permitted"
+  },
+  "treatment": {
+    "target_selection": "one shared visible legal ground target per ordinary-combat selection cadence",
+    "target_priority": ["local visible target", "nearest visible legal target to eligible army centroid", "unit-ID tie-break"],
+    "target_retention": "retain a valid selected target until invalidated or a local target takes priority",
+    "excluded_participants": ["emergency defenders", "Zerg reserve", "non-Zerg leashed Zealots", "scouts"],
+    "pre_release_zerg_policy": "ordinary non-reserve units may share only a local legal defense target; remote targets remain blocked",
+    "public_information_only": true
+  },
+  "opponents": {
+    "zzzk": {"name": "ZZZKBot", "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib", "race": "Zerg", "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748", "ownership": "Ours", "origin": "Port", "author": "Chris Coxe", "source_url": "https://github.com/chriscoxe/ZZZKBot"},
+    "uab-t": {"name": "UAlbertaBot-Terran", "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib", "race": "Terran", "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9", "ownership": "Ours", "origin": "Port", "author": "David Churchill", "source_url": "https://github.com/davechurchill/ualbertabot"},
+    "uab-p": {"name": "UAlbertaBot-Protoss", "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib", "race": "Protoss", "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9", "ownership": "Ours", "origin": "Port", "author": "David Churchill", "source_url": "https://github.com/davechurchill/ualbertabot"},
+    "mcrave": {"name": "McRave-9Pool-treatment", "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib", "race": "Zerg", "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e", "ownership": "Ours", "origin": "Fork", "author": "Christian McCrave", "source_url": "https://github.com/Cmccrave/McRave"},
+    "stardust": {"name": "Stardust-repaired", "path": "artifacts/builds/1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa/stardust-emptytimer-repair/Stardust.dylib", "race": "Protoss", "sha256": "1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa", "ownership": "Ours", "origin": "Fork", "author": "Bruce Mackenzie Nielsen", "source_url": "https://github.com/bmnielsen/Stardust"}
+  },
+  "games": [
+    {"wave": 1, "index": 1, "opponent": "zzzk", "map": "sscai/(2)Benzene.scx", "scenario_seed": 10041, "candidate_player": 1},
+    {"wave": 1, "index": 2, "opponent": "uab-t", "map": "sscai/(2)Destination.scx", "scenario_seed": 10042, "candidate_player": 2},
+    {"wave": 1, "index": 3, "opponent": "uab-p", "map": "sscai/(2)Heartbreak Ridge.scx", "scenario_seed": 10043, "candidate_player": 1},
+    {"wave": 1, "index": 4, "opponent": "mcrave", "map": "sscai/(4)Circuit Breaker.scx", "scenario_seed": 10044, "candidate_player": 2},
+    {"wave": 1, "index": 5, "opponent": "stardust", "map": "sscai/(2)Benzene.scx", "scenario_seed": 10045, "candidate_player": 1},
+    {"wave": 2, "index": 6, "opponent": "zzzk", "map": "sscai/(2)Benzene.scx", "scenario_seed": 10046, "candidate_player": 2},
+    {"wave": 2, "index": 7, "opponent": "uab-t", "map": "sscai/(2)Destination.scx", "scenario_seed": 10047, "candidate_player": 1},
+    {"wave": 2, "index": 8, "opponent": "uab-p", "map": "sscai/(2)Heartbreak Ridge.scx", "scenario_seed": 10048, "candidate_player": 2},
+    {"wave": 2, "index": 9, "opponent": "mcrave", "map": "sscai/(4)Circuit Breaker.scx", "scenario_seed": 10049, "candidate_player": 1},
+    {"wave": 2, "index": 10, "opponent": "stardust", "map": "sscai/(2)Benzene.scx", "scenario_seed": 10050, "candidate_player": 2}
+  ],
+  "required_files": [
+    {"path": "docs/evaluations/kestrel-hillclimb-v18/EVAL_PLAN.md", "sha256": "6a450005eb3c40e0b2ba623a70927beef66bb02abeabede1f8ae092a17873c13"},
+    {"path": "patches/kestrel-v37-to-v38-shared-target.patch", "sha256": "2d84b98d3288d4ac922c22c71647f29492925138ee1ec757ee36512b9786b61a"},
+    {"path": "artifacts/builds/7fdc4f9ad61152e7758318e7d35d04fbda0746a4e2f85a48b3bc664577e0c160/kestrel-opening-v38-shared-target/Kestrel.dylib.build.json", "sha256": "75f2f2fd236bdd71cb64102f8286c0358cd39a1c1a8ffbccf69fb7578a53a1b4"}
+  ],
+  "engine_sha256": "eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b",
+  "provenance_registry": "config/bot-identities.json",
+  "provenance_registry_sha256": "7336555a6cfaa992bc6d912c61c1d0c421953e084ab10af0e202a5a632801b7d",
+  "diagnostic_schema": {
+    "shared_target_fields": ["shared_target_frames", "shared_target_ids", "shared_target_participant_counts", "shared_target_eligible_counts", "shared_target_ordered_counts", "shared_target_local_counts", "shared_target_attempt_counts", "shared_target_accepted_counts", "shared_target_participant_ids"],
+    "shared_target_scalars": ["shared_target_selections", "shared_target_attempts", "shared_target_accepted", "shared_target_rejects", "shared_target_switches", "shared_target_non_zerg_selections", "shared_target_illegal_selections", "shared_target_correction_opportunities"],
+    "shared_target_requirements": {"minimum_participants": 2, "minimum_accepted_commands": 1, "max_rejects": 0, "public_visible_legal_target": true, "participant_ids_partitioned_by_counts": true},
+    "scaling_fields": ["max_pylon_cap", "max_post_core_gateway_cap", "range_upgrade_eligibility_frame", "range_upgrade_bank_start_frame", "range_upgrade_bank_block_count", "range_upgrade_attempt_frame", "range_upgrade_accepted_frame", "range_upgrade_completion_frame", "range_upgrade_attempts", "range_upgrade_accepted", "range_upgrade_completions", "range_upgrade_max_bank_minerals", "range_upgrade_max_bank_gas", "seventh_pylon_accepted_frame", "seventh_pylon_current_frame", "seventh_pylon_completed_frame", "fifth_gateway_accepted_frame", "fifth_gateway_current_frame", "fifth_gateway_completed_frame"],
+    "scaling_caps": {"max_pylons": 10, "max_post_core_gateways": 6},
+    "minimums": {"games": 10, "wins": 2, "zzzk_wins": 1, "shared_target_games": 8, "eligible_scaling_lanes": 3, "completed_scaling_lanes": 2}
+  }
+}

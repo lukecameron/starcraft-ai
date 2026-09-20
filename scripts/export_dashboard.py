@@ -90,11 +90,43 @@ def public_experiment(path, identities=None):
     if games: result["games"]=games
     scorecard=load_json(path.parent/"hillclimb-scorecard.json",{})
     if isinstance(scorecard,dict) and isinstance(scorecard.get("aggregate"),dict):
+        def public_shared_target(value):
+            """Keep shared-target evidence useful without publishing trace arrays."""
+            if not isinstance(value,dict): return None
+            counters=value.get("counters",{}) if isinstance(value.get("counters"),dict) else {}
+            result={}
+            metric_sources={
+                "accepted": ("accepted","shared_target_accepted"),
+                "attempts": ("attempts","shared_target_attempts"),
+                "selections": ("selections","shared_target_selections"),
+                "multi_participant_selections": ("multi_participant_selections",),
+                "coordinated_accepted_selections": ("coordinated_accepted_selections",),
+                "correction_opportunities": ("correction_opportunities","shared_target_correction_opportunities"),
+                "switches": ("switches","shared_target_switches"),
+                "max_participants": ("max_participants",),
+                "shared_target_non_zerg_selections": ("shared_target_non_zerg_selections",),
+                "shared_target_rejects": ("shared_target_rejects",),
+                "shared_target_illegal_selections": ("shared_target_illegal_selections",),
+            }
+            for public_key,source_keys in metric_sources.items():
+                candidate=next((value[source] for source in source_keys if source in value), None)
+                if candidate is None: candidate=next((counters[source] for source in source_keys if source in counters), None)
+                if isinstance(candidate,(int,float)) and not isinstance(candidate,bool): result[public_key]=candidate
+            for key in ("generation","telemetry_status","quantitative_grade","review_flags","opportunity_notes"):
+                if key in value and isinstance(value[key],(str,list,dict)):
+                    result[key]=value[key]
+            checks=value.get("checks")
+            if isinstance(checks,dict):
+                result["checks"]={key:checks[key] for key in ("counts_consistent","frames_ordered","participant_trace","trace_aligned","no_invalid") if key in checks}
+            return result or None
         public_games=[]
         for game in scorecard.get("games",[]):
             if not isinstance(game,dict): continue
             replay=game.get("replay",{}) if isinstance(game.get("replay"),dict) else {}
-            public_games.append({"index":game.get("index"),"run_id":game.get("run_id"),"candidate_outcome":game.get("candidate_outcome"),"outcome_performance":game.get("outcome_performance"),"terminal_frames":game.get("terminal_frames"),"elapsed_seconds":game.get("elapsed_seconds"),"durable_fps":game.get("durable_fps"),"short_game":game.get("short_game"),"heuristic_grade":replay.get("heuristic_grade"),"heuristic_score":replay.get("heuristic_score"),"signals":replay.get("signals"),"first_frames":replay.get("first_frames"),"attack_orders":replay.get("attack_orders"),"harvest_orders":replay.get("harvest_orders"),"build_units":replay.get("build_units"),"production_units":replay.get("production_units")})
+            public_game={"index":game.get("index"),"run_id":game.get("run_id"),"candidate_outcome":game.get("candidate_outcome"),"outcome_performance":game.get("outcome_performance"),"terminal_frames":game.get("terminal_frames"),"elapsed_seconds":game.get("elapsed_seconds"),"durable_fps":game.get("durable_fps"),"short_game":game.get("short_game"),"heuristic_grade":replay.get("heuristic_grade"),"heuristic_score":replay.get("heuristic_score"),"signals":replay.get("signals"),"first_frames":replay.get("first_frames"),"attack_orders":replay.get("attack_orders"),"harvest_orders":replay.get("harvest_orders"),"build_units":replay.get("build_units"),"production_units":replay.get("production_units")}
+            shared_target=public_shared_target(game.get("shared_target"))
+            if shared_target: public_game["shared_target"]=shared_target
+            public_games.append(public_game)
         result["scorecard"]={"schema_version":scorecard.get("schema_version"),"candidate_name":scorecard.get("candidate_name"),"measurement_scope":scorecard.get("measurement_scope"),"decision_note":scorecard.get("decision_note"),"aggregate":scorecard["aggregate"],"games":public_games}
     return result
 

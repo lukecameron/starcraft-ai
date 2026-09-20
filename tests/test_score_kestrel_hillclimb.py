@@ -427,6 +427,29 @@ class KestrelScorecardTests(TestCase):
         self.assertEqual(scorer._zerg_offense_stage_summary(metadata, "Zerg", "v38")["generation"], "v38")
         self.assertEqual(scorer._scaling_summary(metadata, "v38")["generation"], "v38")
 
+    def test_score_match_propagates_v38_shared_target_to_game(self):
+        metadata = self.v38_metadata()
+        metadata.update({"ended": True, "winner": False, "frame_count": 1000,
+                         "command_categories": {}, "rejected_commands": 0})
+        candidate_name = "Kestrel-v38-shared-target"
+        manifest = {
+            "run_id": "v38-shared-target-propagation",
+            "status": "completed",
+            "outcome_verified": True,
+            "players": [
+                {"player": 1, "name": candidate_name, "return_code": 0, "result_metadata": metadata},
+                {"player": 2, "name": "Opponent", "return_code": 0,
+                 "environment": {"BWAPI_CONFIG_AUTO_MENU__RACE": "Zerg"},
+                 "result_metadata": {"winner": True}},
+            ],
+            "replays": [],
+        }
+        result = scorer.score_kestrel_match(manifest, Path("manifest.json"), Path("screp"),
+                                            candidate_name=candidate_name)
+        self.assertEqual(result["shared_target"]["generation"], "v38")
+        self.assertEqual(result["shared_target"]["multi_participant_selections"], 2)
+        self.assertEqual(result["shared_target"]["coordinated_accepted_selections"], 1)
+
     def test_v36_probe_reserve_summary_checks_alignment_window_and_resumption(self):
         summary = scorer._probe_reserve_summary(self.v36_metadata(), "Zerg", "v36")
         self.assertEqual(summary["generation"], "v36")

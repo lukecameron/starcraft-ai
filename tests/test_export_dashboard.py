@@ -54,6 +54,43 @@ class ExportDashboardTest(unittest.TestCase):
             self.assertEqual(item["conclusion"], "Configured conclusion")
             self.assertNotIn("games", item)
 
+    def test_shared_target_scorecard_metrics_are_public_but_trace_arrays_are_not(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "dashboard").mkdir(); (root / "dashboard/index.html").write_text("ok")
+            (root / "config").mkdir()
+            (root / "config/experiments.json").write_text(json.dumps({"experiments": []}))
+            experiment = root / "artifacts/experiments/shared/manifest.json"; experiment.parent.mkdir(parents=True)
+            experiment.write_text(json.dumps({"experiment_id": "shared", "status": "completed", "games": [{"index": 1, "run_id": "run-1"}]}))
+            (experiment.parent / "hillclimb-scorecard.json").write_text(json.dumps({
+                "schema_version": 1,
+                "aggregate": {"games": 1, "shared_target": {"accepted": 12}},
+                "games": [{"index": 1, "run_id": "run-1", "shared_target": {
+                    "counters": {"shared_target_accepted": 9, "shared_target_attempts": 10, "shared_target_selections": 11, "shared_target_correction_opportunities": 5, "shared_target_switches": 2, "shared_target_non_zerg_selections": 7, "shared_target_rejects": 1, "shared_target_illegal_selections": 0},
+                    "coordinated_accepted_selections": 4,
+                    "multi_participant_selections": 6,
+                    "max_participants": 3,
+                    "generation": "v38",
+                    "quantitative_grade": {"grade": "pass", "score": 100},
+                    "review_flags": [],
+                    "trace": {"shared_target_frames": list(range(1000))}
+                }}]
+            }))
+            public = export(root, root / "out")
+            shared = public["experiments"][0]["scorecard"]["games"][0]["shared_target"]
+            self.assertEqual(shared["accepted"], 9)
+            self.assertEqual(shared["attempts"], 10)
+            self.assertEqual(shared["selections"], 11)
+            self.assertEqual(shared["multi_participant_selections"], 6)
+            self.assertEqual(shared["coordinated_accepted_selections"], 4)
+            self.assertEqual(shared["correction_opportunities"], 5)
+            self.assertEqual(shared["shared_target_non_zerg_selections"], 7)
+            self.assertEqual(shared["shared_target_rejects"], 1)
+            self.assertEqual(shared["shared_target_illegal_selections"], 0)
+            self.assertEqual(shared["max_participants"], 3)
+            self.assertEqual(shared["quantitative_grade"]["grade"], "pass")
+            self.assertNotIn("shared_target_frames", json.dumps(public))
+
     def test_export_allowlists_manifest_and_names_bot(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
