@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "experiment_id": "kestrel-hillclimb-v21",
+  "registered_at": "2026-09-21",
+  "eval_plan": "docs/evaluations/kestrel-hillclimb-v21/EVAL_PLAN.md",
+  "eval_plan_sha256": "00cb18186a8fbb52c159f7cbff4cfdefabae72a9b2b05d9d25ade59987cae849",
+  "purpose": "Five-game Kestrel v41 pre-Pylon Probe-bank timing diagnostic",
+  "hypothesis": "Deferring a pre-Pylon Probe against known Zerg feeds 50 minerals into the existing two-Gateway bank and yields two local defenders on the two failed P2 ZZZK lanes without treatment leakage or retained-policy regression",
+  "stop_condition": "Run the fixed five rows once concurrently with a 120-second per-game cap; preserve every started row; stop after two consecutive infrastructure-invalid completions or completion; do not retry, reseed, replace, or rerun",
+  "execution": {
+    "sandbox": "unsandboxed_required",
+    "restricted_sandbox_allowed": false,
+    "if_unsandboxed_unavailable": "do_not_start",
+    "retries": 0,
+    "reseed": false,
+    "replacement": false,
+    "rerun": false
+  },
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "launcher_sha256": "af1682393f9fe43afe885b35a1637e9c464719ef93c83e799d614beed20316c1",
+  "launcher_sidecar": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher.build.json",
+  "launcher_sidecar_sha256": "0beebdd3bb6221a5e6143c015763d14fa20330a8976ede3f997062660b3e7390",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "game_data_files": [
+    {
+      "path": "third_party/game-data/runtime/BrooDat.mpq",
+      "sha256": "c6d810981e24b947b36d531ab047e143fec0284a581fdaad6fc431e1e75e21df"
+    },
+    {
+      "path": "third_party/game-data/runtime/Patch_rt.mpq",
+      "sha256": "a063f069f1abe202b142b08a9dab878eba8ba033bf13a818024a72631c4452be"
+    },
+    {
+      "path": "third_party/game-data/runtime/StarDat.mpq",
+      "sha256": "8845fd871b4f8f242cc5c2b6f6b8b319d86bbbd02bc836356b51f81b5ba8203f"
+    },
+    {
+      "path": "third_party/game-data/runtime/sscai/(2)Benzene.scx",
+      "sha256": "45764b9baa72f83a5eb2eab49ddea46c6af21da75bc42e687e6dab93e4e4044e"
+    },
+    {
+      "path": "third_party/game-data/runtime/sscai/(2)Destination.scx",
+      "sha256": "0241ae7e8b43632e3421444aa3ca3bb10d28b4796f4ccc138103c3b75e5158a5"
+    },
+    {
+      "path": "third_party/game-data/runtime/sscai/(2)Heartbreak Ridge.scx",
+      "sha256": "64527ae691307756dbc2700c68ab5878476eed27c3dfc9a64411955f4107f50b"
+    },
+    {
+      "path": "third_party/game-data/runtime/sscai/(4)Circuit Breaker.scx",
+      "sha256": "ba956f73d18342f3f329741b684fd569e6bcf718b1fcebd86c2d965481260bc0"
+    }
+  ],
+  "wall_timeout_seconds": 120,
+  "concurrency": 5,
+  "stop_after_consecutive_invalid": 2,
+  "candidate": {
+    "name": "Kestrel-v41-zerg-two-gateway-bank",
+    "path": "artifacts/builds/2e39f690e1ec598dd03d0bbfe35de75f282ab626d7b6b0c135a6fb9947ed984d/kestrel-opening-v41-zerg-two-gateway-bank/Kestrel.dylib",
+    "race": "Protoss",
+    "sha256": "2e39f690e1ec598dd03d0bbfe35de75f282ab626d7b6b0c135a6fb9947ed984d",
+    "ownership": "Ours",
+    "origin": "Original",
+    "author": "Luke Cameron",
+    "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel",
+    "source_files": [
+      "third_party/kestrel-opening-v41-candidate/Kestrel.cpp",
+      "third_party/kestrel-opening-v41-candidate/CMakeLists.txt",
+      "third_party/kestrel-opening-v41-candidate/LICENSE"
+    ],
+    "source_sha256": "fec0f4f6c1a1a37924827be427fabe9ce695cad84ef17f5bde23e77d754218ad",
+    "source_combo_sha256": "a6d9a19debf32131aabb16b57f6726e09c9312917be83e25362e2aeafa340d3a",
+    "build_sidecar": "artifacts/builds/2e39f690e1ec598dd03d0bbfe35de75f282ab626d7b6b0c135a6fb9947ed984d/kestrel-opening-v41-zerg-two-gateway-bank/Kestrel.dylib.build.json",
+    "build_sidecar_sha256": "4cdd604145da1ea0975fee32db9534fbea7295159f71427c6597897f7b1b3eda",
+    "source_patch": "patches/kestrel-v40-to-v41-zerg-two-gateway-bank.patch",
+    "source_patch_sha256": "446a560f4aab5c4bb167118ee82bd2fe7bb41702ef7b7c415a853eb25466ae07"
+  },
+  "policy_parent": {
+    "name": "Kestrel-v40-nearest-gateway-probe",
+    "binary_sha256": "adac4ff4dc5aea71b94a5a12d13d62f964fe56a71ca3fd5141f24d0094401012",
+    "source_sha256": "89dde1b4dd26f3ba890e7b0f08836c5b9caef36a9799d8b744e2b01ff2f7c112",
+    "source_combo_sha256": "37be433c0f3e081951b77a5448ed256151a0b97e043601cb21de6ef8d23c3fc4",
+    "source_patch": "patches/kestrel-v39-to-v40-gateway-probe-telemetry.patch",
+    "source_patch_sha256": "9ade3388f07b3289f9f12cd0a468bd6b12d0a3c064d0e166a532111f8cb5c4bf"
+  },
+  "base_candidate": {
+    "experiment_id": "kestrel-hillclimb-v20",
+    "name": "Kestrel-v40-nearest-gateway-probe",
+    "binary_sha256": "adac4ff4dc5aea71b94a5a12d13d62f964fe56a71ca3fd5141f24d0094401012",
+    "source_sha256": "89dde1b4dd26f3ba890e7b0f08836c5b9caef36a9799d8b744e2b01ff2f7c112",
+    "policy": "Frozen rejected v40 parent; v41 changes only known-Zerg pre-Pylon Probe-training reserve and adds a treatment-specific scalar"
+  },
+  "opponents": {
+    "zzzk": {
+      "name": "ZZZKBot",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "race": "Zerg",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748",
+      "ownership": "Ours",
+      "origin": "Port",
+      "author": "Chris Coxe",
+      "source_url": "https://github.com/chriscoxe/ZZZKBot",
+      "build_sidecar": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib.build.json",
+      "build_sidecar_sha256": "41c03e2c266fc012a6df0e1ec1c8c9efd65e24973490ef3d1980c9cf6b36f4f1"
+    },
+    "mcrave": {
+      "name": "McRave-9Pool-treatment",
+      "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+      "race": "Zerg",
+      "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e",
+      "ownership": "Ours",
+      "origin": "Fork",
+      "author": "Christian McCrave",
+      "source_url": "https://github.com/Cmccrave/McRave",
+      "build_sidecar": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib.build.json",
+      "build_sidecar_sha256": "84d88441ef331d8524f0d46624a4804f49917b6a4f7909393cd8a6cc4df81c7f"
+    },
+    "uab-t": {
+      "name": "UAlbertaBot-Terran",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "race": "Terran",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9",
+      "ownership": "Ours",
+      "origin": "Port",
+      "author": "David Churchill",
+      "source_url": "https://github.com/davechurchill/ualbertabot",
+      "build_sidecar": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib.build.json",
+      "build_sidecar_sha256": "2710a35e2dc0f05548a99822a235aee47a0aeadc95d2e8dbf75699da248aeb40"
+    }
+  },
+  "games": [
+    {
+      "wave": 1,
+      "index": 1,
+      "opponent": "zzzk",
+      "map": "sscai/(2)Destination.scx",
+      "candidate_player": 2,
+      "scenario_seed": 11101
+    },
+    {
+      "wave": 1,
+      "index": 2,
+      "opponent": "zzzk",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "candidate_player": 2,
+      "scenario_seed": 11102
+    },
+    {
+      "wave": 1,
+      "index": 3,
+      "opponent": "zzzk",
+      "map": "sscai/(2)Benzene.scx",
+      "candidate_player": 1,
+      "scenario_seed": 11103
+    },
+    {
+      "wave": 1,
+      "index": 4,
+      "opponent": "mcrave",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "candidate_player": 1,
+      "scenario_seed": 11104
+    },
+    {
+      "wave": 1,
+      "index": 5,
+      "opponent": "uab-t",
+      "map": "sscai/(2)Destination.scx",
+      "candidate_player": 1,
+      "scenario_seed": 11105
+    }
+  ],
+  "required_files": [
+    {
+      "path": "docs/evaluations/kestrel-hillclimb-v21/EVAL_PLAN.md",
+      "sha256": "00cb18186a8fbb52c159f7cbff4cfdefabae72a9b2b05d9d25ade59987cae849"
+    },
+    {
+      "path": "patches/kestrel-v40-to-v41-zerg-two-gateway-bank.patch",
+      "sha256": "446a560f4aab5c4bb167118ee82bd2fe7bb41702ef7b7c415a853eb25466ae07"
+    },
+    {
+      "path": "artifacts/builds/2e39f690e1ec598dd03d0bbfe35de75f282ab626d7b6b0c135a6fb9947ed984d/kestrel-opening-v41-zerg-two-gateway-bank/Kestrel.dylib.build.json",
+      "sha256": "4cdd604145da1ea0975fee32db9534fbea7295159f71427c6597897f7b1b3eda"
+    },
+    {
+      "path": "scripts/run_batch.py",
+      "sha256": "3060df9c655f25cac0de45fd422108460bf47aba462389b53ba643fb5549f7ef"
+    },
+    {
+      "path": "scripts/run_match.py",
+      "sha256": "d0a0eee0d932fc279b2ee53831ddf82accf7042a8b7be52e73f144deeb191cbe"
+    },
+    {
+      "path": "scripts/score_kestrel_hillclimb.py",
+      "sha256": "d8fa30d256696a55932163e9f1ad840fff5d871cf91144022cc46d841a2fc539"
+    },
+    {
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib.build.json",
+      "sha256": "41c03e2c266fc012a6df0e1ec1c8c9efd65e24973490ef3d1980c9cf6b36f4f1"
+    },
+    {
+      "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib.build.json",
+      "sha256": "84d88441ef331d8524f0d46624a4804f49917b6a4f7909393cd8a6cc4df81c7f"
+    },
+    {
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib.build.json",
+      "sha256": "2710a35e2dc0f05548a99822a235aee47a0aeadc95d2e8dbf75699da248aeb40"
+    }
+  ],
+  "engine_sha256": "eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b",
+  "provenance_registry": "config/bot-identities.json",
+  "provenance_registry_sha256": "7336555a6cfaa992bc6d912c61c1d0c421953e084ab10af0e202a5a632801b7d",
+  "diagnostic_schema": {
+    "treatment_field": "zerg_pre_pylon_probe_reserve_frames",
+    "retained_generations": [
+      "v40",
+      "v38",
+      "v37",
+      "v36",
+      "v35",
+      "v34"
+    ],
+    "minimums": {
+      "games": 5,
+      "wins": 2,
+      "zzzk_wins": 1,
+      "qualifying_primary_zzzk_lanes": 2,
+      "valid_terminals": 5
+    },
+    "primary_v20_comparators": [
+      {
+        "run_id": "20260920T200634-d58af69191c9",
+        "map": "sscai/(2)Destination.scx",
+        "candidate_player": 2,
+        "second_gateway_current_frame": 2084,
+        "second_gateway_completed_frame": 3055,
+        "first_home_threat_frame": 3560,
+        "global_combat_at_threat": 1,
+        "local_combat_at_threat": 1
+      },
+      {
+        "run_id": "20260920T200638-6b510f61ad96",
+        "map": "sscai/(2)Heartbreak Ridge.scx",
+        "candidate_player": 2,
+        "second_gateway_current_frame": 2082,
+        "second_gateway_completed_frame": 3053,
+        "first_home_threat_frame": 3551,
+        "global_combat_at_threat": 1,
+        "local_combat_at_threat": 1
+      }
+    ]
+  }
+}
