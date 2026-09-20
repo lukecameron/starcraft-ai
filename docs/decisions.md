@@ -15,4 +15,8 @@ The engine spike and initial source discovery run in parallel: Sol owns the engi
 - Expected effect: a reproducible complete match, or a concrete dependency blocker.
 - Test: compile Release without UI; launch a bounded headless match after required assets exist; parse its replay.
 - Stop: checkpoint after 15 minutes of build work; do not launch matches repeatedly if essential game data is absent.
-- Status: in progress. No best validated bot, local rating, strength gain or throughput result yet.
+- Status: initial runtime milestone complete; see experiment ledger and config/baseline.json. No calibrated local rating or measured strategic improvement exists.
+
+## 2026-09-20: use explicit local peer transport
+
+A real Destination launch stalled before either bot received a callback with automatic peer discovery. Both exact child processes were idle and the failure was retained. The documented `LOCAL` mode uses a unique short `game.socket` path per run; it advanced the same bot pair and passed two concurrent diagnostic launches on different maps. Keep this simpler explicit connection instead of discovery. This changes the evaluation regime; historical `LOCAL_AUTO` runs remain distinguishable by their recorded environment.

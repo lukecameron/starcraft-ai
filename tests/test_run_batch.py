@@ -1,4 +1,5 @@
 import importlib.util
+import argparse
 import hashlib
 import json
 import os
@@ -44,6 +45,32 @@ class BatchSummaryTests(unittest.TestCase):
         self.assertEqual(run_batch.classify(match, 1, 1), "launcher_failure")
         match["result"] = [{"winner": True}, {"winner": True}]
         self.assertEqual(run_batch.classify(match, 1), "missing_or_inconsistent_metadata")
+
+    def test_bot_seed_command_mapping_follows_swapped_player_assignment(self):
+        args = argparse.Namespace(runner="runner.py", artifacts_dir="artifacts")
+        schedule = {"launcher": "launcher", "library_path": "lib", "game_data_dir": "data",
+                    "purpose": "test", "experiment_id": "test", "wall_timeout_seconds": 1,
+                    "candidate": {"name": "candidate", "race": "Zerg"}}
+        opponent = {"name": "opponent", "race": "Terran", "path": "opponent.so"}
+        game = {"candidate_player": 2, "map": "map.scx", "scenario_seed": 7,
+                "candidate_bot_seed": 11, "opponent_bot_seed": 22}
+        command = run_batch.command_for(args, schedule, game, Path("candidate.so"), opponent)
+        self.assertEqual(command[command.index("--bot-seed1") + 1], "22")
+        self.assertEqual(command[command.index("--bot-seed2") + 1], "11")
+
+    def test_schedule_rejects_boolean_and_out_of_range_bot_seeds(self):
+        base = {"experiment_id": "test", "hypothesis": "h", "stop_condition": "s", "purpose": "p",
+                "launcher": "l", "library_path": "lib", "game_data_dir": "data",
+                "candidate": {"name": "c", "race": "Zerg", "sha256": "x"},
+                "opponents": {"o": {"name": "o", "race": "Terran", "path": "o", "sha256": "y"}},
+                "games": [{"opponent": "o", "map": "m", "candidate_player": 1,
+                           "scenario_seed": 1, "candidate_bot_seed": True}]}
+        with self.assertRaises(SystemExit):
+            run_batch.validate_schedule(argparse.ArgumentParser(), base)
+        base["games"][0]["candidate_bot_seed"] = 0
+        base["games"][0]["opponent_bot_seed"] = 0x100000000
+        with self.assertRaises(SystemExit):
+            run_batch.validate_schedule(argparse.ArgumentParser(), base)
 
     def test_timeout_and_child_crash_take_precedence_over_runner_failure(self):
         timeout = {"termination_reason": "wall_timeout", "players": [{"return_code": -15}, {"return_code": -15}]}

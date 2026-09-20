@@ -15,6 +15,8 @@ RUNNER = ROOT / "scripts" / "run_match.py"
 
 FAKE_LAUNCHER = '''#!/usr/bin/env python3
 import json, os, pathlib, sys, time
+if os.environ.get("FAKE_LAUNCHED_PATH"):
+    pathlib.Path(os.environ["FAKE_LAUNCHED_PATH"]).write_text("launched")
 mode = os.environ.get("FAKE_MODE", "success")
 if mode == "startup":
     print("test-only startup failure", file=sys.stderr)
@@ -124,6 +126,44 @@ class RunMatchTest(unittest.TestCase):
         self.assertEqual(manifest["status"], "failed")
         self.assertEqual(manifest["players"], [])
         self.assertIn("scenario-capable", manifest["launch_error"])
+
+    def test_unsupported_bot_seed_fails_durably_before_popen(self):
+        marker = self.root / "launched"
+        completed = subprocess.run(self.command() + ["--bot-seed1", "42"],
+                                   env={**dict(__import__("os").environ), "FAKE_LAUNCHED_PATH": str(marker)},
+                                   text=True, capture_output=True)
+        self.assertEqual(completed.returncode, 1)
+        manifest = json.loads(self.manifests()[0].read_text())
+        self.assertEqual(manifest["status"], "failed")
+        self.assertEqual(manifest["players"], [])
+        self.assertFalse(marker.exists())
+        self.assertIn("binary-matched sidecar", manifest["launch_error"])
+
+    def test_bot_seeds_are_isolated_and_inherited_seed_is_cleared(self):
+        for bot in (self.bot1, self.bot2):
+            Path(str(bot) + ".build.json").write_text(json.dumps({
+                "binary_sha256": hashlib.sha256(bot.read_bytes()).hexdigest(),
+                "bot_rng_control": {"env": "MATCH_BOT_SEED"},
+            }))
+        completed = subprocess.run(self.command() + ["--bot-seed1", "11", "--bot-seed2", "22"],
+                                   env={**dict(__import__("os").environ), "MATCH_BOT_SEED": "999"},
+                                   text=True, capture_output=True)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        manifest = json.loads(self.manifests()[0].read_text())
+        self.assertEqual(manifest["reproducibility"]["bot_seeds"], [11, 22])
+        self.assertEqual([player["bot_seed"] for player in manifest["inputs"]["players"]], [11, 22])
+        self.assertEqual([item["environment"]["MATCH_BOT_SEED"]
+                          for item in manifest["launch_configuration"]], ["11", "22"])
+
+    def test_inherited_bot_seed_is_absent_when_not_requested(self):
+        self.launcher.write_text(self.launcher.read_text().replace(
+            'mode = os.environ.get', 'assert "MATCH_BOT_SEED" not in os.environ\nmode = os.environ.get'))
+        completed = subprocess.run(self.command(), env={**dict(__import__("os").environ), "MATCH_BOT_SEED": "999"},
+                                   text=True, capture_output=True)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        manifest = json.loads(self.manifests()[0].read_text())
+        self.assertEqual(manifest["reproducibility"]["bot_seeds"], [None, None])
+        self.assertNotIn("MATCH_BOT_SEED", manifest["launch_configuration"][0]["environment"])
 
     def test_failed_startup_is_durable(self):
         completed = subprocess.run(self.command(), env={**dict(__import__("os").environ), "FAKE_MODE": "startup"},

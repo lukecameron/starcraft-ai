@@ -19,3 +19,7 @@ Verified 2026-09-20 on the primary machine.
 Use project-local dependencies and native compilation. Initial allowance: at most four concurrent compile jobs and two match workers until measurements justify more. Long-running processes must retain an exact session/process ID and write logs under `artifacts/`.
 
 Full-match speed target is 384 logical frames per wall second (16 × 24). No performance claim exists until complete matches, initialization, both bots and replay persistence have been measured. Apple Silicon timings cannot establish compliance on the competition's x86 host.
+
+At the ~30-minute checkpoint, the fresh Codex usage tool reported **87% remaining** on the same weekly window. `quota-axi` still returned explicitly stale data after a failed fetch, so it was not used to assess current quota.
+
+At 03:04 UTC the fresh Codex usage tool reported **66% remaining** in the weekly window. No reset used.

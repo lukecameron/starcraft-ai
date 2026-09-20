@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "status": "unadopted native reference; first quick batch inconclusive (7/10 clean), strength uncalibrated",
+  "reference_bot": "McRave as Zerg",
+  "evidence_runs": [
+    "20260920T023737-795afabea26a",
+    "20260920T023706-7a3329b86962",
+    "20260920T031316-047d7cddf7d5"
+  ],
+  "bots": [
+    {
+      "name": "McRave",
+      "binary_sha256": "c49ee3c4b20a2772f1bfca03249c182d32a7238f9453a7a568990a188a1c4c65",
+      "artifact_path": "artifacts/builds/c49ee3c4b20a2772f1bfca03249c182d32a7238f9453a7a568990a188a1c4c65/McRave.dylib",
+      "build_provenance": {
+        "binary": "build/mcrave/McRave.dylib",
+        "binary_sha256": "c49ee3c4b20a2772f1bfca03249c182d32a7238f9453a7a568990a188a1c4c65",
+        "build_type": "Release",
+        "bwapi_revision": "48124ba8ed1b4d52b3dfd52acbaf34afb9a37fe2",
+        "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+        "language_standard": "C++17",
+        "official_header_check": {
+          "bwapi_revision": "7687da8abc4726f8366401f11ab648d421385793",
+          "bwapi_version": "4.4.0",
+          "result": "passed",
+          "target": "McRaveOfficialHeaders",
+          "translation_units": 114
+        },
+        "port_compile_options": [
+          "-include",
+          "cfloat",
+          "-fdelayed-template-parsing",
+          "BWEM_USE_WINUTILS=0"
+        ],
+        "schema_version": 1,
+        "source_patch_sha256": "adb637027b1402d2459a3eea35c1c91be1238a3b8a9b733081aba376139492a1",
+        "source_repository": "https://github.com/Cmccrave/McRave.git",
+        "source_revision": "7d1719a22d8b896f957abae50e2ea5efff974fe2"
+      },
+      "source_patch": "patches/mcrave-baseline-v1.patch"
+    },
+    {
+      "name": "ZZZKBot",
+      "binary_sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748",
+      "artifact_path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "build_provenance": {
+        "schema_version": 1,
+        "source_repository": "https://github.com/chriscoxe/ZZZKBot.git",
+        "source_revision": "7183e37b6b416ea53c1040c83e639a3a3c395eed",
+        "source_patch": "patches/zzzkbot-native-arm64.patch",
+        "source_patch_sha256": "aedeeef6cc664e9d49d181d8a0044e110008fdca720df386e02fadb95c784c2d",
+        "bwapi_revision": "48124ba8ed1b4d52b3dfd52acbaf34afb9a37fe2",
+        "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+        "cmake_build_type": "Release",
+        "cxx_standard": "C++14",
+        "max_parallel_jobs": 4,
+        "binary_sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "name": "UAlbertaBot",
+      "binary_sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9",
+      "artifact_path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "build_provenance": {
+        "schema_version": 1,
+        "source_repository": "https://github.com/davechurchill/ualbertabot.git",
+        "source_revision": "558899d8793456f4a6ec4196efbb5235552e24db",
+        "source_patch": "patches/ualbertabot-native-arm64.patch",
+        "source_patch_sha256": "7fae4072f37521490e8cffce07257768c22b2972e337f17f77b7750e7c6e43b0",
+        "config_sha256": "e4b2a2f5e40f85c2fd3f43e094fdee4808062751f143d66c785ef0178ba91b39",
+        "bwapi_revision": "48124ba8ed1b4d52b3dfd52acbaf34afb9a37fe2",
+        "official_bwapi_revision": "7687da8abc4726f8366401f11ab648d421385793",
+        "official_header_check": "passed",
+        "official_header_translation_units": 115,
+        "ai_files": [
+          {
+            "path": "UAlbertaBot_Config.txt",
+            "sha256": "e4b2a2f5e40f85c2fd3f43e094fdee4808062751f143d66c785ef0178ba91b39"
+          }
+        ],
+        "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+        "cxx_standard": "C++14",
+        "cmake_build_type": "Release",
+        "max_parallel_jobs": 4,
+        "binary_sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+      }
+    }
+  ],
+  "engine": {
+    "artifacts": [
+      {
+        "path": "third_party/bwapi/build-arm64/bin/BWAPILauncher",
+        "sha256": "0d552c0e4deb4cdaa3bc88136fd0189313b7b9066919c3884c0df528440ec94b",
+        "size_bytes": 38400
+      },
+      {
+        "path": "third_party/bwapi/build-arm64/lib/libBWAPILIB.dylib",
+        "sha256": "7871583246c975ab788fc88d9490decd4eb9cb797e842aa741e3da69a2ff4702",
+        "size_bytes": 464224
+      },
+      {
+        "path": "third_party/bwapi/build-arm64/lib/libBWAPI.dylib",
+        "sha256": "5e6c8248e2238636720264e463018cd638915f3677540abc0aa649d2a40c905e",
+        "size_bytes": 542032
+      },
+      {
+        "path": "third_party/bwapi/build-arm64/lib/ExampleAIModule.dylib",
+        "sha256": "222e38be8967712d473b81e746c6ada2817c98b4e7755fffa16ef8e156e0e9e1",
+        "size_bytes": 74760
+      },
+      {
+        "path": "third_party/bwapi/build-arm64/lib/TestAIModule.dylib",
+        "sha256": "a70eb2d7b2dcf5187563632cf9e70f9adb3307678e16a479803d4264e5e3ad06",
+        "size_bytes": 429568
+      },
+      {
+        "path": "third_party/bwapi/build-arm64/lib/libOpenBWData.dylib",
+        "sha256": "f1a32e5a3dc64b8c62a17788488d36594dd95b13ef124637795b5aca4c846c42",
+        "size_bytes": 1628896
+      }
+    ],
+    "binary_path": "third_party/bwapi/build-arm64/bin/BWAPILauncher",
+    "binary_sha256": "0d552c0e4deb4cdaa3bc88136fd0189313b7b9066919c3884c0df528440ec94b",
+    "bwapi_repository": "https://github.com/OpenBW/bwapi.git",
+    "bwapi_revision": "48124ba8ed1b4d52b3dfd52acbaf34afb9a37fe2",
+    "cmake_build_type": "Release",
+    "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+    "max_parallel_jobs": 4,
+    "openbw_patch": "patches/openbw-scenarios.patch",
+    "openbw_patch_sha256": "73c2716d76e53c81f0dca4637634ce25b8c21dfa94ffba40e81737a434547d2e",
+    "openbw_repository": "https://github.com/OpenBW/openbw.git",
+    "openbw_revision": "4b046d5f65302b10cb0a745f0fecd37ec85b20a8",
+    "scenario_control": {
+      "player_id_env": "OPENBW_SCENARIO_PLAYER_ID",
+      "seed_env": "OPENBW_SCENARIO_SEED",
+      "seed_semantics": "final OpenBW LCG state before random-race and starting-slot draws"
+    },
+    "schema_version": 1,
+    "teardown_lifetime_fix": {
+      "semantics": "async handles skip client access after server teardown begins; guard outlives io_service",
+      "source": "sync_server_asio_socket.h"
+    },
+    "timer_lifetime_fix": {
+      "semantics": "async timeout handlers retain shared completion state beyond caller stack scope",
+      "source": "sync.h"
+    },
+    "validated_release_run": "20260920T031316-047d7cddf7d5",
+    "validation_scope": "native release and full ASAN reproduced shutdown paths; no general synchronization or strength claim"
+  },
+  "competition_submission_status": "McRave derivative requires author permission before upload under SSCAIT recent-update rule; no contact/submission authorized",
+  "not_yet_validated": [
+    "calibrated strength",
+    "diverse opponent and map generalization",
+    "representative late-game throughput",
+    "Windows x86 linking and original-game runtime"
+  ],
+  "known_engine_failures": [
+    "Socket teardown and timer lifetime errors repaired and reproduced cleanly on f1a32e5a engine; all preceding failures remain archived.",
+    "Earlier inconsistent dual-winner callbacks remain invalid unscored evidence; broad synchronization validation remains open."
+  ]
+}

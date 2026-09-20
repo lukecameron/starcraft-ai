@@ -145,8 +145,11 @@ def validate_schedule(parser, schedule):
         if not isinstance(game.get("map"), str) or not game["map"]:
             parser.error(f"game {index} requires a map")
         seed = game.get("scenario_seed")
-        if not isinstance(seed, int) or not 0 <= seed <= 0xFFFFFFFF:
+        if type(seed) is not int or not 0 <= seed <= 0xFFFFFFFF:
             parser.error(f"game {index} scenario_seed must be a uint32")
+        for key in ("candidate_bot_seed", "opponent_bot_seed"):
+            if key in game and (type(game[key]) is not int or not 0 <= game[key] <= 0xFFFFFFFF):
+                parser.error(f"game {index} {key} must be a uint32")
     for name, opponent in schedule["opponents"].items():
         if opponent.get("race") not in ("Terran", "Protoss", "Zerg", "Random"):
             parser.error(f"opponent {name} has an invalid race")
@@ -183,6 +186,12 @@ def command_for(args, schedule, game, candidate, opponent):
                "--wall-timeout", str(schedule["wall_timeout_seconds"]), "--artifacts-dir", args.artifacts_dir]
     if "scenario_seed" in game:
         command += ["--seed", str(game["scenario_seed"])]
+    bot_seeds = [None, None]
+    bot_seeds[candidate_player - 1] = game.get("candidate_bot_seed")
+    bot_seeds[2 - candidate_player] = game.get("opponent_bot_seed")
+    for player, bot_seed in enumerate(bot_seeds, 1):
+        if bot_seed is not None:
+            command += [f"--bot-seed{player}", str(bot_seed)]
     return command
 
 

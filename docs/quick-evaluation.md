@@ -4,6 +4,8 @@
 
 The first schedule is `config/quick-schedule.json`. It preregisters ten games: four against ZZZKBot Zerg, three against UAlbertaBot Protoss, and three against UAlbertaBot Terran. Benzene and Destination each appear five times. McRave launches as player 1 five times and player 2 five times. The candidate and opponent SHA-256 values identify frozen binaries before any process starts. Scenario seeds are paired where direct launch-order comparisons are useful; their meaning depends on the engine contract recorded by each game manifest.
 
+A game may also specify `candidate_bot_seed` and `opponent_bot_seed` as unsigned 32-bit integers. The coordinator maps them to `--bot-seed1` and `--bot-seed2` after applying `candidate_player`, so a seed stays attached to the named bot when launch positions swap. Omitted bot seeds preserve each module's default RNG behavior. `run_match.py` rejects a requested bot seed before launch unless that exact binary's matching build sidecar declares support for `MATCH_BOT_SEED`; engine scenario control and bot RNG control are independent inputs.
+
 Run only after the controlled-seed engine and all frozen modules are available:
 
 ```sh
@@ -19,6 +21,6 @@ Only games with a completed, verified outcome, zero child return codes, and bool
 
 Each game record links the authoritative match manifest and copies its end-to-end elapsed time, durable completion time, logical frame throughput, and whole-process peak RSS per player. The experiment ledger reports total batch wall time, which includes runner startup and incremental archival.
 
-After a successfully completed schedule, the configured `scripts/publish_dashboard.sh` hook runs with `EXPERIMENT_MANIFEST` pointing at the finalized ledger. Its output and return code are recorded separately in `runner-logs/publish-hook.log`; publication failure does not change match results or the experiment status.
+After every terminal schedule outcome, including failure or interruption, the configured `scripts/publish_dashboard.sh` hook runs with `EXPERIMENT_MANIFEST` pointing at the finalized ledger. Its output and return code are recorded separately in `runner-logs/publish-hook.log`; publication failure does not change match results or the experiment status.
 
 The batch is a short compatibility and behavior loop. Compilation and game generation performed before the batch are not included in its game timing, and ten openings on two maps are not a representative strength suite. The preregistered decision is to investigate any failure and collect a larger comparison. This baseline follows a crash fix, so its results do not measure a strategic gain.

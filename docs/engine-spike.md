@@ -10,7 +10,7 @@ The native, headless OpenBW launcher and a representative BWAPI AI module compil
 Error: file_reader: failed to open ./Patch_rt.mpq for reading
 ```
 
-This establishes **compiled**, **loader smoke-tested**, and **complete multiplayer match plus replay playback verified**. After the engineer explicitly authorized following OpenBW's recommended data route, the required data was sourced into ignored local storage from Blizzard's public StarEdit package and the map from SSCAIT's published tournament pack.
+This establishes **compiled**, **loader smoke-tested**, and **complete multiplayer match and independently parsed replay verified**. After the engineer explicitly authorized following OpenBW's recommended data route, the required data was sourced into ignored local storage from Blizzard's public StarEdit package and the map from SSCAIT's published tournament pack.
 
 Pinned upstream inputs:
 
@@ -47,7 +47,7 @@ Outputs:
 - `artifacts/spikes/engine/configure.log`: the initial expected CMake 4 policy failure.
 - `artifacts/spikes/engine/configure-policy.log`, `build.log`, and `launcher-no-assets.log`: successful configuration/build and runtime smoke evidence.
 
-The build emits many warnings from old BWAPI/OpenBW code, including undefined variable-template warnings, deprecated `sprintf`/`OSMemoryBarrier`, and questionable non-trivial `memcpy` calls. They are not build blockers, but the undefined-template and object-copy warnings merit runtime testing once assets exist.
+The upstream build emits warnings including undefined variable-template declarations, deprecated `sprintf`/`OSMemoryBarrier`, and non-trivial object-copy operations. Complete games now exercise this code, but these warnings remain upstream debt; passing games do not establish their safety.
 
 ## Local game data and maps
 
@@ -69,15 +69,45 @@ Source and immutable hashes:
 
 Blizzard's public StarEdit announcement links the ZIP directly. The package is no longer supported, but it contains the trimmed 1.16-compatible archives OpenBW needs. SSCAIT publishes its 15-map pack as the tournament map selection. These assets remain local and must not be committed or redistributed.
 
+To reproduce the local data layout from those public sources:
+
+```sh
+mkdir -p third_party/game-data/downloads third_party/game-data/runtime/sscai
+curl --fail --location http://download.blizzard.com/pub/starcraft/StarEdit/StarEdit.zip -o third_party/game-data/downloads/StarEdit.zip
+curl --fail --location https://sscaitournament.com/files/sscai_map_pack.zip -o third_party/game-data/downloads/sscai_map_pack.zip
+python3 - <<'PY'
+from pathlib import Path
+import hashlib
+import zipfile
+base = Path('third_party/game-data')
+expected = {
+    'StarEdit.zip': '2306b3a82a1c2be7afc2ab2f917d44398ba50462bc47b4af25bc4952b2e17bfa',
+    'sscai_map_pack.zip': 'efc9070e5ff2fdd1066a414bb989748ac49bec776db1fac16eebd39d6e284aa7',
+}
+for name, digest in expected.items():
+    assert hashlib.sha256((base / 'downloads' / name).read_bytes()).hexdigest() == digest, name
+with zipfile.ZipFile(base / 'downloads/StarEdit.zip') as archive:
+    for source, target in [('BrooDat.mpq', 'BrooDat.mpq'), ('StarDat.mpq', 'StarDat.mpq'), ('patch_rt.mpq', 'Patch_rt.mpq')]:
+        (base / 'runtime' / target).write_bytes(archive.read('StarEdit/' + source))
+with zipfile.ZipFile(base / 'downloads/sscai_map_pack.zip') as archive:
+    for name in archive.namelist():
+        path = Path(name)
+        if path.parent == Path('sscai') and path.suffix.lower() in ('.scm', '.scx'):
+            (base / 'runtime/sscai' / path.name).write_bytes(archive.read(name))
+PY
+```
+
+An upstream archive checksum change should be investigated before using it, since game data and maps affect reproducibility. Only data files are extracted; no downloaded installer or executable is run.
+
 The launcher probes `Patch_rt.mpq` first. With all three MPQs and SSCAIT's `(2)Benzene.scx`, a headless single-player launch successfully loaded `ExampleAIModule.dylib`, reported BWAPI 4.2.0 Release live, identified `Benzene1.1`, and entered `Zerg vs Unknown`. The example bot then flooded `Unit_Does_Not_Exist` errors because OpenBW has no built-in opponent; the process was interrupted after the startup proof.
 
-OpenBW has no built-in computer opponent. A real bot-versus-bot match needs two launcher processes and two native modules. The smallest initial module is the built `ExampleAIModule.dylib`; it only orders idle workers to mine and is suitable as a plumbing check, not a competitive baseline. Configure both processes through `BWAPI_CONFIG_*` environment variables or separate INI files, set `auto_menu=LAN`, and use `OPENBW_LAN_MODE=LOCAL_AUTO`. Both clients must select the same map. UI is disabled at compile time and can also be forced with `OPENBW_ENABLE_UI=0`.
+OpenBW has no built-in computer opponent. A real bot-versus-bot match needs two launcher processes and two native modules. The smallest initial module is the built `ExampleAIModule.dylib`; it only orders idle workers to mine and is suitable as a plumbing check, not a competitive baseline. Configure both processes through `BWAPI_CONFIG_*` environment variables or separate INI files, set `auto_menu=LAN`, and use `OPENBW_LAN_MODE=LOCAL` with the same short `OPENBW_LOCAL_PATH` for both clients. The automatic discovery mode stalled before callbacks on Destination, whereas direct local sockets started that game and two concurrent diagnostic pairs. Both clients must select the same map. UI is disabled at compile time and can also be forced with `OPENBW_ENABLE_UI=0`.
 
 ## Replay support
 
 This OpenBW revision contains both a Brood War replay reader (`replay.h`) and saver (`replay_saver.h`). BWAPI's end-of-game path calls `bwgame.saveReplay(...)`; `auto_menu.save_replay` supplies its path. The saver writes the native Brood War replay structure, including the `0x53526572` identifier, compressed sections, CRC32 values, embedded scenario data, and command stream. Therefore output is intended to be a true `.rep`, not a custom command log.
 
-Generation and playback are runtime verified. The first completed match generated a replay for each player, and loading the archived player-1 replay through BWAPILauncher completed successfully in 0.45 seconds with exit code zero. OpenBW has had replay desynchronization reports, so this is a plumbing result rather than broad proof that every replay remains synchronized.
+Generation is runtime verified, and the archived player-1 replay independently parses with screp v1.13.4: 5,613 header frames and 76 decoded commands, without parser errors. See [replay validation](replay-validation.md). A BWAPILauncher replay-load smoke run reached module initialization; its retained log has no terminal-frame summary or persisted exit record, so full playback completion remains unverified. Parsing alone does not prove simulation synchronization.
 
 Completed match evidence is in `artifacts/runs/20260920T015245-8d1cc76f5e12/game-0001/manifest.json`. WorkerRush Protoss defeated Idle Protoss on Benzene in 5,614 logical frames. End-to-end harness time was 1.536 seconds, or 3,656 logical frames/second (152x the project's 24-fps reference speed and 9.5x the required 16x target). Each launcher peaked around 44 MB RSS, though this short diagnostic match does not establish a representative full-game memory bound.
 
@@ -93,13 +123,15 @@ Two integration failures and one sandbox limitation were also preserved before s
 
 ## Latency and headless timing
 
-OpenBW sets `sync_funcs.sync_st.latency = 3` every time it loads a map or replay. `Game::getLatencyFrames()` returns this value directly. No environment/configuration override exists in the inspected source, so this backend implements the project's LF3 command-latency requirement by construction. Both diagnostic modules also reported 3 at runtime.
+OpenBW sets `sync_funcs.sync_st.latency = 3` when creating a multiplayer game. Single-player replay playback uses the default two-frame observer latency; that does not change the recorded multiplayer commands. `Game::getLatencyFrames()` returns this value directly. No environment/configuration override exists in the inspected source, so this backend implements the project's LF3 command-latency requirement by construction. Both diagnostic modules also reported 3 at runtime.
 
-In the no-UI branch, `next_frame()` advances without sleeping. `OPENBW_GAME_SPEED` controls sleeping only when a UI object exists. Therefore headless throughput is not throttled by the normal 42 ms fastest-game frame duration. Representative competitive full-match throughput remains unmeasured; the diagnostic game comfortably passes the threshold but is not a sufficient performance suite.
+In the no-UI branch, `next_frame()` advances without sleeping. `OPENBW_GAME_SPEED` controls sleeping only when a UI object exists. Therefore headless throughput is not throttled by the normal 42 ms fastest-game frame duration. The first McRave/ZZZKBot cross-game measured 633 frames/s, or 26.4× reference speed, including durable replay archival. A representative late-game suite remains unmeasured; see [performance evidence](performance.md).
 
-## Bot baseline recommendation
+## Current bot route
 
-Use the example module only to prove the match plumbing. For the first competitive codebase, evaluate Steamhammer 5.3.6 as the leading base: it is current (AIIDE 2025), C++, BWAPI 4.4.0, all-race, full-featured, and its author states that it retains UAlbertaBot's MIT license. Its source is distributed as a versioned archive rather than maintained in a public source repository, so hash and inspect that archive before importing it. Its OpenBW compatibility is unverified and the local OpenBW fork exposes 4.2.0, making API deltas and dynamic-loading assumptions the first bounded port test. UAlbertaBot is a simpler fallback if Steamhammer's port cost is high. Do not use Stardust as the base without author consent: its license adds a competition-submission restriction for forks.
+McRave is the provisional development reference; ZZZKBot supplies an independent rush opponent. Both ports have completed native games and emitted independently parsed replays. Full McRave gameplay also compiles against official 4.4.0 headers, without a Windows link or runtime claim. See [McRave](mcrave-port.md), [ZZZKBot](zzzkbot-port.md), and the versioned [reference record](../config/baseline.json).
+
+The cohort now includes ZZZKBot Zerg and full UAlbertaBot Protoss/Terran policies. It remains uncalibrated; the first controlled quick batch is registered. McRave's recent source update means author permission is needed before a derivative submission; local development and benchmarking can proceed. UAlbertaBot is also a runnable permissive fallback. Stardust carries a competition-fork consent condition and is a benchmark lead only.
 
 ## Official Windows/BWAPI path
 
@@ -110,11 +142,19 @@ Keep engine-specific startup and build definitions outside gameplay code. Compil
 1. ARM64 macOS `.dylib` against OpenBW's BWAPI 4.2 fork for local simulation.
 2. Win32 `.dll` against official BWAPI 4.4.0 for competition.
 
-Avoid OpenBW internals in the policy. Differences between 4.2 and 4.4 must be isolated behind compatibility helpers and tested on both targets. This Windows lane is **statically reviewed only**: no Windows compiler or original-game runtime was available in this spike. The first portability slice should compile the minimal module plus one representative gameplay translation unit in a Windows CI/VM; runtime injection remains a separate verification.
+Avoid OpenBW internals in the policy. Differences between 4.2 and 4.4 must be isolated behind compatibility helpers and tested on both targets. The diagnostic and all 114 McRave translation units compile as ARM64 objects against official BWAPI 4.4.0 headers. No Windows compiler or original-game runtime was available: Win32 linking and injection remain unverified. The next portability check must produce and load the real Win32 DLL.
 
 ## Concrete remaining blockers
 
-1. No meaningful competitive native opponent has completed a match; WorkerRush and Idle are diagnostic fixtures only.
+1. The runnable cohort has three codebases across three races. Calibrated strength, stronger diverse anchors and representative late-game performance remain unverified.
 2. OpenBW's repository has no explicit license file at the pinned revision; clarify redistribution before shipping it or derived binaries.
 3. Official BWAPI 4.4.0 is a different code line from the OpenBW 4.2 fork. Windows compilation and injection remain unverified.
-4. Replay validation needs expansion to representative games and an explicit terminal-frame/desync assertion; the current playback process completed without error but emitted no frame summary.
+4. Replay validation needs expansion to representative games and an explicit terminal-frame/desync assertion; the retained playback smoke log reaches module initialization without a recorded error; process completion and synchronization remain unverified.
+
+## Controlled scenarios and expanded playback check
+
+The evaluator now supports `--seed` with a pinned opt-in OpenBW patch; two repeated fixtures produced byte-identical replays, and swapping bot assignments preserved starting slots. See [scenario control](scenario-control.md). Bot-internal nondeterminism is still possible.
+
+The same pinned patch now repairs an OpenBW asynchronous socket-handler lifetime fault during ordinary launcher shutdown. The exact release reproduction and an AddressSanitizer teardown check pass with both launcher processes exiting zero; see [OpenBW socket teardown lifetime repair](openbw-teardown.md).
+
+`artifacts/spikes/replay-playback-c8f74ad2/manifest.json` records full native playback of UAlbertaBot versus ZZZKBot: replay length 9,581 frames, observer terminal callback at 9,583, zero exit, and no replay error. This verifies reaching the end of this replay; no final-state checksum comparison to the live match has been implemented.

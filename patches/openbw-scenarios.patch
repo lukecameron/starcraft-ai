@@ -1,0 +1,165 @@
+diff --git a/sync.h b/sync.h
+index 19cbab6..81a35b6 100644
+--- a/sync.h
++++ b/sync.h
+@@ -7,15 +7,48 @@
+ #include "replay_saver.h"
+ 
+ #include <chrono>
++#include <cerrno>
++#include <cstdlib>
+ #include <random>
+ #include <thread>
+ #include <functional>
++#include <memory>
+ #include <type_traits>
+ #include <typeinfo>
+ 
+ namespace bwgame {
+ 
+ struct sync_state {
++	struct scenario_control_t {
++		bool enabled = false;
++		uint32_t seed = 0;
++		uint32_t player_id = 0;
++	};
++
++	static scenario_control_t scenario_control() {
++		const char* seed_str = std::getenv("OPENBW_SCENARIO_SEED");
++		const char* player_id_str = std::getenv("OPENBW_SCENARIO_PLAYER_ID");
++		if (!seed_str && !player_id_str) return {};
++		if (!seed_str || !player_id_str) error("OPENBW_SCENARIO_SEED and OPENBW_SCENARIO_PLAYER_ID must be set together");
++		auto parse_uint32 = [](const char* name, const char* value) {
++			if (!*value) error("%s must be a decimal uint32", name);
++			for (const char* p = value; *p; ++p) {
++				if (*p < '0' || *p > '9') error("%s must be a decimal uint32", name);
++			}
++			char* end = nullptr;
++			errno = 0;
++			unsigned long long parsed = std::strtoull(value, &end, 10);
++			if (errno || !end || *end || parsed > 0xffffffffull) error("%s must be a decimal uint32", name);
++			return (uint32_t)parsed;
++		};
++		scenario_control_t r;
++		r.enabled = true;
++		r.seed = parse_uint32("OPENBW_SCENARIO_SEED", seed_str);
++		r.player_id = parse_uint32("OPENBW_SCENARIO_PLAYER_ID", player_id_str);
++		if (!r.player_id) error("OPENBW_SCENARIO_PLAYER_ID must be nonzero");
++		return r;
++	}
++
+ 	struct scheduled_action {
+ 		uint8_t frame;
+ 		size_t data_begin;
+@@ -32,6 +65,13 @@ struct sync_state {
+ 	struct uid_t {
+ 		std::array<uint32_t, 8> vals{};
+ 		static uid_t generate() {
++			auto scenario = sync_state::scenario_control();
++			if (scenario.enabled) {
++				uid_t r;
++				r.vals = {{0x53434149u, 0x4f50454eu, 0x42575343u, 0x454e4152u,
++					0x494f4944u, scenario.player_id, ~scenario.player_id, scenario.player_id ^ 0xa5a5a5a5u}};
++				return r;
++			}
+ 			uid_t r;
+ 			std::array<uint32_t, 8> arr;
+ 			arr[0] = 42;
+@@ -687,6 +727,8 @@ struct sync_functions: action_functions {
+ 			a_string seed_str;
+ 			for (auto& v : sync_st.clients) seed_str += v.uid.str();
+ 			uint32_t rand_state = seed ^ data_loading::crc32_t()((const uint8_t*)seed_str.data(), seed_str.size());
++			auto scenario = sync_state::scenario_control();
++			if (scenario.enabled) rand_state = scenario.seed;
+ 			st.lcg_rand_state = rand_state;
+ 
+ 			for (int i = 0; i != 12; ++i) {
+@@ -972,11 +1014,11 @@ struct sync_functions: action_functions {
+ 					}
+ 					return false;
+ 				};
+-				bool timed_out = false;
+-				server.set_timeout(std::chrono::milliseconds(50), [&]{
+-					timed_out = true;
++				auto timed_out = std::make_shared<bool>(false);
++				server.set_timeout(std::chrono::milliseconds(50), [timed_out]{
++					*timed_out = true;
+ 				});
+-				while (!any_scheduled_actions() && !timed_out) {
++				while (!any_scheduled_actions() && !*timed_out) {
+ 					server.run_one(std::bind(&syncer_t::on_new_client, this, std::placeholders::_1));
+ 				}
+ 				if (!pred()) {
+@@ -996,17 +1038,17 @@ struct sync_functions: action_functions {
+ 		}
+ 
+ 		void final_sync() {
+-			bool timed_out = false;
+-			server.set_timeout(std::chrono::milliseconds(250), [&]{
+-				timed_out = true;
++			auto timed_out = std::make_shared<bool>(false);
++			server.set_timeout(std::chrono::milliseconds(250), [timed_out]{
++				*timed_out = true;
+ 			});
+-			while (!sync_st.local_client->scheduled_actions.empty() && !timed_out) {
++			while (!sync_st.local_client->scheduled_actions.empty() && !*timed_out) {
+ 				sync_next_frame();
+ 				server.poll(std::bind(&syncer_t::on_new_client, this, std::placeholders::_1));
+-				while (!all_clients_in_sync() && !timed_out) {
++				while (!all_clients_in_sync() && !*timed_out) {
+ 					server.run_one(std::bind(&syncer_t::on_new_client, this, std::placeholders::_1));
+ 				}
+-				if (!timed_out) process_messages();
++				if (!*timed_out) process_messages();
+ 			}
+ 		}
+ 
+diff --git a/sync_server_asio_socket.h b/sync_server_asio_socket.h
+index 3078078..808aef0 100644
+--- a/sync_server_asio_socket.h
++++ b/sync_server_asio_socket.h
+@@ -23,7 +23,7 @@ namespace bwgame {
+ 
+ template<typename socket_T>
+ struct sync_server_asio_socket {
+-	
++	bool shutting_down = false;
+ 	asio::io_service io_service;
+ 	asio::io_service::work work{io_service};
+ 	asio::steady_timer timer{io_service};
+@@ -31,15 +31,18 @@ struct sync_server_asio_socket {
+ 	template<typename T, typename release_F>
+ 	struct async_handle_t {
+ 		T* obj;
++		bool* shutting_down;
+ 		release_F release_f;
+-		async_handle_t(T* obj, release_F&& release_f) : obj(obj), release_f(release_f) {
++		async_handle_t(T* obj, bool* shutting_down, release_F&& release_f)
++			: obj(obj), shutting_down(shutting_down), release_f(release_f) {
+ 			++obj->async_count;
+ 		}
+ 		~async_handle_t() {
+-			if (!--obj->async_count) release_f(obj);
++			if (!*shutting_down && !--obj->async_count) release_f(obj);
+ 		}
+-		async_handle_t(const async_handle_t& n) : obj(n.obj), release_f(n.release_f) {
+-			++obj->async_count;
++		async_handle_t(const async_handle_t& n)
++			: obj(n.obj), shutting_down(n.shutting_down), release_f(n.release_f) {
++			if (!*shutting_down) ++obj->async_count;
+ 		}
+ 		operator T*() const {
+ 			return obj;
+@@ -50,7 +53,11 @@ struct sync_server_asio_socket {
+ 	};
+ 	template<typename T, typename release_F>
+ 	async_handle_t<T, release_F> async_handle(T* obj, release_F&&f) {
+-		return async_handle_t<T, release_F>(obj, std::forward<release_F>(f));
++		return async_handle_t<T, release_F>(obj, &shutting_down, std::forward<release_F>(f));
++	}
++
++	~sync_server_asio_socket() {
++		shutting_down = true;
+ 	}
+ 	
+ 	const size_t recv_size = 0x1000;

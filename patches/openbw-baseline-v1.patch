@@ -1,0 +1,73 @@
+diff --git a/sync.h b/sync.h
+index 19cbab6..58786ab 100644
+--- a/sync.h
++++ b/sync.h
+@@ -7,6 +7,8 @@
+ #include "replay_saver.h"
+ 
+ #include <chrono>
++#include <cerrno>
++#include <cstdlib>
+ #include <random>
+ #include <thread>
+ #include <functional>
+@@ -16,6 +18,36 @@
+ namespace bwgame {
+ 
+ struct sync_state {
++	struct scenario_control_t {
++		bool enabled = false;
++		uint32_t seed = 0;
++		uint32_t player_id = 0;
++	};
++
++	static scenario_control_t scenario_control() {
++		const char* seed_str = std::getenv("OPENBW_SCENARIO_SEED");
++		const char* player_id_str = std::getenv("OPENBW_SCENARIO_PLAYER_ID");
++		if (!seed_str && !player_id_str) return {};
++		if (!seed_str || !player_id_str) error("OPENBW_SCENARIO_SEED and OPENBW_SCENARIO_PLAYER_ID must be set together");
++		auto parse_uint32 = [](const char* name, const char* value) {
++			if (!*value) error("%s must be a decimal uint32", name);
++			for (const char* p = value; *p; ++p) {
++				if (*p < '0' || *p > '9') error("%s must be a decimal uint32", name);
++			}
++			char* end = nullptr;
++			errno = 0;
++			unsigned long long parsed = std::strtoull(value, &end, 10);
++			if (errno || !end || *end || parsed > 0xffffffffull) error("%s must be a decimal uint32", name);
++			return (uint32_t)parsed;
++		};
++		scenario_control_t r;
++		r.enabled = true;
++		r.seed = parse_uint32("OPENBW_SCENARIO_SEED", seed_str);
++		r.player_id = parse_uint32("OPENBW_SCENARIO_PLAYER_ID", player_id_str);
++		if (!r.player_id) error("OPENBW_SCENARIO_PLAYER_ID must be nonzero");
++		return r;
++	}
++
+ 	struct scheduled_action {
+ 		uint8_t frame;
+ 		size_t data_begin;
+@@ -32,6 +64,13 @@ struct sync_state {
+ 	struct uid_t {
+ 		std::array<uint32_t, 8> vals{};
+ 		static uid_t generate() {
++			auto scenario = sync_state::scenario_control();
++			if (scenario.enabled) {
++				uid_t r;
++				r.vals = {{0x53434149u, 0x4f50454eu, 0x42575343u, 0x454e4152u,
++					0x494f4944u, scenario.player_id, ~scenario.player_id, scenario.player_id ^ 0xa5a5a5a5u}};
++				return r;
++			}
+ 			uid_t r;
+ 			std::array<uint32_t, 8> arr;
+ 			arr[0] = 42;
+@@ -687,6 +726,8 @@ struct sync_functions: action_functions {
+ 			a_string seed_str;
+ 			for (auto& v : sync_st.clients) seed_str += v.uid.str();
+ 			uint32_t rand_state = seed ^ data_loading::crc32_t()((const uint8_t*)seed_str.data(), seed_str.size());
++			auto scenario = sync_state::scenario_control();
++			if (scenario.enabled) rand_state = scenario.seed;
+ 			st.lcg_rand_state = rand_state;
+ 
+ 			for (int i = 0; i != 12; ++i) {

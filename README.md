@@ -14,9 +14,9 @@ The [progress dashboard](https://starcraft-ai.pages.dev/) publishes experiments,
 - [Opponent source/rating manifest](config/opponents.json), [research inventory](docs/research/wiki-inventory.md), [decisions](docs/decisions.md)
 - [Current reference build](config/baseline.json), [performance evidence](docs/performance.md), [resume state](docs/resume.md)
 
-## Run the bot baseline
+## Build and run the native ports
 
-Follow the [engine setup](docs/engine-spike.md) first, including the local game-data layout. Clone the bot and official-header dependencies at their pinned revisions:
+Follow the [engine setup](docs/engine-spike.md) first, including the local game-data layout. The current McRave source includes an optimization candidate under evaluation; the frozen reference in `config/baseline.json` remains separate. Clone the bot and official-header dependencies at their pinned revisions:
 
 ```sh
 git clone https://github.com/Cmccrave/McRave.git third_party/mcrave

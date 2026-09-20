@@ -1,0 +1,372 @@
+diff --git a/BOSS/source/GameState.cpp b/BOSS/source/GameState.cpp
+index b3f0153..942ddf0 100644
+--- a/BOSS/source/GameState.cpp
++++ b/BOSS/source/GameState.cpp
+@@ -14,7 +14,7 @@ GameState::GameState(const RaceID r)
+     
+ }
+ 
+-#ifdef _MSC_VER
++#if !defined(BOSS_EMSCRIPTEN)
+ GameState::GameState(BWAPI::GameWrapper & game, BWAPI::PlayerInterface * self, const std::vector<BWAPI::UnitType> & buildingsQueued)
+     : _race                 (Races::GetRaceID(self->getRace()))
+     , _currentFrame         (game->getFrameCount())
+@@ -1195,4 +1195,4 @@ std::string GameState::whyIsNotLegal(const ActionType & action) const
+     }
+ 
+     return "Legal";
+-}
+\ No newline at end of file
++}
+diff --git a/BOSS/source/GameState.h b/BOSS/source/GameState.h
+index 56741a5..80ea7b8 100644
+--- a/BOSS/source/GameState.h
++++ b/BOSS/source/GameState.h
+@@ -67,7 +67,7 @@ public:
+ 
+ // constructor based on BWAPI::Game only makes sense if using VS
+ // we won't be using this if we're compiling to emscripten or linux
+-#ifdef _MSC_VER
++#if !defined(BOSS_EMSCRIPTEN)
+     GameState(BWAPI::GameWrapper & game, BWAPI::PlayerInterface * player, const std::vector<BWAPI::UnitType> & buildingsQueued);
+ #endif
+ 
+diff --git a/UAlbertaBot/Source/BuildingData.cpp b/UAlbertaBot/Source/BuildingData.cpp
+index 7fd1004..41b75db 100644
+--- a/UAlbertaBot/Source/BuildingData.cpp
++++ b/UAlbertaBot/Source/BuildingData.cpp
+@@ -9,7 +9,7 @@ BuildingData::BuildingData()
+ 
+ void BuildingData::removeBuilding(const Building & b)
+ {
+-    auto & building = std::find(m_buildings.begin(), m_buildings.end(), b);
++    auto building = std::find(m_buildings.begin(), m_buildings.end(), b);
+ 
+     if (building != m_buildings.end())
+     {
+@@ -46,4 +46,4 @@ void BuildingData::removeBuildings(const std::vector<Building> & buildings)
+     {
+         removeBuilding(b);
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/UAlbertaBot/Source/BuildingManager.cpp b/UAlbertaBot/Source/BuildingManager.cpp
+index 07cc53b..378ea14 100644
+--- a/UAlbertaBot/Source/BuildingManager.cpp
++++ b/UAlbertaBot/Source/BuildingManager.cpp
+@@ -455,11 +455,11 @@ void BuildingManager::removeBuildings(const std::vector<Building> & toRemove)
+ {
+     for (auto & b : toRemove)
+     {
+-        auto & it = std::find(m_buildings.begin(), m_buildings.end(), b);
++        auto it = std::find(m_buildings.begin(), m_buildings.end(), b);
+ 
+         if (it != m_buildings.end())
+         {
+             m_buildings.erase(it);
+         }
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/UAlbertaBot/Source/CombatSimulation.h b/UAlbertaBot/Source/CombatSimulation.h
+index 00c64dd..2aa5c42 100644
+--- a/UAlbertaBot/Source/CombatSimulation.h
++++ b/UAlbertaBot/Source/CombatSimulation.h
+@@ -6,10 +6,10 @@
+ 	#include "Visualizer.h"
+ #endif
+ 
+-#include "..\..\SparCraft\source\GameState.h"
+-#include "..\..\SparCraft\source\Game.h"
+-#include "..\..\SparCraft\source\Unit.h"
+-#include "..\..\SparCraft\source\AllPlayers.h"
++#include "../../SparCraft/source/GameState.h"
++#include "../../SparCraft/source/Game.h"
++#include "../../SparCraft/source/Unit.h"
++#include "../../SparCraft/source/AllPlayers.h"
+ 
+ namespace UAlbertaBot
+ {
+@@ -30,4 +30,4 @@ public:
+ 	const SparCraft::GameState &	getSparCraftState() const;
+ 	const size_t                    getSparCraftPlayerID(BWAPI::Player player) const;
+ };
+-}
+\ No newline at end of file
++}
+diff --git a/UAlbertaBot/Source/Config.cpp b/UAlbertaBot/Source/Config.cpp
+index eb711d9..69b4533 100644
+--- a/UAlbertaBot/Source/Config.cpp
++++ b/UAlbertaBot/Source/Config.cpp
+@@ -12,7 +12,11 @@ namespace Config
+     {
+         bool ConfigFileFound                = false;
+         bool ConfigFileParsed               = false;
++#ifdef UALBERTA_CONFIG_FILE
++        std::string ConfigFileLocation      = UALBERTA_CONFIG_FILE;
++#else
+         std::string ConfigFileLocation      = "UAlbertaBot_Config.txt";
++#endif
+     }
+ 
+     namespace Strategy
+@@ -123,4 +127,4 @@ namespace Config
+     {
+         extern int MAP_GRID_SIZE            = 320;      // size of grid spacing in MapGrid
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/UAlbertaBot/Source/Logger.cpp b/UAlbertaBot/Source/Logger.cpp
+index 7f43183..9cadab7 100644
+--- a/UAlbertaBot/Source/Logger.cpp
++++ b/UAlbertaBot/Source/Logger.cpp
+@@ -23,7 +23,7 @@ void Logger::LogAppendToFile(const std::string & logFile, const char *fmt, ...)
+ 	va_start(arg, fmt);
+ 	//vfprintf(log_file, fmt, arg);
+ 	char buff[256];
+-	vsnprintf_s(buff, 256, fmt, arg);
++	vsnprintf(buff, sizeof(buff), fmt, arg);
+ 	va_end(arg);
+ 		
+ 	std::ofstream logStream;
+@@ -62,4 +62,4 @@ std::string FileUtils::ReadFile(const std::string & filename)
+     }
+ 
+     return ss.str();
+-}
+\ No newline at end of file
++}
+diff --git a/UAlbertaBot/Source/ParseUtils.cpp b/UAlbertaBot/Source/ParseUtils.cpp
+index 44bd2d4..a0ecd8a 100644
+--- a/UAlbertaBot/Source/ParseUtils.cpp
++++ b/UAlbertaBot/Source/ParseUtils.cpp
+@@ -1,5 +1,5 @@
+ #include "ParseUtils.h"
+-#include "rapidjson\document.h"
++#include "rapidjson/document.h"
+ #include "JSONTools.h"
+ #include "BuildOrder.h"
+ #include "StrategyManager.h"
+@@ -221,7 +221,8 @@ void ParseUtils::ParseConfigFile(const std::string & filename)
+                     }
+                 }
+ 
+-                Global::Strategy().addStrategy(name, Strategy(name, strategyRace, buildOrder));
++                Strategy strategy(name, strategyRace, buildOrder);
++                Global::Strategy().addStrategy(name, strategy);
+             }
+         }
+     }
+@@ -354,4 +355,4 @@ bool ParseUtils::GetBoolFromString(const std::string & str)
+     }
+ 
+     return false;
+-}
+\ No newline at end of file
++}
+diff --git a/UAlbertaBot/Source/ProductionManager.cpp b/UAlbertaBot/Source/ProductionManager.cpp
+index d0aa28c..d1b89e0 100644
+--- a/UAlbertaBot/Source/ProductionManager.cpp
++++ b/UAlbertaBot/Source/ProductionManager.cpp
+@@ -33,7 +33,7 @@ void ProductionManager::performBuildOrderSearch()
+ 
+     PROFILE_FUNCTION();
+ 
+-    BuildOrder & buildOrder = m_bossManager.getBuildOrder();
++    BuildOrder buildOrder = m_bossManager.getBuildOrder();
+ 
+     if (buildOrder.size() > 0)
+     {
+@@ -715,4 +715,4 @@ bool ProductionManager::canPlanBuildOrderNow() const
+ std::vector<BWAPI::UnitType> ProductionManager::buildingsQueued()
+ {
+     return m_buildingManager.buildingsQueued();
+-}
+\ No newline at end of file
++}
+diff --git a/UAlbertaBot/Source/Profiler.hpp b/UAlbertaBot/Source/Profiler.hpp
+index 761a25d..6def79e 100644
+--- a/UAlbertaBot/Source/Profiler.hpp
++++ b/UAlbertaBot/Source/Profiler.hpp
+@@ -3,6 +3,7 @@
+ #include <chrono>
+ #include <fstream>
+ #include <mutex>
++#include <thread>
+ #include <map>
+ #include <algorithm>
+ 
+@@ -113,4 +114,4 @@ public:
+         m_stopped = true;
+     }
+ };
+-}
+\ No newline at end of file
++}
+diff --git a/UAlbertaBot/Source/SquadData.cpp b/UAlbertaBot/Source/SquadData.cpp
+index 2be5a32..c0b212a 100644
+--- a/UAlbertaBot/Source/SquadData.cpp
++++ b/UAlbertaBot/Source/SquadData.cpp
+@@ -39,7 +39,7 @@ void SquadData::clearSquadData()
+ 
+ void SquadData::removeSquad(const std::string & squadName)
+ {
+-    auto & squadPtr = m_squads.find(squadName);
++    auto squadPtr = m_squads.find(squadName);
+ 
+     UAB_ASSERT_WARNING(squadPtr != m_squads.end(), "Trying to clear a squad that didn't exist: %s", squadName.c_str());
+     if (squadPtr == m_squads.end())
+@@ -190,7 +190,7 @@ bool SquadData::canAssignUnitToSquad(BWAPI::Unit unit, const Squad & squad) cons
+ 
+ Squad & SquadData::getSquad(const std::string & squadName)
+ {
+-    UAB_ASSERT_WARNING(squadExists(squadName), "Trying to access squad that doesn't exist: %s", squadName);
++    UAB_ASSERT_WARNING(squadExists(squadName), "Trying to access squad that doesn't exist: %s", squadName.c_str());
+     
+     return m_squads[squadName];
+-}
+\ No newline at end of file
++}
+diff --git a/UAlbertaBot/Source/UABAssert.cpp b/UAlbertaBot/Source/UABAssert.cpp
+index 90e759b..f57682a 100644
+--- a/UAlbertaBot/Source/UABAssert.cpp
++++ b/UAlbertaBot/Source/UABAssert.cpp
+@@ -17,7 +17,11 @@ namespace Assert
+         struct tm  tstruct;
+         char       buf[80];
+         //tstruct = *localtime(&now);
++#ifdef _WIN32
+ 		localtime_s(&tstruct, &now);
++#else
++		localtime_r(&now, &tstruct);
++#endif
+         strftime(buf, sizeof(buf), "%Y-%m-%d_%X", &tstruct);
+ 
+         return buf;
+@@ -31,7 +35,7 @@ namespace Assert
+             va_list args;
+             va_start(args, msg);
+             //vsprintf(messageBuffer, msg, args);
+-			vsnprintf_s(messageBuffer, 1024, msg, args);
++			vsnprintf(messageBuffer, sizeof(messageBuffer), msg, args);
+             va_end(args);
+         }
+ 
+@@ -55,4 +59,3 @@ namespace Assert
+     }
+ }
+ }
+-
+diff --git a/UAlbertaBot/Source/UAlbertaBotModule.cpp b/UAlbertaBot/Source/UAlbertaBotModule.cpp
+index 3d259b3..deeaf77 100644
+--- a/UAlbertaBot/Source/UAlbertaBotModule.cpp
++++ b/UAlbertaBot/Source/UAlbertaBotModule.cpp
+@@ -18,9 +18,41 @@
+ #include "Global.h"
+ #include "StrategyManager.h"
+ #include "MapTools.h"
++#include <cstdlib>
++#include <fstream>
+ 
+ using namespace UAlbertaBot;
+ 
++namespace {
++void writePortResult(bool ended, bool winner)
++{
++    int workers = 0, combatUnits = 0, productionBuildings = 0;
++    for (auto unit : BWAPI::Broodwar->self()->getUnits()) {
++        const auto type = unit->getType();
++        workers += type.isWorker();
++        combatUnits += type.canAttack() && !type.isWorker();
++        productionBuildings += type.isBuilding() && type.canProduce();
++    }
++    std::ostringstream record;
++    record << "{\"frame_count\":" << BWAPI::Broodwar->getFrameCount()
++           << ",\"winner\":" << (winner ? "true" : "false")
++           << ",\"ended\":" << (ended ? "true" : "false")
++           << ",\"latency_frames\":" << BWAPI::Broodwar->getLatencyFrames()
++           << ",\"workers\":" << workers
++           << ",\"combat_units\":" << combatUnits
++           << ",\"production_buildings\":" << productionBuildings << "}\n";
++    std::ofstream diagnostic("bwapi-data/write/diagnostic.json", std::ios::trunc);
++    diagnostic << record.str();
++    if (ended) {
++        const char *path = std::getenv("MATCH_RESULT_PATH");
++        if (path && path[0]) {
++            std::ofstream result(path, std::ios::trunc);
++            result << record.str();
++        }
++    }
++}
++}
++
+ UAlbertaBotModule::UAlbertaBotModule()
+ {
+     Global::GameStart();
+@@ -32,6 +64,7 @@ void UAlbertaBotModule::onStart()
+     // Parse the bot's configuration file if it has one, change this file path to where your config file is
+     // Any relative path name will be relative to Starcraft installation folder
+     ParseUtils::ParseConfigFile(Config::ConfigFile::ConfigFileLocation);
++    writePortResult(false, false);
+ 
+     // Set our BWAPI options here    
+ 	BWAPI::Broodwar->setLocalSpeed(Config::BWAPIOptions::SetLocalSpeed);
+@@ -67,6 +100,7 @@ void UAlbertaBotModule::onStart()
+ 
+ void UAlbertaBotModule::onEnd(bool isWinner) 
+ {
++	writePortResult(true, isWinner);
+ 	if (Config::Modules::UsingGameCommander)
+ 	{
+ 		Global::Strategy().onEnd(isWinner);
+@@ -157,4 +191,4 @@ void UAlbertaBotModule::onUnitHide(BWAPI::Unit unit)
+ void UAlbertaBotModule::onUnitRenegade(BWAPI::Unit unit)
+ { 
+ 	if (Config::Modules::UsingGameCommander) { m_gameCommander.onUnitRenegade(unit); }
+-}
+\ No newline at end of file
++}
+diff --git a/UAlbertaBot/Source/UAlbertaBotModule.h b/UAlbertaBot/Source/UAlbertaBotModule.h
+index 08bea91..84ff7a1 100644
+--- a/UAlbertaBot/Source/UAlbertaBotModule.h
++++ b/UAlbertaBot/Source/UAlbertaBotModule.h
+@@ -7,7 +7,7 @@
+ namespace UAlbertaBot
+ {
+ 
+-class UAlbertaBotModule
++class UAlbertaBotModule : public BWAPI::AIModule
+ {
+ 	GameCommander m_gameCommander;
+     AutoObserver  m_autoObserver;
+@@ -28,4 +28,4 @@ public:
+ 	void	onUnitRenegade(BWAPI::Unit unit);
+ };
+ 
+-}
+\ No newline at end of file
++}
+diff --git a/UAlbertaBot/Source/UnitData.cpp b/UAlbertaBot/Source/UnitData.cpp
+index 6545925..f710220 100644
+--- a/UAlbertaBot/Source/UnitData.cpp
++++ b/UAlbertaBot/Source/UnitData.cpp
+@@ -22,7 +22,7 @@ void UnitData::updateUnit(BWAPI::Unit unit)
+ 	if (!unit) { return; }
+ 
+     bool firstSeen = false;
+-    auto & it = unitMap.find(unit);
++    auto it = unitMap.find(unit);
+     if (it == unitMap.end())
+     {
+         firstSeen = true;
+@@ -118,4 +118,4 @@ int UnitData::getNumDeadUnits(BWAPI::UnitType t) const
+ const std::map<BWAPI::Unit,UnitInfo> & UnitData::getUnits() const 
+ { 
+     return unitMap; 
+-}
+\ No newline at end of file
++}
+

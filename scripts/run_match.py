@@ -152,6 +152,9 @@ def player_environment(args: argparse.Namespace, player: int, work: Path, socket
     if args.seed is not None:
         env["OPENBW_SCENARIO_SEED"] = str(args.seed)
         env["OPENBW_SCENARIO_PLAYER_ID"] = str(player)
+    bot_seed = args.bot_seed1 if player == 1 else args.bot_seed2
+    if bot_seed is not None:
+        env["MATCH_BOT_SEED"] = str(bot_seed)
     return env, raw_replay, result_path
 
 
@@ -228,6 +231,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--purpose", required=True)
     parser.add_argument("--experiment-id", help="Stable experiment ledger identity for dashboard grouping")
     parser.add_argument("--seed", type=int, help="Controlled uint32 engine seed before race and start-slot draws")
+    parser.add_argument("--bot-seed1", type=int, help="Controlled uint32 RNG seed for player 1's supported bot")
+    parser.add_argument("--bot-seed2", type=int, help="Controlled uint32 RNG seed for player 2's supported bot")
     parser.add_argument("--wall-timeout", required=True, type=float)
     parser.add_argument("--artifacts-dir", type=Path, default=Path("artifacts"))
     parser.add_argument("--library-path", type=Path)
@@ -237,6 +242,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("--wall-timeout must be finite and positive")
     if args.seed is not None and not 0 <= args.seed <= 0xffffffff:
         parser.error("--seed must be an unsigned 32-bit integer")
+    for label in ("bot_seed1", "bot_seed2"):
+        value = getattr(args, label)
+        if value is not None and not 0 <= value <= 0xffffffff:
+            parser.error(f"--{label.replace('_', '-')} must be an unsigned 32-bit integer")
     for label in ("launcher", "bot1", "bot2", "game_data_dir"):
         path = getattr(args, label)
         if not path.exists():
@@ -275,9 +284,11 @@ def main(argv: list[str] | None = None) -> int:
         inputs["map"].update(artifact(map_file))
     else:
         inputs["map"]["hash_unavailable_reason"] = "configured map is not a regular file under game-data-dir"
-    for number, (bot, race) in enumerate(((args.bot1, args.race1), (args.bot2, args.race2)), 1):
+    for number, (bot, race, bot_seed) in enumerate(((args.bot1, args.race1, args.bot_seed1),
+                                                     (args.bot2, args.race2, args.bot_seed2)), 1):
         inputs["players"].append({"player": number, "race": race,
                                   "name": args.name1 if number == 1 else args.name2,
+                                  "bot_seed": bot_seed,
                                   "bot_module": binary_artifact(bot.resolve())})
 
     manifest: dict[str, object] = {
@@ -296,6 +307,8 @@ def main(argv: list[str] | None = None) -> int:
             "random_seed": args.seed,
             "seed_semantics": "OpenBW LCG state before random-race and start-slot draws" if args.seed is not None else None,
             "protocol_player_ids": [1, 2] if args.seed is not None else None,
+            "bot_seeds": [args.bot_seed1, args.bot_seed2],
+            "bot_seed_semantics": "Per-bot RNG initialization through MATCH_BOT_SEED; null means bot default behavior.",
             "known_nondeterminism": (
                 "Engine initialization controlled; bot wall-clock seeds, address-dependent ordering, or search budgets may still differ."
                 if args.seed is not None else
@@ -337,6 +350,13 @@ def main(argv: list[str] | None = None) -> int:
             for name in ("libOpenBWData.dylib", "libBWAPI.dylib", "libBWAPILIB.dylib"):
                 if name not in expected or actual.get(name) != expected[name]:
                     raise ValueError(f"Controlled engine library does not match build provenance: {name}")
+        for number, bot_seed in enumerate((args.bot_seed1, args.bot_seed2), 1):
+            if bot_seed is None:
+                continue
+            module = inputs["players"][number - 1]["bot_module"]
+            control = module.get("build_provenance", {}).get("bot_rng_control", {})
+            if control.get("env") != "MATCH_BOT_SEED":
+                raise ValueError(f"--bot-seed{number} requires a binary-matched sidecar declaring bot_rng_control.env MATCH_BOT_SEED")
         for number in (1, 2):
             work = game_dir / f"player-{number}"
             link_game_data(args.game_data_dir.resolve(), work)

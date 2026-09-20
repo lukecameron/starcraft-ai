@@ -1,10 +1,127 @@
 {
   "schema_version": 1,
   "experiments": [
-    {"id":"diagnostic-completion","title":"Diagnostic completion","date":"2026-09-20","status":"completed","hypothesis":"Two legal-observation native OpenBW clients can complete a headless game and emit replay files.","conclusion":"Supported for WorkerRush versus Idle; competitive strength and long-match synchronization remain unverified.","evidence_run_ids":["20260920T015245-8d1cc76f5e12"],"retrospective":true},
-    {"id":"competitive-bot-ports","title":"Competitive bot ports","date":"2026-09-20","status":"in_progress","hypothesis":"McRave and ZZZKBot can run natively without disabling gameplay.","notes":"Both source ports compile and have diagnostic evidence; the cohort remains uncalibrated and source revisions are not ladder binary matches.","conclusion":"Both compile and have diagnostic evidence; strength calibration is pending.","evidence_run_ids":["20260920T020618-09905c5f8fef","20260920T022831-ee2139f58ecb"],"retrospective":true},
-    {"id":"scenario-control","title":"Scenario control and repeatability","date":"2026-09-20","status":"completed","hypothesis":"Matched map, seed, revision, and launch settings will make repeated games suitable for calibration.","notes":"Fixture runs exercised the 424242 scenario-control path; these are calibration infrastructure checks, not strength evidence.","conclusion":"Three controlled fixture runs completed or recorded with stable scenario inputs; calibration still requires representative bot games.","evidence_run_ids":["20260920T024239-ff5e99f89c1e","20260920T024247-b4cd47265e8f","20260920T024254-47e64439d46e"],"related_game_ids":["20260920T024239-ff5e99f89c1e","20260920T024247-b4cd47265e8f","20260920T024254-47e64439d46e"],"retrospective":true},
-    {"id":"ualbertabot-cross-race","title":"UAlbertaBot cross-race port","date":"2026-09-20","status":"completed","hypothesis":"The MIT UAlbertaBot port can complete a native OpenBW cross-race game with normal gameplay systems enabled.","notes":"Protoss UAlbertaBot versus Zerg ZZZKBot completed on Benzene; this is compatibility evidence, not historical ladder strength evidence.","conclusion":"Completed with verified opposing results, LF3, zero exits, and archived replays.","evidence_run_ids":["20260920T023120-3a7f34fec974"],"related_game_ids":["20260920T023120-3a7f34fec974"],"retrospective":true},
-    {"id":"mcrave-crash-fix","title":"McRave defeat shutdown repair","date":"2026-09-20","status":"completed","hypothesis":"The McRave lifecycle repair will eliminate the post-defeat Destination crash without changing strategic behavior.","notes":"AddressSanitizer verification was clean, but its result metadata had an opposing-winner failure caveat; release verification later completed with opposing results, LF3, empty stderr, and two hashed replays.","conclusion":"Lifecycle reliability evidence improved; the ASAN caveat means this does not establish full reliability or strategic equivalence.","evidence_run_ids":["20260920T023651-fb11b5825657","20260920T023737-795afabea26a"],"related_game_ids":["20260920T023737-795afabea26a"],"retrospective":true}
+    {
+      "id": "diagnostic-completion",
+      "title": "Diagnostic completion",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "Two legal-observation native OpenBW clients can complete a headless game and emit replay files.",
+      "conclusion": "Supported for WorkerRush versus Idle; competitive strength and long-match synchronization remain unverified.",
+      "evidence_run_ids": [
+        "20260920T015245-8d1cc76f5e12"
+      ],
+      "retrospective": true
+    },
+    {
+      "id": "competitive-bot-ports",
+      "title": "Competitive bot ports",
+      "date": "2026-09-20",
+      "status": "in_progress",
+      "hypothesis": "McRave and ZZZKBot can run natively without disabling gameplay.",
+      "notes": "Both source ports compile and have diagnostic evidence; the cohort remains uncalibrated and source revisions are not ladder binary matches.",
+      "conclusion": "Both compile and have diagnostic evidence; strength calibration is pending.",
+      "evidence_run_ids": [
+        "20260920T020618-09905c5f8fef",
+        "20260920T022831-ee2139f58ecb"
+      ],
+      "retrospective": true
+    },
+    {
+      "id": "scenario-control",
+      "title": "Scenario control and repeatability",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "Matched map, seed, revision, and launch settings will make repeated games suitable for calibration.",
+      "notes": "Fixture runs exercised the 424242 scenario-control path; these are calibration infrastructure checks, not strength evidence.",
+      "conclusion": "Three controlled fixture runs completed or recorded with stable scenario inputs; calibration still requires representative bot games.",
+      "evidence_run_ids": [
+        "20260920T024239-ff5e99f89c1e",
+        "20260920T024247-b4cd47265e8f",
+        "20260920T024254-47e64439d46e"
+      ],
+      "related_game_ids": [
+        "20260920T024239-ff5e99f89c1e",
+        "20260920T024247-b4cd47265e8f",
+        "20260920T024254-47e64439d46e"
+      ],
+      "retrospective": true
+    },
+    {
+      "id": "ualbertabot-cross-race",
+      "title": "UAlbertaBot cross-race port",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "The MIT UAlbertaBot port can complete a native OpenBW cross-race game with normal gameplay systems enabled.",
+      "notes": "Protoss UAlbertaBot versus Zerg ZZZKBot completed on Benzene; this is compatibility evidence, not historical ladder strength evidence.",
+      "conclusion": "Completed with verified opposing results, LF3, zero exits, and archived replays.",
+      "evidence_run_ids": [
+        "20260920T023120-3a7f34fec974"
+      ],
+      "related_game_ids": [
+        "20260920T023120-3a7f34fec974"
+      ],
+      "retrospective": true
+    },
+    {
+      "id": "mcrave-crash-fix",
+      "title": "McRave defeat shutdown repair",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "The McRave lifecycle repair will eliminate the post-defeat Destination crash without changing strategic behavior.",
+      "notes": "AddressSanitizer verification was clean, but its result metadata had an opposing-winner failure caveat; release verification later completed with opposing results, LF3, empty stderr, and two hashed replays.",
+      "conclusion": "Lifecycle reliability evidence improved; the ASAN caveat means this does not establish full reliability or strategic equivalence.",
+      "evidence_run_ids": [
+        "20260920T023651-fb11b5825657",
+        "20260920T023737-795afabea26a"
+      ],
+      "related_game_ids": [
+        "20260920T023737-795afabea26a"
+      ],
+      "retrospective": true
+    },
+    {
+      "id": "openbw-lifetime-repair",
+      "title": "OpenBW shutdown and timer lifetime repairs",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "Correcting queued-handler and timer state lifetimes will eliminate the reproduced engine memory errors without changing bot policies.",
+      "notes": "Exact Destination seed-1002 release reproduction and full default AddressSanitizer check completed. Earlier partial shared-state builds were superseded after review caught two pointer-value predicates; they remain archived.",
+      "conclusion": "Verified opposing terminal results, zero exits, empty stderr and two replays in both corrected checks. This establishes the tested lifetime paths, not broad synchronization correctness.",
+      "evidence_run_ids": [
+        "20260920T025029-fe8a87ea13f5",
+        "20260920T030331-626756454df6",
+        "20260920T031316-047d7cddf7d5",
+        "20260920T031425-8bf5f2dec3b9"
+      ]
+    },
+    {
+      "id": "mcrave-timeout-profile-v1",
+      "title": "Profile the slow McRave cross-race game",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "McRave policy work dominates the slow Destination game; a source subsystem will account for at least 20% of sampled runtime.",
+      "notes": "Ten seconds of sampling yielded 7,780 main-thread samples. Both clients completed the profiled game; instrumentation and different openings limit performance comparison.",
+      "conclusion": "Goal assignment accounted for 47.6% of samples, with repeated ground-distance calculations at 45.8%. Repeated nearest-unit scans recompute paths for a growing army. No policy change was made in this experiment.",
+      "evidence_run_ids": [
+        "20260920T025132-cb24a640d358",
+        "20260920T025316-90e77ce69d14",
+        "20260920T030426-ab435a546070"
+      ]
+    },
+    {
+      "id": "mcrave-goal-distance-cache-v1",
+      "title": "Cache distances within goal assignment",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "INCONCLUSIVE",
+      "hypothesis": "Reusing ground distances within one assignment call will reduce repeated path searches while preserving selection order.",
+      "notes": "Official-header compilation and an ordered model check passed. Candidate and baseline selected different randomized openings; comparison engines also differed. No complete candidate replay was emitted before the wall cap.",
+      "conclusion": "Candidate reached 231.8 frames/s versus 189.9 in a prior unsampled run, but both timed out and trajectories differed. This is preliminary performance evidence; no causal speedup, strength gain or baseline adoption is established. A controlled bot-seed comparison is next.",
+      "evidence_run_ids": [
+        "20260920T025132-cb24a640d358",
+        "20260920T030848-ac4ea9f6a371"
+      ]
+    }
   ]
 }
