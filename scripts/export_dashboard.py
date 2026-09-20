@@ -88,6 +88,14 @@ def public_experiment(path, identities=None):
         result["candidate"]={"sha256":candidate.get("sha256"),**identity_for(candidate.get("path"),identities or {},candidate.get("sha256"))}
     if opponents: result["opponents"]=opponents
     if games: result["games"]=games
+    scorecard=load_json(path.parent/"hillclimb-scorecard.json",{})
+    if isinstance(scorecard,dict) and isinstance(scorecard.get("aggregate"),dict):
+        public_games=[]
+        for game in scorecard.get("games",[]):
+            if not isinstance(game,dict): continue
+            replay=game.get("replay",{}) if isinstance(game.get("replay"),dict) else {}
+            public_games.append({"index":game.get("index"),"run_id":game.get("run_id"),"candidate_outcome":game.get("candidate_outcome"),"terminal_frames":game.get("terminal_frames"),"elapsed_seconds":game.get("elapsed_seconds"),"durable_fps":game.get("durable_fps"),"short_game":game.get("short_game"),"heuristic_grade":replay.get("heuristic_grade"),"heuristic_score":replay.get("heuristic_score"),"signals":replay.get("signals"),"first_frames":replay.get("first_frames"),"attack_orders":replay.get("attack_orders"),"harvest_orders":replay.get("harvest_orders"),"build_units":replay.get("build_units"),"production_units":replay.get("production_units")})
+        result["scorecard"]={"schema_version":scorecard.get("schema_version"),"candidate_name":scorecard.get("candidate_name"),"measurement_scope":scorecard.get("measurement_scope"),"decision_note":scorecard.get("decision_note"),"aggregate":scorecard["aggregate"],"games":public_games}
     return result
 
 def append_unique(existing, additions, fields):

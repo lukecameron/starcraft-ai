@@ -1,0 +1,44 @@
+--- third_party/kestrel-opening-v19-candidate/Kestrel.cpp	2026-09-20 18:52:02
++++ third_party/kestrel-opening-v22-candidate/Kestrel.cpp	2026-09-20 21:54:52
+@@ -327,11 +327,11 @@
+         if (!knownZerg_ && supplyUsed >= 26 && gateways < 2 && self->minerals() >= 150) {
+             if (build(BWAPI::UnitTypes::Protoss_Gateway, home)) return;
+         }
+-        if ((!knownZerg_ || acceptedZealotTrains_ >= 4) && gateways > 0 &&
++        if ((!knownZerg_ || acceptedZealotTrains_ >= 2) && gateways > 0 &&
+             count(BWAPI::UnitTypes::Protoss_Assimilator) < 1 && self->minerals() >= 100) {
+             if (buildAssimilator()) return;
+         }
+-        if ((!knownZerg_ || acceptedZealotTrains_ >= 4) && count(BWAPI::UnitTypes::Protoss_Assimilator, true) > 0 &&
++        if ((!knownZerg_ || acceptedZealotTrains_ >= 2) && count(BWAPI::UnitTypes::Protoss_Assimilator, true) > 0 &&
+             count(BWAPI::UnitTypes::Protoss_Cybernetics_Core) < 1 && self->minerals() >= 200) {
+             if (build(BWAPI::UnitTypes::Protoss_Cybernetics_Core, home)) return;
+         }
+@@ -407,6 +407,14 @@
+ 
+     void scoutAndFight() {
+         const int army = count(BWAPI::UnitTypes::Protoss_Zealot, true) + count(BWAPI::UnitTypes::Protoss_Dragoon, true);
++        const BWAPI::TilePosition start = BWAPI::Broodwar->self()->getStartLocation();
++        const BWAPI::Position home(start.x * 32 + 64, start.y * 32 + 48);
++        int localCompletedZealots = 0;
++        for (auto homeUnit : BWAPI::Broodwar->self()->getUnits()) {
++            if (homeUnit->exists() && homeUnit->isCompleted() &&
++                homeUnit->getType() == BWAPI::UnitTypes::Protoss_Zealot &&
++                homeUnit->getDistance(home) < 12 * 32) ++localCompletedZealots;
++        }
+         if (scoutId_ < 0 && count(BWAPI::UnitTypes::Protoss_Probe) >= 9) {
+             for (auto probe : sorted(BWAPI::Broodwar->self()->getUnits())) {
+                 if (probe->exists() && probe->isCompleted() && probe->getType() == BWAPI::UnitTypes::Protoss_Probe &&
+@@ -421,10 +429,8 @@
+             const bool combat = unit->getType() == BWAPI::UnitTypes::Protoss_Zealot || unit->getType() == BWAPI::UnitTypes::Protoss_Dragoon;
+             const bool scout = unit->getID() == scoutId_;
+             if (!combat && !scout) continue;
+-            const BWAPI::TilePosition start = BWAPI::Broodwar->self()->getStartLocation();
+-            const BWAPI::Position home(start.x * 32 + 64, start.y * 32 + 48);
+-            if (knownZerg_ && combat && unit->getType() == BWAPI::UnitTypes::Protoss_Zealot &&
+-                count(BWAPI::UnitTypes::Protoss_Zealot, true) < 2) {
++            if (firstHomeThreatFrame_ >= 0 && combat && unit->getType() == BWAPI::UnitTypes::Protoss_Zealot &&
++                localCompletedZealots < 2) {
+                 if (unit->getDistance(home) > 4 * 32 && !unit->isMoving()) issue(unit->move(home), AttackCommand);
+                 attackRequests_.erase(unit->getID());
+                 continue;

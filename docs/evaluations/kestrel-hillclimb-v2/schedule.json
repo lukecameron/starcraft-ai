@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "experiment_id": "kestrel-hillclimb-v2",
+  "registered_at": "2026-09-20T12:00:00Z",
+  "eval_plan_sha256": "da1e662e2e63f27f3355eeec344e55bd045ac78eb2b2ad6058734662f0d6512e",
+  "purpose": "Exploratory five-way Kestrel v22 hill-climb after v19 replay scorecard",
+  "hypothesis": "A race-general local home hold plus earlier Protoss tech will improve survival and conversion against the frozen five-opponent screen without command-quality regressions.",
+  "stop_condition": "Run exactly five attempts concurrently; retain every result and stop after two consecutive infrastructure failures, a 900-second cohort cap, or completion. Do not retry or replace attempts.",
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "wall_timeout_seconds": 300,
+  "cohort_wall_cap_seconds": 900,
+  "stop_after_consecutive_invalid": 2,
+  "candidate": {
+    "name": "Kestrel-v22-three-change-hillclimb",
+    "path": "artifacts/builds/6e112c43d6dace13d1152c834658aa35647ceea29b761159187d44d3837fcf57/kestrel-opening-v22-candidate/Kestrel.dylib",
+    "race": "Protoss",
+    "sha256": "6e112c43d6dace13d1152c834658aa35647ceea29b761159187d44d3837fcf57"
+  },
+  "opponents": {
+    "zzzk": {
+      "name": "ZZZKBot",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "race": "Zerg",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+    },
+    "uab-t": {
+      "name": "UAlbertaBot-Terran",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "race": "Terran",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+    },
+    "uab-p": {
+      "name": "UAlbertaBot-Protoss",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "race": "Protoss",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+    },
+    "mcrave": {
+      "name": "McRave-9Pool-treatment",
+      "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+      "race": "Zerg",
+      "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+    },
+    "stardust": {
+      "name": "Stardust-repaired",
+      "path": "artifacts/builds/1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa/stardust-emptytimer-repair/Stardust.dylib",
+      "race": "Protoss",
+      "sha256": "1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa"
+    }
+  },
+  "games": [
+    {"opponent":"zzzk","map":"sscai/(2)Benzene.scx","scenario_seed":9811,"candidate_player":1},
+    {"opponent":"uab-t","map":"sscai/(2)Destination.scx","scenario_seed":9812,"candidate_player":2},
+    {"opponent":"uab-p","map":"sscai/(2)Heartbreak Ridge.scx","scenario_seed":9813,"candidate_player":1},
+    {"opponent":"mcrave","map":"sscai/(4)Circuit Breaker.scx","scenario_seed":9814,"candidate_player":2},
+    {"opponent":"stardust","map":"sscai/(2)Benzene.scx","scenario_seed":9815,"candidate_player":1}
+  ],
+  "required_files": [
+    {"path":"docs/evaluations/kestrel-hillclimb-v2/EVAL_PLAN.md","sha256":"da1e662e2e63f27f3355eeec344e55bd045ac78eb2b2ad6058734662f0d6512e"}
+  ],
+  "recovery_of": "kestrel-hillclimb-v1-recovery"
+}
