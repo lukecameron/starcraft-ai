@@ -175,9 +175,21 @@ def main() -> int:
             games.append(game)
             continue
         candidate_player = candidate.get("player")
+        candidate_result = candidate.get("result_metadata") or {}
         replay = next((r for r in manifest.get("replays", []) if r.get("player") == candidate_player), None)
-        game.update({"run_id": manifest.get("run_id"), "candidate_player": candidate_player,
-                     "status": manifest.get("status"), "outcome_verified": manifest.get("outcome_verified")})
+        game.update({
+            "run_id": manifest.get("run_id"),
+            "candidate_player": candidate_player,
+            "status": manifest.get("status"),
+            "outcome_verified": manifest.get("outcome_verified"),
+            "candidate_result_metadata": candidate_result,
+            "candidate_outcome": "win" if candidate_result.get("winner") is True else "loss" if candidate_result.get("winner") is False else "unknown",
+            "elapsed_seconds": manifest.get("elapsed_seconds"),
+            "durable_completion_seconds": manifest.get("durable_completion_seconds"),
+            "terminal_frames": candidate_result.get("frame_count"),
+            "durable_fps": manifest.get("durable_logical_frames_per_wall_second"),
+            "short_game": isinstance(manifest.get("elapsed_seconds"), (int, float)) and manifest["elapsed_seconds"] <= 300,
+        })
         if not replay:
             game["error"] = "candidate_replay_missing"
         else:
@@ -190,6 +202,9 @@ def main() -> int:
     aggregate = {"games": len(games), "scored_replays": len(valid),
                  "grades": {grade: sum(g["replay"].get("heuristic_grade") == grade for g in valid)
                             for grade in ("strong", "partial", "weak", "missing")},
+                 "candidate_outcomes": {outcome: sum(g.get("candidate_outcome") == outcome for g in games)
+                                        for outcome in ("win", "loss", "unknown")},
+                 "short_games": sum(g.get("short_game") is True for g in games),
                  "signals": {name: sum(g["replay"].get("signals", {}).get(name, False) for g in valid)
                              for name in ("economy", "construction", "production", "combat")}}
     output = Path(args.output).resolve() if args.output else experiment_dir / "hillclimb-scorecard.json"
