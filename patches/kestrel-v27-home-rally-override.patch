@@ -1,0 +1,47 @@
+diff --git a/third_party/kestrel-opening-v22-candidate/Kestrel.cpp b/third_party/kestrel-opening-v27-candidate/Kestrel.cpp
+index bd5b53f..87ea0f6 100644
+--- a/third_party/kestrel-opening-v22-candidate/Kestrel.cpp
++++ b/third_party/kestrel-opening-v27-candidate/Kestrel.cpp
+@@ -8,6 +8,7 @@
+ #include <fstream>
+ #include <limits>
+ #include <unordered_map>
++#include <unordered_set>
+ #include <vector>
+ 
+ #ifdef _WIN32
+@@ -57,6 +58,9 @@ class Kestrel final : public BWAPI::AIModule {
+     int secondGatewayCurrentFrame_ = -1;
+     int secondGatewayCompletedFrame_ = -1;
+     int firstHomeThreatFrame_ = -1;
++    int firstHomeRallyFrame_ = -1;
++    int homeRallyOrders_ = 0;
++    std::unordered_set<int> homeRalliedZealots_;
+     int firstHomeZealotLossFrame_ = -1;
+     int maxLocalCompletedZealotsBeforeLoss_ = 0;
+     int acceptedStructuresAfterFirstZealot_ = 0;
+@@ -144,6 +148,9 @@ class Kestrel final : public BWAPI::AIModule {
+             << ",\"second_gateway_current_frame\":" << secondGatewayCurrentFrame_
+             << ",\"second_gateway_completed_frame\":" << secondGatewayCompletedFrame_
+             << ",\"first_home_threat_frame\":" << firstHomeThreatFrame_
++            << ",\"first_home_rally_frame\":" << firstHomeRallyFrame_
++            << ",\"home_rally_orders\":" << homeRallyOrders_
++            << ",\"home_rally_unique_units\":" << homeRalliedZealots_.size()
+             << ",\"first_home_zealot_loss_frame\":" << firstHomeZealotLossFrame_
+             << ",\"max_local_completed_zealots_before_loss\":" << maxLocalCompletedZealotsBeforeLoss_
+             << ",\"accepted_structures_after_first_zealot\":" << acceptedStructuresAfterFirstZealot_
+@@ -431,7 +438,13 @@ class Kestrel final : public BWAPI::AIModule {
+             if (!combat && !scout) continue;
+             if (firstHomeThreatFrame_ >= 0 && combat && unit->getType() == BWAPI::UnitTypes::Protoss_Zealot &&
+                 localCompletedZealots < 2) {
+-                if (unit->getDistance(home) > 4 * 32 && !unit->isMoving()) issue(unit->move(home), AttackCommand);
++                if (unit->getDistance(home) > 4 * 32 && homeRalliedZealots_.count(unit->getID()) == 0 &&
++                    unit->getTargetPosition() != home &&
++                    issue(unit->move(home), AttackCommand)) {
++                    homeRalliedZealots_.insert(unit->getID());
++                    ++homeRallyOrders_;
++                    if (firstHomeRallyFrame_ < 0) firstHomeRallyFrame_ = BWAPI::Broodwar->getFrameCount();
++                }
+                 attackRequests_.erase(unit->getID());
+                 continue;
+             }
