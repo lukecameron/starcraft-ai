@@ -20,10 +20,11 @@ Checkpoint: 20 September 2026, 11:45 UTC. Latest user scope: **finish the curren
 - Root owns `config/experiments.json`, `docs/kestrel-bot.md`, this resume and publication. Avoid overlapping edits without handoff.
 - Local HTTP server session 85590, PID 1285, serves `public` at 127.0.0.1:8787. Chrome CLI works while Mac is locked; do not bypass the lock. Current browser is immutable a634def1, desktop 1200. Prior mobile 390 and desktop layout checks passed.
 
-## Current hill-climb checkpoint (2026-09-20 14:35 UTC)
+## Current hill-climb checkpoint (2026-09-20 15:00 UTC)
 
 - The five-way Kestrel hill-climb loop has now preserved v19 recovery and v22 through v29. Each candidate screen has zero verified wins. v29 exercised its build-commandability guard once, recorded zero rejected build commands, accepted later construction and completed a sixth Pylon in three lanes. All five games were losses and McRave ran at 340.17 fps below the registered 384 fps gate. No screen changes Elo or canonical v13.
-- v22 remains the exploratory base. v26-v29 retain positive mechanism signals for diagnosis but are rejected for advancement. Latest result: `docs/evaluations/kestrel-hillclimb-v9/RESULT.md`; runs `20260920T142655-6bc36872dba3`, `20260920T142655-bccc4436f910`, `20260920T142655-ff5b6e5c8997`, `20260920T142655-1ed1af13bac4`, `20260920T142655-58e4feb4e739`.
+- v30 was an instrumentation-only first-engagement diagnostic based exactly on v29 policy. Four attempts produced verified losses and rich traces; UAlberta-Terran failed without callbacks or replays after an engine unknown-action error. The four completed lanes also fail the literal registered replay-frame direction, so the result is **INCONCLUSIVE** and cannot select a policy candidate. Descriptively, worker scouts confound the threat heuristic and both Zerg lanes show dispersed combat units when pressure reaches home. Result: `docs/evaluations/kestrel-first-engagement-diagnostic-v1/RESULT.md`; runs `20260920T145146-da87c3e53cd1`, `20260920T145146-9fb0be7279a8`, `20260920T145146-557385fb25f2`, `20260920T145146-f81dae62f736`, `20260920T145146-16677ccebd1b`.
+- v22 remains the exploratory policy base. v26-v29 retain positive mechanism signals for diagnosis but are rejected for advancement. v30 is diagnostic-only and inconclusive. Canonical Kestrel remains v13 and local Elo is unchanged.
 - The scorecard separates descriptive replay coverage from outcome performance grades and includes command-regression and unverified states. Dashboard experiment cards publish those grades with the preserved replay links.
 - Latest dashboard deployment: https://255a638b.starcraft-ai.pages.dev (405 runs, 90 experiments; v29 scorecard, provenance and replay download verified).
 

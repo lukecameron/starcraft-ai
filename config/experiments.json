@@ -1295,6 +1295,30 @@
         "origin": "Original",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
       }
+    },
+    {
+      "id": "kestrel-first-engagement-diagnostic-v1",
+      "title": "Kestrel v30 first-engagement diagnostic",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "INCONCLUSIVE",
+      "hypothesis": "Public first-threat, production-queue and local-engagement observations can identify one repeated concrete failure for a bounded next Kestrel change, or show that the lanes require separate diagnoses.",
+      "notes": "Four attempts produced verified terminal losses and preserved diagnostic traces; UAlberta-Terran ended without callbacks or replays after an engine unknown-action error. All eight available replay copies parsed and hash-matched, but their terminal frames were one below callbacks, opposite the literal registered plus-one relation.",
+      "conclusion": "Inconclusive because the preregistered integrity gates failed. The traces descriptively expose worker-scout threat confounding and repeated Zerg-lane army dispersion, but they cannot authorize a policy change, Elo update or candidate promotion.",
+      "evidence_run_ids": [
+        "20260920T145146-da87c3e53cd1",
+        "20260920T145146-9fb0be7279a8",
+        "20260920T145146-557385fb25f2",
+        "20260920T145146-f81dae62f736",
+        "20260920T145146-16677ccebd1b"
+      ],
+      "evidence_experiment_id": "kestrel-first-engagement-diagnostic-v1",
+      "candidate_binary_sha256": "2fe8d4868a8957a634d0d33629632c590cf2198d1a7985f0b1966a2c9b812476",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      }
     }
   ]
 }
