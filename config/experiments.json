@@ -1175,6 +1175,30 @@
         "origin": "Original",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
       }
+    },
+    {
+      "id": "kestrel-hillclimb-v5",
+      "title": "Kestrel v25 combat-target priority hill-climb",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "INCONCLUSIVE",
+      "hypothesis": "Preferring visible combat-capable enemy units over workers as attack targets will improve early fight conversion without changing Kestrel opening economy or tech.",
+      "notes": "Four valid losses and one unverified UAlberta-Terran attempt completed; no wins. The invalid attempt has missing/inconsistent metadata and 12 gather Unit_Busy rejections, and was not retried.",
+      "conclusion": "Reject v25 and leave Elo unchanged. Preserve v22 as the stronger exploratory base; keep the invalid attempt excluded from ratings.",
+      "evidence_run_ids": [
+        "20260920T121414-cf9bf32dc598",
+        "20260920T121414-e95ba2468ea8",
+        "20260920T121414-539480824ec7",
+        "20260920T121414-2bfb51ea8738",
+        "20260920T121414-20a3891c157f"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v5",
+      "candidate_binary_sha256": "af72888b05066851512ee01f80f028f2950baa7ea045d52696443a723b51feed",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      }
     }
   ]
 }
