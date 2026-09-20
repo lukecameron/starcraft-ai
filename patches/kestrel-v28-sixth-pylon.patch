@@ -1,0 +1,50 @@
+diff --git a/third_party/kestrel-opening-v22-candidate/Kestrel.cpp b/third_party/kestrel-opening-v28-candidate/Kestrel.cpp
+index bd5b53f..623f85d 100644
+--- a/third_party/kestrel-opening-v22-candidate/Kestrel.cpp
++++ b/third_party/kestrel-opening-v28-candidate/Kestrel.cpp
+@@ -46,6 +46,9 @@ class Kestrel final : public BWAPI::AIModule {
+     int firstPylonAcceptedFrame_ = -1;
+     int firstPylonCurrentFrame_ = -1;
+     int firstPylonCompletedFrame_ = -1;
++    int sixthPylonAcceptedFrame_ = -1;
++    int sixthPylonCurrentFrame_ = -1;
++    int sixthPylonCompletedFrame_ = -1;
+     int firstGatewayAcceptedFrame_ = -1;
+     int firstGatewayCurrentFrame_ = -1;
+     int firstGatewayCompletedFrame_ = -1;
+@@ -135,6 +138,9 @@ class Kestrel final : public BWAPI::AIModule {
+             << ",\"first_pylon_accepted_frame\":" << firstPylonAcceptedFrame_
+             << ",\"first_pylon_current_frame\":" << firstPylonCurrentFrame_
+             << ",\"first_pylon_completed_frame\":" << firstPylonCompletedFrame_
++            << ",\"sixth_pylon_accepted_frame\":" << sixthPylonAcceptedFrame_
++            << ",\"sixth_pylon_current_frame\":" << sixthPylonCurrentFrame_
++            << ",\"sixth_pylon_completed_frame\":" << sixthPylonCompletedFrame_
+             << ",\"first_gateway_accepted_frame\":" << firstGatewayAcceptedFrame_
+             << ",\"first_gateway_current_frame\":" << firstGatewayCurrentFrame_
+             << ",\"first_gateway_completed_frame\":" << firstGatewayCompletedFrame_
+@@ -227,6 +233,7 @@ class Kestrel final : public BWAPI::AIModule {
+         if (accepted) {
+             if (firstZealotTrainFrame_ >= 0) ++acceptedStructuresAfterFirstZealot_;
+             if (type == BWAPI::UnitTypes::Protoss_Pylon && firstPylonAcceptedFrame_ < 0) firstPylonAcceptedFrame_ = frame;
++            if (type == BWAPI::UnitTypes::Protoss_Pylon && count(type) >= 5 && sixthPylonAcceptedFrame_ < 0) sixthPylonAcceptedFrame_ = frame;
+             if (type == BWAPI::UnitTypes::Protoss_Gateway && firstGatewayAcceptedFrame_ < 0) firstGatewayAcceptedFrame_ = frame;
+             pendingBuildType_ = type;
+             pendingBuildBaseline_ = count(type);
+@@ -313,7 +320,7 @@ class Kestrel final : public BWAPI::AIModule {
+             firstGatewayCurrentFrame_ < 0 && self->minerals() >= 150) {
+             if (build(BWAPI::UnitTypes::Protoss_Gateway, home)) return;
+         }
+-        if (supplyTotal - supplyUsed <= 4 && pylons < 5 && pylons == completedPylons && self->minerals() >= 100) {
++        if (supplyTotal - supplyUsed <= 4 && pylons < 6 && pylons == completedPylons && self->minerals() >= 100) {
+             if (build(BWAPI::UnitTypes::Protoss_Pylon, home)) return;
+         }
+         const int gateways = count(BWAPI::UnitTypes::Protoss_Gateway);
+@@ -469,6 +476,8 @@ class Kestrel final : public BWAPI::AIModule {
+                 lastZealotPositions_[unit->getID()] = unit->getPosition();
+         if (count(BWAPI::UnitTypes::Protoss_Pylon) > 0 && firstPylonCurrentFrame_ < 0) firstPylonCurrentFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Pylon, true) > 0 && firstPylonCompletedFrame_ < 0) firstPylonCompletedFrame_ = frame;
++        if (count(BWAPI::UnitTypes::Protoss_Pylon) >= 6 && sixthPylonCurrentFrame_ < 0) sixthPylonCurrentFrame_ = frame;
++        if (count(BWAPI::UnitTypes::Protoss_Pylon, true) >= 6 && sixthPylonCompletedFrame_ < 0) sixthPylonCompletedFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Gateway) > 0 && firstGatewayCurrentFrame_ < 0) firstGatewayCurrentFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Gateway, true) > 0 && firstGatewayCompletedFrame_ < 0) firstGatewayCompletedFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Zealot, true) > 0 && firstZealotCompletedFrame_ < 0) firstZealotCompletedFrame_ = frame;
