@@ -25,7 +25,7 @@ Checkpoint: 20 September 2026, 11:45 UTC. Latest user scope: **finish the curren
 - The five-way Kestrel hill-climb loop has now preserved v19 recovery and v22 through v26. Each candidate screen has zero verified wins. v26 passed every integrity gate and verified Core-before-second-Gateway ordering in both Zerg lanes, but neither Zerg lane produced a Dragoon and all five games were losses. No screen changes Elo or canonical v13.
 - v22 remains the exploratory base. v26 is rejected for zero wins while retaining its positive construction-order signal for diagnosis. Exact result: `docs/evaluations/kestrel-hillclimb-v6/RESULT.md`; runs `20260920T132810-8ffbb2ccff92`, `20260920T132810-d50396f0e52d`, `20260920T132810-5a58121f0bdd`, `20260920T132810-285b823f37d9`, `20260920T132810-5d2c18cb2959`.
 - The scorecard separates descriptive replay coverage from outcome performance grades and includes command-regression and unverified states. Dashboard experiment cards publish those grades with the preserved replay links.
-- Latest dashboard deployment: https://763dbc0d.starcraft-ai.pages.dev.
+- Latest dashboard deployment: https://ceb41dac.starcraft-ai.pages.dev (390 runs, 87 experiments; v26 scorecard and provenance verified).
 
 ## Current engine
 
