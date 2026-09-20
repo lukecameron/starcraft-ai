@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "experiment_id": "kestrel-hillclimb-v20",
+  "registered_at": "2026-09-21",
+  "eval_plan": "docs/evaluations/kestrel-hillclimb-v20/EVAL_PLAN.md",
+  "eval_plan_sha256": "619f1430f8d0b0c1f6b014e1085d045a38d08914cea098894a867bd5008e7a6a",
+  "purpose": "Fresh ten-game Kestrel v40 nearest-Gateway-Probe opening-repair screen with bounded treatment telemetry",
+  "hypothesis": "Nearest eligible Probe selection for the first two Gateways removes slot-sensitive builder travel delay and yields two completed local defenders at early Zerg pressure without regressing v38 behavior",
+  "stop_condition": "Run the fixed ten rows once with concurrency five and 120-second per-game cap; preserve every started row; stop after two consecutive infrastructure-invalid completions or completion; do not retry, reseed, replace, or rerun",
+  "execution": {
+    "sandbox": "unsandboxed_required",
+    "restricted_sandbox_allowed": false,
+    "if_unsandboxed_unavailable": "do_not_start",
+    "retries": 0,
+    "reseed": false,
+    "replacement": false,
+    "rerun": false
+  },
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "launcher_sha256": "af1682393f9fe43afe885b35a1637e9c464719ef93c83e799d614beed20316c1",
+  "launcher_sidecar": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher.build.json",
+  "launcher_sidecar_sha256": "0beebdd3bb6221a5e6143c015763d14fa20330a8976ede3f997062660b3e7390",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "game_data_files": [
+    {"path": "third_party/game-data/runtime/BrooDat.mpq", "sha256": "c6d810981e24b947b36d531ab047e143fec0284a581fdaad6fc431e1e75e21df"},
+    {"path": "third_party/game-data/runtime/Patch_rt.mpq", "sha256": "a063f069f1abe202b142b08a9dab878eba8ba033bf13a818024a72631c4452be"},
+    {"path": "third_party/game-data/runtime/StarDat.mpq", "sha256": "8845fd871b4f8f242cc5c2b6f6b8b319d86bbbd02bc836356b51f81b5ba8203f"},
+    {"path": "third_party/game-data/runtime/sscai/(2)Benzene.scx", "sha256": "45764b9baa72f83a5eb2eab49ddea46c6af21da75bc42e687e6dab93e4e4044e"},
+    {"path": "third_party/game-data/runtime/sscai/(2)Destination.scx", "sha256": "0241ae7e8b43632e3421444aa3ca3bb10d28b4796f4ccc138103c3b75e5158a5"},
+    {"path": "third_party/game-data/runtime/sscai/(2)Heartbreak Ridge.scx", "sha256": "64527ae691307756dbc2700c68ab5878476eed27c3dfc9a64411955f4107f50b"},
+    {"path": "third_party/game-data/runtime/sscai/(4)Circuit Breaker.scx", "sha256": "ba956f73d18342f3f329741b684fd569e6bcf718b1fcebd86c2d965481260bc0"}
+  ],
+  "wall_timeout_seconds": 120,
+  "concurrency": 5,
+  "stop_after_consecutive_invalid": 2,
+  "candidate": {
+    "name": "Kestrel-v40-nearest-gateway-probe",
+    "path": "artifacts/builds/adac4ff4dc5aea71b94a5a12d13d62f964fe56a71ca3fd5141f24d0094401012/kestrel-opening-v40-telemetry-complete/Kestrel.dylib",
+    "race": "Protoss",
+    "sha256": "adac4ff4dc5aea71b94a5a12d13d62f964fe56a71ca3fd5141f24d0094401012",
+    "ownership": "Ours",
+    "origin": "Original",
+    "author": "Luke Cameron",
+    "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel",
+    "source_files": ["third_party/kestrel-opening-v40-candidate/Kestrel.cpp", "third_party/kestrel-opening-v40-candidate/CMakeLists.txt", "third_party/kestrel-opening-v40-candidate/LICENSE"],
+    "source_sha256": "89dde1b4dd26f3ba890e7b0f08836c5b9caef36a9799d8b744e2b01ff2f7c112",
+    "source_combo_sha256": "37be433c0f3e081951b77a5448ed256151a0b97e043601cb21de6ef8d23c3fc4",
+    "build_sidecar": "artifacts/builds/adac4ff4dc5aea71b94a5a12d13d62f964fe56a71ca3fd5141f24d0094401012/kestrel-opening-v40-telemetry-complete/Kestrel.dylib.build.json",
+    "build_sidecar_sha256": "b723e14a26f52badca025234977ed010f2cdee804274c5a778ed8b65dc18a8be",
+    "source_patch": "patches/kestrel-v39-to-v40-gateway-probe-telemetry.patch",
+    "source_patch_sha256": "9ade3388f07b3289f9f12cd0a468bd6b12d0a3c064d0e166a532111f8cb5c4bf"
+  },
+  "policy_parent": {
+    "name": "Kestrel-v39-nearest-gateway-probe",
+    "binary_sha256": "d1afed56f304d6acfde34bbf47fdfe772bfe275f26a7ea695c1ab28a5e7906d9",
+    "source_sha256": "a38d6536648bcfa5255db01b2bfdd07ec0ee76a0f2ce96a9b872794129478ba6",
+    "source_combo_sha256": "faf536cd903e0a5ffeb7e0a40db55d81d717d855fdbd3b2b001a7d4353911fb0",
+    "source_patch": "patches/kestrel-v38-to-v39-nearest-gateway-probe.patch",
+    "source_patch_sha256": "e5efa63c04d38231276fad154c0d7266ac14b4a9f40aeb963041911fb0ef5481"
+  },
+  "base_candidate": {
+    "experiment_id": "kestrel-hillclimb-v18",
+    "name": "Kestrel-v38-shared-target",
+    "binary_sha256": "7fdc4f9ad61152e7758318e7d35d04fbda0746a4e2f85a48b3bc664577e0c160",
+    "source_sha256": "f105ab5073ec3d586807478c74838900ed02fa2d812c3ac4d94081c36c3217ab",
+    "policy": "Frozen rejected v38 parent; v39 changes only early Gateway builder selection and v40 adds bounded diagnostics"
+  },
+  "opponents": {
+    "zzzk": {"name": "ZZZKBot", "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib", "race": "Zerg", "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748", "ownership": "Ours", "origin": "Port", "author": "Chris Coxe", "source_url": "https://github.com/chriscoxe/ZZZKBot"},
+    "uab-t": {"name": "UAlbertaBot-Terran", "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib", "race": "Terran", "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9", "ownership": "Ours", "origin": "Port", "author": "David Churchill", "source_url": "https://github.com/davechurchill/ualbertabot"},
+    "uab-p": {"name": "UAlbertaBot-Protoss", "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib", "race": "Protoss", "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9", "ownership": "Ours", "origin": "Port", "author": "David Churchill", "source_url": "https://github.com/davechurchill/ualbertabot"},
+    "mcrave": {"name": "McRave-9Pool-treatment", "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib", "race": "Zerg", "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e", "ownership": "Ours", "origin": "Fork", "author": "Christian McCrave", "source_url": "https://github.com/Cmccrave/McRave"},
+    "stardust": {"name": "Stardust-repaired", "path": "artifacts/builds/1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa/stardust-emptytimer-repair/Stardust.dylib", "race": "Protoss", "sha256": "1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa", "ownership": "Ours", "origin": "Fork", "author": "Bruce Mackenzie Nielsen", "source_url": "https://github.com/bmnielsen/Stardust"}
+  },
+  "games": [
+    {"wave": 1, "index": 1, "opponent": "zzzk", "map": "sscai/(2)Benzene.scx", "candidate_player": 1, "scenario_seed": 10101},
+    {"wave": 1, "index": 2, "opponent": "zzzk", "map": "sscai/(2)Destination.scx", "candidate_player": 2, "scenario_seed": 10102},
+    {"wave": 1, "index": 3, "opponent": "uab-t", "map": "sscai/(2)Destination.scx", "candidate_player": 1, "scenario_seed": 10103},
+    {"wave": 1, "index": 4, "opponent": "uab-p", "map": "sscai/(2)Heartbreak Ridge.scx", "candidate_player": 2, "scenario_seed": 10104},
+    {"wave": 1, "index": 5, "opponent": "mcrave", "map": "sscai/(4)Circuit Breaker.scx", "candidate_player": 1, "scenario_seed": 10105},
+    {"wave": 2, "index": 6, "opponent": "zzzk", "map": "sscai/(4)Circuit Breaker.scx", "candidate_player": 1, "scenario_seed": 10106},
+    {"wave": 2, "index": 7, "opponent": "zzzk", "map": "sscai/(2)Heartbreak Ridge.scx", "candidate_player": 2, "scenario_seed": 10107},
+    {"wave": 2, "index": 8, "opponent": "uab-t", "map": "sscai/(2)Destination.scx", "candidate_player": 2, "scenario_seed": 10108},
+    {"wave": 2, "index": 9, "opponent": "uab-p", "map": "sscai/(2)Heartbreak Ridge.scx", "candidate_player": 1, "scenario_seed": 10109},
+    {"wave": 2, "index": 10, "opponent": "stardust", "map": "sscai/(2)Benzene.scx", "candidate_player": 2, "scenario_seed": 10110}
+  ],
+  "required_files": [
+    {"path": "docs/evaluations/kestrel-hillclimb-v20/EVAL_PLAN.md", "sha256": "619f1430f8d0b0c1f6b014e1085d045a38d08914cea098894a867bd5008e7a6a"},
+    {"path": "patches/kestrel-v38-to-v39-nearest-gateway-probe.patch", "sha256": "e5efa63c04d38231276fad154c0d7266ac14b4a9f40aeb963041911fb0ef5481"},
+    {"path": "patches/kestrel-v39-to-v40-gateway-probe-telemetry.patch", "sha256": "9ade3388f07b3289f9f12cd0a468bd6b12d0a3c064d0e166a532111f8cb5c4bf"},
+    {"path": "artifacts/builds/adac4ff4dc5aea71b94a5a12d13d62f964fe56a71ca3fd5141f24d0094401012/kestrel-opening-v40-telemetry-complete/Kestrel.dylib.build.json", "sha256": "b723e14a26f52badca025234977ed010f2cdee804274c5a778ed8b65dc18a8be"},
+    {"path": "scripts/run_batch.py", "sha256": "3060df9c655f25cac0de45fd422108460bf47aba462389b53ba643fb5549f7ef"},
+    {"path": "scripts/run_match.py", "sha256": "d0a0eee0d932fc279b2ee53831ddf82accf7042a8b7be52e73f144deeb191cbe"}
+  ],
+  "engine_sha256": "eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b",
+  "provenance_registry": "config/bot-identities.json",
+  "provenance_registry_sha256": "7336555a6cfaa992bc6d912c61c1d0c421953e084ab10af0e202a5a632801b7d",
+  "diagnostic_schema": {
+    "gateway_probe_fields": ["gateway_probe_selection_frames", "gateway_probe_selection_ordinals", "gateway_probe_selection_builder_ids", "gateway_probe_selection_tile_xs", "gateway_probe_selection_tile_ys", "gateway_probe_selection_builder_distances", "gateway_probe_selection_eligible_counts", "gateway_probe_selection_min_eligible_distances", "gateway_probe_selection_candidate_counts", "gateway_probe_selection_candidate_truncated", "gateway_probe_candidate_ids", "gateway_probe_candidate_distances", "gateway_probe_candidate_reason_codes"],
+    "gateway_probe_reason_codes": {"eligible": 0, "incomplete": 1, "scout": 2, "emergency_defender": 3, "gas_worker": 4, "constructing": 5},
+    "minimums": {"games": 10, "wins": 2, "zzzk_wins": 1, "qualifying_zzzk_lanes": 3, "shared_target_games": 8, "eligible_scaling_lanes": 3, "completed_scaling_lanes": 2}
+  }
+}
