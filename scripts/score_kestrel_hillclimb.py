@@ -134,7 +134,7 @@ def _candidate_generation(candidate_name: object) -> str | None:
     """Resolve a policy generation from the schedule's candidate display name."""
     if not isinstance(candidate_name, str):
         return None
-    match = re.search(r"(?:^|[^a-z0-9])v(36)(?:[^a-z0-9]|$)", candidate_name.lower())
+    match = re.search(r"(?:^|[^a-z0-9])v(37|36)(?:[^a-z0-9]|$)", candidate_name.lower())
     return f"v{match.group(1)}" if match else None
 
 
@@ -146,8 +146,14 @@ def _diagnostic_generation(metadata: dict[str, object], candidate_name: object =
     field-based detection remains the fallback for archived diagnostics.
     """
     candidate_generation = _candidate_generation(candidate_name)
-    if candidate_generation == "v36":
+    if candidate_generation in {"v36", "v37"}:
         return candidate_generation
+    if any(name in metadata for name in (
+        "range_upgrade_eligibility_frame", "seventh_pylon_accepted_frame",
+        "fifth_gateway_accepted_frame", "max_pylon_cap",
+        "max_post_core_gateway_cap",
+    )):
+        return "v37"
     if any(name in metadata for name in (
         "accepted_build_pre_command_counts",
         "emergency_episode_ids",
@@ -417,23 +423,34 @@ def _probe_reserve_summary(metadata: dict[str, object], opponent_race: str | Non
     window_end = _metadata_int(metadata, "probe_reserve_window_end_frame", -1)
     first_pylon = _metadata_int(metadata, "first_pylon_accepted_frame", -1)
     second_gateway = _metadata_int(metadata, "second_gateway_current_frame", -1)
-    if window_start >= 0 and first_pylon >= 0 and window_start < first_pylon:
-        review_flags.append("probe_reserve_window_before_first_pylon")
-    if window_end >= 0 and window_start >= 0 and window_end < window_start:
-        review_flags.append("probe_reserve_window_end_before_start")
-    if window_end >= 0 and second_gateway >= 0 and window_end > second_gateway:
-        review_flags.append("probe_reserve_window_end_after_second_gateway")
-    in_opening_window = (first_pylon >= 0 and second_gateway >= 0 and
-                         first_pylon <= second_gateway)
-    if in_opening_window and any(isinstance(frame, int) and first_pylon <= frame < second_gateway for frame in accepted):
-        review_flags.append("probe_train_during_pre_second_gateway_window")
-    post_window_train = window_end >= 0 and any(isinstance(frame, int) and frame >= window_end for frame in accepted)
     race = _normalise_race(opponent_race)
     if race is None:
         known_zerg = metadata.get("known_zerg")
         if isinstance(known_zerg, bool):
             race = "zerg" if known_zerg else "non-zerg"
     expected_inactive = race in {"terran", "protoss", "non-zerg"}
+    cadence = max(6, _metadata_int(metadata, "latency_frames", 6))
+    if race == "zerg" and first_pylon >= 0:
+        if window_start < 0:
+            review_flags.append("probe_reserve_window_start_missing")
+        elif window_start < first_pylon:
+            review_flags.append("probe_reserve_window_before_first_pylon")
+        elif window_start > first_pylon + cadence:
+            review_flags.append("probe_reserve_window_start_delayed")
+    if window_end >= 0 and window_start >= 0 and window_end < window_start:
+        review_flags.append("probe_reserve_window_end_before_start")
+    if race == "zerg" and second_gateway >= 0:
+        if window_end < 0:
+            review_flags.append("probe_reserve_window_end_missing")
+        elif window_end < second_gateway:
+            review_flags.append("probe_reserve_window_end_before_second_gateway")
+        elif window_end >= second_gateway + cadence:
+            review_flags.append("probe_reserve_window_end_delayed")
+    in_opening_window = (first_pylon >= 0 and second_gateway >= 0 and
+                         first_pylon <= second_gateway)
+    if in_opening_window and any(isinstance(frame, int) and first_pylon <= frame < second_gateway for frame in accepted):
+        review_flags.append("probe_train_during_pre_second_gateway_window")
+    post_window_train = window_end >= 0 and any(isinstance(frame, int) and frame >= window_end for frame in accepted)
     max_reserve = _metadata_int(metadata, "max_opening_probe_reserve", 0)
     if race == "zerg" and max_reserve != 250:
         review_flags.append("probe_reserve_max_threshold_mismatch")
@@ -461,7 +478,7 @@ def _probe_reserve_summary(metadata: dict[str, object], opponent_race: str | Non
     if expected_inactive:
         grade = "pass" if checks["non_zerg_inactive"] else "review"
     elif not review_flags:
-        grade = "pass" if block_frames or accepted else "untested"
+        grade = "pass" if block_frames else "untested"
     else:
         grade = "review"
     return {
@@ -1398,6 +1415,104 @@ def read_diagnostic_events(metadata: dict[str, object], root: Path) -> dict[str,
     return result
 
 
+def _scaling_summary(metadata: dict[str, object], generation: str | None = None) -> dict[str, object]:
+    """Validate v37 scaling, range-upgrade, and production-cap telemetry."""
+    generation = generation or _diagnostic_generation(metadata)
+    required = (
+        "max_pylon_cap", "max_post_core_gateway_cap",
+        "range_upgrade_eligibility_frame", "range_upgrade_bank_start_frame",
+        "range_upgrade_bank_block_count", "range_upgrade_attempt_frame",
+        "range_upgrade_accepted_frame", "range_upgrade_completion_frame",
+        "range_upgrade_attempts", "range_upgrade_accepted", "range_upgrade_completions",
+        "range_upgrade_max_bank_minerals", "range_upgrade_max_bank_gas",
+        "seventh_pylon_accepted_frame", "seventh_pylon_current_frame",
+        "seventh_pylon_completed_frame", "fifth_gateway_accepted_frame",
+        "fifth_gateway_current_frame", "fifth_gateway_completed_frame",
+    )
+    feature_present = generation == "v37" or any(name in metadata for name in required)
+    if not feature_present:
+        return {
+            "generation": "legacy_absent", "telemetry_status": "legacy_absent",
+            "fields_present": [], "missing_fields": [], "invalid_fields": [],
+            "review_flags": [], "opportunity_notes": [],
+            "checks": {}, "quantitative_grade": {"grade": "legacy_absent", "score": 0, "max_score": 0},
+        }
+    missing = [name for name in required if name not in metadata]
+    invalid = [name for name in required if name in metadata and
+               (not isinstance(metadata[name], int) or isinstance(metadata[name], bool))]
+    flags: list[str] = []
+    if missing:
+        flags.append("scaling_required_fields_missing")
+    if invalid:
+        flags.append("scaling_field_type_mismatch")
+    values = {name: _metadata_int(metadata, name, -1) for name in required}
+    if values["max_pylon_cap"] != 10 or values["max_post_core_gateway_cap"] != 6:
+        flags.append("scaling_cap_constant_mismatch")
+    observed_pylons = _metadata_int(metadata, "max_pylons", -1)
+    observed_gateways = _metadata_int(metadata, "max_gateways", -1)
+    if observed_pylons > values["max_pylon_cap"]:
+        flags.append("scaling_pylon_cap_exceeded")
+    if observed_gateways > values["max_post_core_gateway_cap"]:
+        flags.append("scaling_gateway_cap_exceeded")
+    for prefix in ("seventh_pylon", "fifth_gateway"):
+        milestones = [values[f"{prefix}_{suffix}_frame"] for suffix in ("accepted", "current", "completed")]
+        observed = [frame >= 0 for frame in milestones]
+        if any(observed) and not all(observed):
+            flags.append(f"{prefix}_milestone_incomplete")
+        if all(observed) and milestones != sorted(milestones):
+            flags.append(f"{prefix}_milestone_order")
+    eligibility = values["range_upgrade_eligibility_frame"]
+    opportunity_notes: list[str] = []
+    if eligibility < 0:
+        opportunity_notes.append("range_upgrade_opportunity_unobserved")
+    else:
+        ordered = [values[name] for name in (
+            "range_upgrade_eligibility_frame", "range_upgrade_bank_start_frame",
+            "range_upgrade_attempt_frame", "range_upgrade_accepted_frame",
+            "range_upgrade_completion_frame")]
+        if any(frame < 0 for frame in ordered):
+            flags.append("range_upgrade_trace_incomplete")
+        elif ordered != sorted(ordered):
+            flags.append("range_upgrade_trace_order")
+        if values["range_upgrade_attempts"] < 1:
+            flags.append("range_upgrade_attempt_missing")
+        if values["range_upgrade_accepted"] != 1 or values["range_upgrade_completions"] != 1:
+            flags.append("range_upgrade_not_accepted_once_and_completed")
+        if values["range_upgrade_accepted"] > values["range_upgrade_attempts"]:
+            flags.append("range_upgrade_accept_count_exceeds_attempts")
+    for name in ("range_upgrade_bank_block_count", "range_upgrade_attempts",
+                 "range_upgrade_accepted", "range_upgrade_completions",
+                 "range_upgrade_max_bank_minerals", "range_upgrade_max_bank_gas"):
+        if values[name] < 0:
+            flags.append("scaling_negative_counter")
+            break
+    checks = {
+        "required_fields": not missing and not invalid,
+        "cap_constants": "scaling_cap_constant_mismatch" not in flags,
+        "milestone_order": not any(flag.endswith("milestone_order") or flag.endswith("milestone_incomplete") for flag in flags),
+        "upgrade_trace": not any(flag.startswith("range_upgrade_") and flag != "range_upgrade_opportunity_unobserved" for flag in flags),
+    }
+    if flags:
+        grade = "review"
+    elif eligibility < 0:
+        grade = "untested"
+    else:
+        grade = "pass"
+    return {
+        "generation": "v37", "telemetry_status": "complete" if not missing and not invalid else "partial",
+        "fields_present": [name for name in required if name in metadata],
+        "missing_fields": missing, "invalid_fields": invalid, "review_flags": sorted(set(flags)),
+        "opportunity_notes": opportunity_notes, "checks": checks,
+        "caps": {"max_pylons": values["max_pylon_cap"], "max_gateways": values["max_post_core_gateway_cap"]},
+        "observed_caps": {"max_pylons": observed_pylons, "max_gateways": observed_gateways},
+        "upgrade": {name: values[name] for name in required if name.startswith("range_upgrade_")},
+        "milestones": {prefix: {suffix: values[f"{prefix}_{suffix}_frame"] for suffix in ("accepted", "current", "completed")}
+                       for prefix in ("seventh_pylon", "fifth_gateway")},
+        "quantitative_grade": {"grade": grade, "score": 100 if grade in {"pass", "untested"} else 0,
+                                "max_score": 100},
+    }
+
+
 def _diagnostic_summary(metadata: dict[str, object], root: Path, opponent_race: str | None = None,
                         candidate_name: object = None) -> dict[str, object]:
     generation = _diagnostic_generation(metadata, candidate_name)
@@ -1513,6 +1628,7 @@ def _diagnostic_summary(metadata: dict[str, object], root: Path, opponent_race: 
     result["construction_pending"] = _construction_pending_summary(metadata, opponent_race, generation)
     result["probe_reserve"] = _probe_reserve_summary(metadata, opponent_race, generation)
     result["zerg_offense_stage"] = _zerg_offense_stage_summary(metadata, opponent_race, generation)
+    result["scaling"] = _scaling_summary(metadata, generation)
     return result
 
 
@@ -1722,6 +1838,7 @@ def score_kestrel_match(manifest: dict[str, object], manifest_path: Path, screp:
     if (diagnostic.get("construction_pending") or {}).get("review_flags"): integrity_reasons.append("construction_mechanism_review")
     if (diagnostic.get("probe_reserve") or {}).get("review_flags"): integrity_reasons.append("probe_reserve_review")
     if (diagnostic.get("zerg_offense_stage") or {}).get("review_flags"): integrity_reasons.append("zerg_offense_stage_review")
+    if (diagnostic.get("scaling") or {}).get("review_flags"): integrity_reasons.append("scaling_review")
     if not candidate_parsed: integrity_reasons.append("candidate_replay_missing")
     if candidate_parsed and not candidate_parsed.get("manifest_hash_matches"): integrity_reasons.append("candidate_replay_hash")
     if any(not item["fidelity"].get("hash_matches") for item in game["replays"]): integrity_reasons.append("replay_hash")
@@ -1752,6 +1869,7 @@ def score_kestrel_match(manifest: dict[str, object], manifest_path: Path, screp:
     }
     game["defense"] = defense
     game["reserve_offense"] = diagnostic["reserve_offense"]
+    game["scaling"] = diagnostic["scaling"]
     return game
 
 
@@ -2017,6 +2135,30 @@ def main() -> int:
         for flag in item.get("review_flags", []):
             reserve_review_flags[flag] = reserve_review_flags.get(flag, 0) + 1
     aggregate["probe_reserve"]["review_flags"] = dict(sorted(reserve_review_flags.items()))
+    scaling_games = [g.get("scaling") for g in games if isinstance(g.get("scaling"), dict)]
+    scaling_review_flags: dict[str, int] = {}
+    scaling_opportunity_notes: dict[str, int] = {}
+    aggregate["scaling"] = {
+        "games": len(scaling_games),
+        "generations": {generation: sum(item.get("generation") == generation for item in scaling_games)
+                         for generation in ("v37", "legacy_absent")},
+        "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade for item in scaling_games)
+                   for grade in ("pass", "untested", "review", "legacy_absent")},
+        "eligible": sum((item.get("upgrade") or {}).get("range_upgrade_eligibility_frame", -1) >= 0 for item in scaling_games),
+        "accepted": sum((item.get("upgrade") or {}).get("range_upgrade_accepted", 0) for item in scaling_games),
+        "completed": sum((item.get("upgrade") or {}).get("range_upgrade_completions", 0) for item in scaling_games),
+        "seventh_pylon_observed": sum((item.get("milestones") or {}).get("seventh_pylon", {}).get("accepted", -1) >= 0 for item in scaling_games),
+        "fifth_gateway_observed": sum((item.get("milestones") or {}).get("fifth_gateway", {}).get("accepted", -1) >= 0 for item in scaling_games),
+        "review_flags": scaling_review_flags,
+        "opportunity_notes": scaling_opportunity_notes,
+    }
+    for item in scaling_games:
+        for flag in item.get("review_flags", []):
+            scaling_review_flags[flag] = scaling_review_flags.get(flag, 0) + 1
+        for note in item.get("opportunity_notes", []):
+            scaling_opportunity_notes[note] = scaling_opportunity_notes.get(note, 0) + 1
+    aggregate["scaling"]["review_flags"] = dict(sorted(scaling_review_flags.items()))
+    aggregate["scaling"]["opportunity_notes"] = dict(sorted(scaling_opportunity_notes.items()))
     output = Path(args.output).resolve() if args.output else experiment_dir / "hillclimb-scorecard.json"
     scorecard = {"schema_version": 1, "experiment_id": args.experiment_id,
                  "candidate_name": candidate_name, "ledger_path": str(ledger_path),

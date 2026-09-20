@@ -1464,6 +1464,31 @@
         "author": "Luke Cameron",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
       }
+    },
+    {
+      "id": "kestrel-hillclimb-v15",
+      "title": "Kestrel v36 opening 250-mineral Probe reserve hill-climb",
+      "date": "2026-09-21",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Holding 250 minerals for Probe production from first-Pylon acceptance until second-Gateway current will suppress the early Probe opportunity, bring the second Gateway and follow-on combat online sooner, and improve survival against the first qualifying ZZZK pressure while preserving v35 construction bookkeeping, emergency episode, reserve, staged offense, commandability and non-Zerg behavior.",
+      "notes": "Five concurrent games completed with five valid short terminal losses and ten verified replays. Both Zerg lanes had complete aligned reserve telemetry but zero 200..299-mineral reserve-block opportunities, so the reserve and emergency cap-block mechanisms were untested. The matched ZZZK lane reached two completed combat units at threat and survived much longer than v35, but the cohort had no verified win.",
+      "conclusion": "Rejected at zero verified wins and untested Zerg reserve mechanisms. The matched ZZZK timing state improved descriptively, but no causal reserve effect was established. Non-Zerg timing shifts require a determinism/input audit before attribution. No Elo update.",
+      "evidence_run_ids": [
+        "20260920T175750-68f4313b16ab",
+        "20260920T175750-e16825ab884f",
+        "20260920T175750-de8083382e65",
+        "20260920T175750-53f8cbbcb6bd",
+        "20260920T175750-9bbc4c6e562c"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v15",
+      "candidate_binary_sha256": "c2e95394fd5c8c6a6dcd4ae2d7a8f1460624d454a906c6dba3e3e32bfb960b85",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "author": "Luke Cameron",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      }
     }
   ]
 }

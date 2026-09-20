@@ -174,6 +174,62 @@ class KestrelScorecardTests(TestCase):
         })
         return metadata
 
+    @staticmethod
+    def v37_metadata() -> dict[str, object]:
+        metadata = KestrelScorecardTests.v36_metadata()
+        metadata.update({
+            "max_pylon_cap": 10,
+            "max_post_core_gateway_cap": 6,
+            "range_upgrade_eligibility_frame": 600,
+            "range_upgrade_bank_start_frame": 600,
+            "range_upgrade_bank_block_count": 2,
+            "range_upgrade_attempt_frame": 720,
+            "range_upgrade_accepted_frame": 720,
+            "range_upgrade_completion_frame": 1200,
+            "range_upgrade_attempts": 1,
+            "range_upgrade_accepted": 1,
+            "range_upgrade_completions": 1,
+            "range_upgrade_max_bank_minerals": 150,
+            "range_upgrade_max_bank_gas": 150,
+            "seventh_pylon_accepted_frame": 800,
+            "seventh_pylon_current_frame": 830,
+            "seventh_pylon_completed_frame": 900,
+            "fifth_gateway_accepted_frame": 1000,
+            "fifth_gateway_current_frame": 1030,
+            "fifth_gateway_completed_frame": 1100,
+        })
+        return metadata
+
+    def test_v37_scaling_summary_validates_upgrade_caps_and_milestones(self):
+        summary = scorer._scaling_summary(self.v37_metadata(), "v37")
+        self.assertEqual(summary["quantitative_grade"]["grade"], "pass")
+        self.assertEqual(summary["caps"], {"max_pylons": 10, "max_gateways": 6})
+        self.assertTrue(summary["checks"]["milestone_order"])
+        self.assertEqual(summary["upgrade"]["range_upgrade_accepted"], 1)
+
+    def test_v37_scaling_without_eligibility_is_untested(self):
+        metadata = self.v37_metadata()
+        metadata["range_upgrade_eligibility_frame"] = -1
+        metadata["range_upgrade_bank_start_frame"] = -1
+        metadata["range_upgrade_attempt_frame"] = -1
+        metadata["range_upgrade_accepted_frame"] = -1
+        metadata["range_upgrade_completion_frame"] = -1
+        metadata["range_upgrade_attempts"] = 0
+        metadata["range_upgrade_accepted"] = 0
+        metadata["range_upgrade_completions"] = 0
+        summary = scorer._scaling_summary(metadata, "v37")
+        self.assertEqual(summary["quantitative_grade"]["grade"], "untested")
+        self.assertIn("range_upgrade_opportunity_unobserved", summary["opportunity_notes"])
+
+    def test_v37_scaling_malformed_required_telemetry_is_review(self):
+        metadata = self.v37_metadata()
+        del metadata["fifth_gateway_completed_frame"]
+        metadata["range_upgrade_accepted"] = 2
+        summary = scorer._scaling_summary(metadata, "v37")
+        self.assertEqual(summary["quantitative_grade"]["grade"], "review")
+        self.assertIn("scaling_required_fields_missing", summary["review_flags"])
+        self.assertIn("range_upgrade_not_accepted_once_and_completed", summary["review_flags"])
+
     def test_v36_candidate_name_retains_v35_and_v34_schema_checks(self):
         metadata = self.v36_metadata()
         self.assertEqual(scorer._diagnostic_generation(metadata), "v35")
@@ -197,6 +253,28 @@ class KestrelScorecardTests(TestCase):
         self.assertEqual(summary["reserve_blocks"]["count"], 2)
         self.assertTrue(summary["checks"]["probe_train_absence"])
         self.assertTrue(summary["checks"]["post_window_resumption"])
+
+    def test_v36_probe_reserve_window_allows_next_cadence_after_gateway_current(self):
+        metadata = self.v36_metadata()
+        metadata["latency_frames"] = 3
+        metadata["probe_reserve_window_end_frame"] = 155
+        metadata["accepted_probe_train_frames"] = [40, 155]
+        summary = scorer._probe_reserve_summary(metadata, "Zerg", "v36")
+        self.assertTrue(summary["checks"]["window_ordered"])
+        self.assertTrue(summary["checks"]["post_window_resumption"])
+
+        metadata["probe_reserve_window_end_frame"] = 156
+        summary = scorer._probe_reserve_summary(metadata, "Zerg", "v36")
+        self.assertIn("probe_reserve_window_end_delayed", summary["review_flags"])
+
+    def test_v36_probe_reserve_without_block_opportunity_is_untested(self):
+        metadata = self.v36_metadata()
+        metadata["probe_reserve_block_frames"] = []
+        metadata["probe_reserve_block_minerals"] = []
+        metadata["probe_reserve_block_count"] = 0
+        summary = scorer._probe_reserve_summary(metadata, "Zerg", "v36")
+        self.assertEqual(summary["quantitative_grade"]["grade"], "untested")
+        self.assertIn("reserve_block_opportunity_unobserved", summary["opportunity_notes"])
 
     def test_v36_probe_reserve_summary_rejects_bad_minerals_and_non_zerg_activity(self):
         metadata = self.v36_metadata()
