@@ -1271,6 +1271,30 @@
         "origin": "Original",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
       }
+    },
+    {
+      "id": "kestrel-hillclimb-v9",
+      "title": "Kestrel v29 build-commandability repair hill-climb",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Requiring public BWAPI build commandability before issuing construction commands will eliminate build Unit_Busy rejections without starving later construction.",
+      "notes": "Five reciprocal, replay-verified losses completed. UAlberta-Terran exercised one commandability guard block, recorded zero rejected build commands and accepted later construction. McRave ran at 340.17 fps below the 384 fps gate; no lane produced a win.",
+      "conclusion": "Reject v29 for zero wins and failure of the preregistered McRave throughput gate. Preserve the verified guard-recovery and sixth-Pylon mechanism signals, but do not adopt the candidate or update Elo.",
+      "evidence_run_ids": [
+        "20260920T142655-6bc36872dba3",
+        "20260920T142655-bccc4436f910",
+        "20260920T142655-ff5b6e5c8997",
+        "20260920T142655-1ed1af13bac4",
+        "20260920T142655-58e4feb4e739"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v9",
+      "candidate_binary_sha256": "c7196ea991f5755b6e34c9c9ebff87faf3884d221de9492a7952ce20cc57d56c",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      }
     }
   ]
 }
