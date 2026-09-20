@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "experiment_id": "kestrel-local-anchor-v1",
+  "registered_at": "2026-09-20T09:09:00Z",
+  "eval_plan_sha256": "cd78a408a2f7af14cb5db84b0f7877c71929779c1c608da9110e03c12c43d551",
+  "schedule_sha256": "3b8a15f3b7876b072f4483e77d09318f03cbd7cd51361be28f9afcb0ea3293c5",
+  "engine_launcher_sha256": "eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b",
+  "engine_library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "candidate": {
+    "name": "Kestrel-v13",
+    "race": "Protoss",
+    "module_sha256": "622bca47b47f78f3e9d1971d1e340f991b54ced7f3bfdfd932d3062e125cbd98",
+    "path": "artifacts/builds/622bca47b47f78f3e9d1971d1e340f991b54ced7f3bfdfd932d3062e125cbd98/kestrel-v13-gas-worker-guard/Kestrel.dylib"
+  },
+  "opponents": [
+    {
+      "name": "UAlbertaBot-Terran",
+      "race": "Terran",
+      "module_sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib"
+    },
+    {
+      "name": "ZZZKBot",
+      "race": "Zerg",
+      "module_sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748",
+      "path": "build/zzzkbot/lib/ZZZKBot.dylib"
+    }
+  ],
+  "games": 12,
+  "maps": [
+    "sscai/(2)Benzene.scx",
+    "sscai/(2)Heartbreak Ridge.scx",
+    "sscai/(2)Destination.scx"
+  ],
+  "seeds": [9701, 9702, 9703, 9704, 9705, 9706],
+  "result": {
+    "candidate_wins": 2,
+    "candidate_losses": 10,
+    "valid_attempts": 12,
+    "invalid_attempts": 0
+  }
+}
