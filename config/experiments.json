@@ -947,6 +947,22 @@
         "20260920T081003-a879044ab3cc",
         "20260920T081512-101a3a250076"
       ]
+    },
+    {
+      "id": "kestrel-opening-v16",
+      "title": "Kestrel tests first-Pylon reservation",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Reserving 100 minerals for the first Pylon after six completed Probes will move the V15 production sequence early enough for two completed local Zealots to overlap before the first local loss.",
+      "notes": "The candidate accepted its first Pylon 192 to 264 frames earlier and its first Gateway 291 to 326 frames earlier than matched controls, but reached only one local completed Zealot before the first loss in both games. Heartbreak also recorded three accepted Zealot trains and no accepted structure after the first train. All four games were clean and all eight replays parsed.",
+      "conclusion": "Rejected. Earlier first-Pylon timing did not produce overlapping defenders and was worse than the matched controls on the registered local-overlap gate. Canonical Kestrel v13 remains unchanged; v16 does not advance to held-out comparison.",
+      "evidence_run_ids": [
+        "20260920T083339-02d992fff3d9",
+        "20260920T083341-33df1273eb31",
+        "20260920T083343-fde4d42b5ae3",
+        "20260920T083345-3668c7a9941b"
+      ]
     }
   ]
 }

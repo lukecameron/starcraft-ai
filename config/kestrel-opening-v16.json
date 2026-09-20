@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "experiment_id": "kestrel-opening-v16",
+  "registered_at": "2026-09-20T08:09:44.724066+00:00",
+  "eval_plan_sha256": "7b7d89a9860c0ebb91f56a0579280b3ffb3644360657be73d42a9dd1e392d343",
+  "schedule_sha256": "aaa726cbbf45e57de9ff26a8575f909df7abce6af9dfe7bdc4358f29b4aac39d",
+  "control_source_sha256": "0dd08d52e816e4a28fdb979b9cb35093301d54b54eacaa38279fa07e79bc5101",
+  "candidate_source_sha256": "e6965f441748a3d1cd9c181e0ef9ecfa128819c774390dadeae1e66ddc2362e0",
+  "control_binary_sha256": "42f3ea9c3218a2873803962d5437d4f5e313e4883eef6f89ca4a63d6a30713a2",
+  "candidate_binary_sha256": "f44605e64582c1827f46c419cbd906e0ffec4500e9fb4c1da08d61b2624b6999",
+  "games": [
+    {"arm": "control", "map": "sscai/(2)Benzene.scx", "seed": 6203},
+    {"arm": "candidate", "map": "sscai/(2)Benzene.scx", "seed": 6203},
+    {"arm": "candidate", "map": "sscai/(2)Heartbreak Ridge.scx", "seed": 6204},
+    {"arm": "control", "map": "sscai/(2)Heartbreak Ridge.scx", "seed": 6204}
+  ]
+}
