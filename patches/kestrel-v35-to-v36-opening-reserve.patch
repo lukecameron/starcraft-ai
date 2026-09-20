@@ -1,0 +1,96 @@
+diff --git a/third_party/kestrel-opening-v35-candidate/Kestrel.cpp b/third_party/kestrel-opening-v36-candidate/Kestrel.cpp
+index c5be32c..b682be8 100644
+--- a/third_party/kestrel-opening-v35-candidate/Kestrel.cpp
++++ b/third_party/kestrel-opening-v36-candidate/Kestrel.cpp
+@@ -74,6 +74,14 @@ class Kestrel final : public BWAPI::AIModule {
+     std::vector<int> acceptedBuildTypeIds_;
+     std::vector<int> acceptedBuildPreCommandCounts_;
+     std::vector<int> acceptedBuildPostCommandCounts_;
++    std::vector<int> acceptedProbeTrainFrames_;
++    std::vector<int> probeReserveBlockFrames_;
++    std::vector<int> probeReserveBlockMinerals_;
++    int openingProbeReserve_ = 0;
++    int maxOpeningProbeReserve_ = 0;
++    int firstProbeReserveWindowFrame_ = -1;
++    int probeReserveWindowEndFrame_ = -1;
++    int probeReserveBlockCount_ = 0;
+     std::unordered_map<int, BWAPI::Position> lastZealotPositions_;
+     std::unordered_map<int, int> zergOffenseStageSuppressedTargets_;
+     std::unordered_map<int, int> zergOffenseStageHomeMoveLastFrame_;
+@@ -312,7 +320,26 @@ class Kestrel final : public BWAPI::AIModule {
+             if (index) out << ',';
+             out << acceptedBuildPostCommandCounts_[index];
+         }
+-        out << "]"
++        out << "],\"accepted_probe_train_frames\":[";
++        for (size_t index = 0; index < acceptedProbeTrainFrames_.size(); ++index) {
++            if (index) out << ',';
++            out << acceptedProbeTrainFrames_[index];
++        }
++        out << "],\"probe_reserve_block_frames\":[";
++        for (size_t index = 0; index < probeReserveBlockFrames_.size(); ++index) {
++            if (index) out << ',';
++            out << probeReserveBlockFrames_[index];
++        }
++        out << "],\"probe_reserve_block_minerals\":[";
++        for (size_t index = 0; index < probeReserveBlockMinerals_.size(); ++index) {
++            if (index) out << ',';
++            out << probeReserveBlockMinerals_[index];
++        }
++        out << "],\"opening_probe_reserve\":" << openingProbeReserve_
++            << ",\"max_opening_probe_reserve\":" << maxOpeningProbeReserve_
++            << ",\"first_probe_reserve_window_frame\":" << firstProbeReserveWindowFrame_
++            << ",\"probe_reserve_window_end_frame\":" << probeReserveWindowEndFrame_
++            << ",\"probe_reserve_block_count\":" << probeReserveBlockCount_
+             << ",\"first_home_threat_frame\":" << firstHomeThreatFrame_
+             << ",\"first_home_zealot_loss_frame\":" << firstHomeZealotLossFrame_
+             << ",\"max_local_completed_zealots_before_loss\":" << maxLocalCompletedZealotsBeforeLoss_
+@@ -1016,17 +1043,42 @@ class Kestrel final : public BWAPI::AIModule {
+         if (knownZerg_ && completedProbes >= 6 && firstPylonCurrentFrame_ < 0) {
+             openingReserve = 100;
+         } else if (knownZerg_ && firstPylonAcceptedFrame_ >= 0) {
+-            if (firstGatewayCurrentFrame_ < 0) openingReserve = 150;
+-            else if (secondGatewayCurrentFrame_ < 0) openingReserve = 150;
++            // Bank minerals for the second Gateway before adding another
++            // Probe.  In v35 the second Gateway completed at 3242 while the
++            // first Zerg pressure arrived at 3789; the second Zealot missed
++            // that window by roughly one train cycle.  The reserve applies
++            // from the first-Pylon opening until the second Gateway becomes
++            // current, including the interval before the first Gateway is
++            // publicly current.
++            if (firstGatewayCurrentFrame_ < 0) openingReserve = 250;
++            else if (secondGatewayCurrentFrame_ < 0) openingReserve = 250;
+             else if (!firstZealotQueued_) openingReserve = 100;
+         }
++        const int frame = BWAPI::Broodwar->getFrameCount();
++        openingProbeReserve_ = knownZerg_ ? openingReserve : 0;
++        maxOpeningProbeReserve_ = std::max(maxOpeningProbeReserve_, openingProbeReserve_);
++        if (knownZerg_ && firstPylonAcceptedFrame_ >= 0 && secondGatewayCurrentFrame_ < 0) {
++            if (firstProbeReserveWindowFrame_ < 0) firstProbeReserveWindowFrame_ = frame;
++        } else if (knownZerg_ && firstProbeReserveWindowFrame_ >= 0 &&
++                   probeReserveWindowEndFrame_ < 0 && secondGatewayCurrentFrame_ >= 0) {
++            probeReserveWindowEndFrame_ = frame;
++        }
+         for (auto unit : sorted(BWAPI::Broodwar->self()->getUnits())) {
+             if (!unit->exists() || !unit->isCompleted() || unit->isTraining()) continue;
+             const BWAPI::UnitType type = unit->getType();
+-            if (type == BWAPI::UnitTypes::Protoss_Nexus && probes < 28 &&
+-                BWAPI::Broodwar->self()->minerals() >= 50 + openingReserve &&
+-                unit->canTrain(BWAPI::UnitTypes::Protoss_Probe)) {
+-                issue(unit->train(BWAPI::UnitTypes::Protoss_Probe), TrainCommand);
++            if (type == BWAPI::UnitTypes::Protoss_Nexus && probes < 28) {
++                const int minerals = BWAPI::Broodwar->self()->minerals();
++                const bool canTrainProbe = unit->canTrain(BWAPI::UnitTypes::Protoss_Probe);
++                if (knownZerg_ && firstPylonAcceptedFrame_ >= 0 && secondGatewayCurrentFrame_ < 0 &&
++                    openingReserve == 250 && minerals >= 200 && minerals < 300 && canTrainProbe) {
++                    ++probeReserveBlockCount_;
++                    probeReserveBlockFrames_.push_back(frame);
++                    probeReserveBlockMinerals_.push_back(minerals);
++                }
++                if (minerals >= 50 + openingReserve && canTrainProbe) {
++                    if (issue(unit->train(BWAPI::UnitTypes::Protoss_Probe), TrainCommand))
++                        if (knownZerg_) acceptedProbeTrainFrames_.push_back(frame);
++                }
+             } else if (type == BWAPI::UnitTypes::Protoss_Gateway) {
+                 if (count(BWAPI::UnitTypes::Protoss_Cybernetics_Core, true) > 0 &&
+                     BWAPI::Broodwar->self()->minerals() >= 125 && BWAPI::Broodwar->self()->gas() >= 50 &&

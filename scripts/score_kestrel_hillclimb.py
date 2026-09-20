@@ -14,6 +14,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import tempfile
@@ -129,8 +130,24 @@ def _normalise_race(race: object) -> str | None:
     return value if value in {"zerg", "terran", "protoss", "random"} else None
 
 
-def _diagnostic_generation(metadata: dict[str, object]) -> str:
-    """Identify the Kestrel telemetry generation from additive field names."""
+def _candidate_generation(candidate_name: object) -> str | None:
+    """Resolve a policy generation from the schedule's candidate display name."""
+    if not isinstance(candidate_name, str):
+        return None
+    match = re.search(r"(?:^|[^a-z0-9])v(36)(?:[^a-z0-9]|$)", candidate_name.lower())
+    return f"v{match.group(1)}" if match else None
+
+
+def _diagnostic_generation(metadata: dict[str, object], candidate_name: object = None) -> str:
+    """Identify the Kestrel telemetry generation from the candidate and fields.
+
+    v36 intentionally keeps the v35 construction and emergency episode fields,
+    so the candidate name supplies the policy-generation disambiguation while
+    field-based detection remains the fallback for archived diagnostics.
+    """
+    candidate_generation = _candidate_generation(candidate_name)
+    if candidate_generation == "v36":
+        return candidate_generation
     if any(name in metadata for name in (
         "accepted_build_pre_command_counts",
         "emergency_episode_ids",
@@ -151,7 +168,8 @@ def _diagnostic_generation(metadata: dict[str, object]) -> str:
     return "legacy"
 
 
-def _construction_pending_summary(metadata: dict[str, object], opponent_race: str | None = None) -> dict[str, object]:
+def _construction_pending_summary(metadata: dict[str, object], opponent_race: str | None = None,
+                                  generation: str | None = None) -> dict[str, object]:
     """Validate v35's pre-command construction bookkeeping observations.
 
     v35 deliberately records the accepted-build arrays rather than exposing
@@ -160,6 +178,7 @@ def _construction_pending_summary(metadata: dict[str, object], opponent_race: st
     eventually reflected by the engine.  Older diagnostics have no arrays and
     remain ``legacy_absent``.
     """
+    generation = generation or _diagnostic_generation(metadata)
     names = (
         "accepted_build_frames",
         "accepted_build_type_ids",
@@ -284,7 +303,7 @@ def _construction_pending_summary(metadata: dict[str, object], opponent_race: st
         grade = "review"
     score_checks = [value for value in checks.values() if isinstance(value, bool)]
     return {
-        "generation": "v35",
+        "generation": generation if generation in {"v35", "v36"} else "v35",
         "telemetry_status": "complete" if not missing and not invalid_fields else "partial",
         "fields_present": present,
         "missing_fields": missing,
@@ -311,6 +330,157 @@ def _construction_pending_summary(metadata: dict[str, object], opponent_race: st
     }
 
 
+def _probe_reserve_summary(metadata: dict[str, object], opponent_race: str | None = None,
+                           generation: str | None = None) -> dict[str, object]:
+    """Validate v36's known-Zerg Probe reserve window telemetry."""
+    generation = generation or _diagnostic_generation(metadata)
+    names = (
+        "accepted_probe_train_frames", "probe_reserve_block_frames",
+        "probe_reserve_block_minerals", "opening_probe_reserve",
+        "max_opening_probe_reserve",
+        "first_probe_reserve_window_frame", "probe_reserve_window_end_frame",
+        "probe_reserve_block_count",
+    )
+    feature_present = any(name in metadata for name in names)
+    if not feature_present:
+        if generation == "v36":
+            return {
+                "generation": "v36",
+                "telemetry_status": "partial",
+                "fields_present": [],
+                "missing_fields": list(names),
+                "invalid_fields": [],
+                "accepted_probe_train_frames": [],
+                "reserve_blocks": {"frames": [], "minerals": [], "count": 0},
+                "window": {"start_frame": -1, "end_frame": -1, "threshold": 250},
+                "checks": {"trace_aligned": False, "block_count": False, "block_frames_ordered": False,
+                            "block_minerals_in_range": False, "window_ordered": False,
+                            "probe_train_absence": False, "post_window_resumption": None,
+                            "non_zerg_inactive": None, "max_reserve_threshold": False},
+                "quantitative_grade": {"score": 0, "max_score": 100, "grade": "review"},
+                "review_flags": ["probe_reserve_required_fields_missing"],
+                "opportunity_notes": ["reserve_telemetry_missing"],
+            }
+        return {
+            "generation": "legacy",
+            "telemetry_status": "legacy_absent",
+            "fields_present": [],
+            "missing_fields": [],
+            "invalid_fields": [],
+            "accepted_probe_train_frames": [],
+            "reserve_blocks": {"frames": [], "minerals": [], "count": 0},
+            "window": {"start_frame": -1, "end_frame": -1, "threshold": 250},
+            "checks": {"trace_aligned": True, "block_count": True, "block_frames_ordered": True,
+                        "block_minerals_in_range": True, "window_ordered": True,
+                        "probe_train_absence": True, "post_window_resumption": None,
+                        "non_zerg_inactive": None, "max_reserve_threshold": None},
+            "quantitative_grade": {"score": 0, "max_score": 100, "grade": "legacy_absent"},
+            "review_flags": [],
+            "opportunity_notes": [],
+        }
+
+    list_names = ("accepted_probe_train_frames", "probe_reserve_block_frames", "probe_reserve_block_minerals")
+    present = [name for name in names if name in metadata]
+    missing = [name for name in names if name not in metadata]
+    arrays = {name: _metadata_list(metadata, name) for name in list_names}
+    invalid_fields = [name for name in list_names if name in metadata and not isinstance(metadata[name], list)]
+    invalid_scalars = [name for name in names[len(list_names):]
+                       if name in metadata and (not isinstance(metadata[name], int) or isinstance(metadata[name], bool))]
+    review_flags: list[str] = []
+    if invalid_fields:
+        review_flags.append("probe_reserve_trace_type_mismatch")
+    if invalid_scalars:
+        review_flags.append("probe_reserve_scalar_type_mismatch")
+    accepted = arrays["accepted_probe_train_frames"]
+    block_frames = arrays["probe_reserve_block_frames"]
+    block_minerals = arrays["probe_reserve_block_minerals"]
+    if len(block_frames) != len(block_minerals):
+        review_flags.append("probe_reserve_trace_length_mismatch")
+    block_count = _metadata_int(metadata, "probe_reserve_block_count", 0)
+    if block_count != len(block_frames):
+        review_flags.append("probe_reserve_block_count_mismatch")
+    for values, type_flag in ((accepted, "probe_train_frame_type_mismatch"),
+                              (block_frames, "probe_reserve_frame_type_mismatch"),
+                              (block_minerals, "probe_reserve_mineral_type_mismatch")):
+        if any(not isinstance(value, int) or isinstance(value, bool) for value in values):
+            review_flags.append(type_flag)
+    if any(isinstance(previous, int) and isinstance(current, int) and current < previous
+           for previous, current in zip(accepted, accepted[1:])):
+        review_flags.append("probe_train_frames_not_ordered")
+    if any(isinstance(previous, int) and isinstance(current, int) and current < previous
+           for previous, current in zip(block_frames, block_frames[1:])):
+        review_flags.append("probe_reserve_block_frames_not_ordered")
+    if any(isinstance(value, int) and not 200 <= value < 300 for value in block_minerals):
+        review_flags.append("probe_reserve_block_minerals_out_of_range")
+
+    window_start = _metadata_int(metadata, "first_probe_reserve_window_frame", -1)
+    window_end = _metadata_int(metadata, "probe_reserve_window_end_frame", -1)
+    first_pylon = _metadata_int(metadata, "first_pylon_accepted_frame", -1)
+    second_gateway = _metadata_int(metadata, "second_gateway_current_frame", -1)
+    if window_start >= 0 and first_pylon >= 0 and window_start < first_pylon:
+        review_flags.append("probe_reserve_window_before_first_pylon")
+    if window_end >= 0 and window_start >= 0 and window_end < window_start:
+        review_flags.append("probe_reserve_window_end_before_start")
+    if window_end >= 0 and second_gateway >= 0 and window_end > second_gateway:
+        review_flags.append("probe_reserve_window_end_after_second_gateway")
+    in_opening_window = (first_pylon >= 0 and second_gateway >= 0 and
+                         first_pylon <= second_gateway)
+    if in_opening_window and any(isinstance(frame, int) and first_pylon <= frame < second_gateway for frame in accepted):
+        review_flags.append("probe_train_during_pre_second_gateway_window")
+    post_window_train = window_end >= 0 and any(isinstance(frame, int) and frame >= window_end for frame in accepted)
+    race = _normalise_race(opponent_race)
+    if race is None:
+        known_zerg = metadata.get("known_zerg")
+        if isinstance(known_zerg, bool):
+            race = "zerg" if known_zerg else "non-zerg"
+    expected_inactive = race in {"terran", "protoss", "non-zerg"}
+    max_reserve = _metadata_int(metadata, "max_opening_probe_reserve", 0)
+    if race == "zerg" and max_reserve != 250:
+        review_flags.append("probe_reserve_max_threshold_mismatch")
+    if expected_inactive and max_reserve != 0:
+        review_flags.append("non_zerg_probe_reserve_max_threshold_mismatch")
+    if expected_inactive and (accepted or block_frames or block_minerals or block_count != 0 or
+                              _metadata_int(metadata, "opening_probe_reserve", 0) != 0 or
+                              window_start != -1 or window_end != -1):
+        review_flags.append("non_zerg_probe_reserve_activity")
+    if missing:
+        review_flags.append("probe_reserve_required_fields_missing")
+    checks = {
+        "trace_aligned": "probe_reserve_trace_length_mismatch" not in review_flags,
+        "block_count": "probe_reserve_block_count_mismatch" not in review_flags,
+        "block_frames_ordered": "probe_reserve_block_frames_not_ordered" not in review_flags,
+        "block_minerals_in_range": "probe_reserve_block_minerals_out_of_range" not in review_flags,
+        "window_ordered": not any(flag.startswith("probe_reserve_window") for flag in review_flags),
+        "probe_train_absence": "probe_train_during_pre_second_gateway_window" not in review_flags,
+        "post_window_resumption": post_window_train if window_end >= 0 else None,
+        "max_reserve_threshold": not any(flag.endswith("max_threshold_mismatch") for flag in review_flags),
+        "non_zerg_inactive": (not any(flag.startswith("non_zerg_probe_reserve") for flag in review_flags)
+                              if expected_inactive else None),
+    }
+    scored_checks = [value for value in checks.values() if isinstance(value, bool)]
+    if expected_inactive:
+        grade = "pass" if checks["non_zerg_inactive"] else "review"
+    elif not review_flags:
+        grade = "pass" if block_frames or accepted else "untested"
+    else:
+        grade = "review"
+    return {
+        "generation": generation if generation == "v36" else "legacy" if not feature_present else "v36",
+        "telemetry_status": "complete" if not missing and not invalid_fields and not invalid_scalars else "partial",
+        "fields_present": present,
+        "missing_fields": missing,
+        "invalid_fields": sorted(set(invalid_fields + invalid_scalars)),
+        "accepted_probe_train_frames": accepted,
+        "reserve_blocks": {"frames": block_frames, "minerals": block_minerals, "count": block_count},
+        "window": {"start_frame": window_start, "end_frame": window_end, "threshold": 250},
+        "checks": checks,
+        "quantitative_grade": {"score": round(100 * sum(scored_checks) / len(scored_checks)) if scored_checks else 0,
+                               "max_score": 100, "grade": grade},
+        "review_flags": sorted(set(review_flags)),
+        "opportunity_notes": [] if block_frames else ["reserve_block_opportunity_unobserved"],
+    }
+
+
 def _emergency_batches(frames: list[object], sizes: list[object], ids: list[object]) -> tuple[list[dict[str, object]], list[str]]:
     """Build reviewable assignment batches from v33's parallel telemetry arrays."""
     flags: list[str] = []
@@ -334,8 +504,10 @@ def _emergency_batches(frames: list[object], sizes: list[object], ids: list[obje
     return batches, flags
 
 
-def _emergency_episode_summary(metadata: dict[str, object], opponent_race: str | None = None) -> dict[str, object]:
+def _emergency_episode_summary(metadata: dict[str, object], opponent_race: str | None = None,
+                               generation: str | None = None) -> dict[str, object]:
     """Validate v35's cumulative two-Probe emergency threat episodes."""
+    generation = generation or _diagnostic_generation(metadata)
     names = (
         "emergency_episode_current_id",
         "emergency_episode_current_assignment_count",
@@ -536,7 +708,7 @@ def _emergency_episode_summary(metadata: dict[str, object], opponent_race: str |
     else:
         grade = "pass" if not review_flags else "review"
     return {
-        "generation": "v35",
+        "generation": generation if generation in {"v35", "v36"} else "v35",
         "telemetry_status": "complete" if not missing and not invalid_fields else "partial",
         "fields_present": present,
         "missing_fields": missing,
@@ -577,10 +749,11 @@ def _aggregate_emergency_episode_summaries(episode_games: list[dict[str, object]
     return aggregate
 
 
-def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | None = None) -> dict[str, object]:
+def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | None = None,
+                              generation: str | None = None) -> dict[str, object]:
     """Normalize v33/v34 emergency-worker telemetry and legacy absence."""
-    generation = _diagnostic_generation(metadata)
-    army_generation = "three" if generation in {"v34", "v35"} else "two"
+    generation = generation or _diagnostic_generation(metadata)
+    army_generation = "three" if generation in {"v34", "v35", "v36"} else "two"
     army_event_key = f"emergency_army_{army_generation}_release_events"
     army_defender_key = f"emergency_army_{army_generation}_released_defenders"
     first_army_frame_key = f"emergency_first_army_{army_generation}_release_frame"
@@ -730,7 +903,7 @@ def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | 
     if values["emergency_threat_clear_release_events"] + values[army_event_key] > 0 and not release_trace:
         review_flags.append("release_reason_without_release_trace")
 
-    episode_summary = _emergency_episode_summary(metadata, opponent_race) if generation == "v35" else None
+    episode_summary = _emergency_episode_summary(metadata, opponent_race, generation) if generation in {"v35", "v36"} else None
     if episode_summary is not None:
         review_flags.extend(f"episode:{flag}" for flag in episode_summary.get("review_flags", []))
 
@@ -856,12 +1029,14 @@ def _player_race(player: object) -> str | None:
     return _normalise_race(environment.get("BWAPI_CONFIG_AUTO_MENU__RACE"))
 
 
-def _zerg_offense_stage_summary(metadata: dict[str, object], opponent_race: str | None = None) -> dict[str, object]:
+def _zerg_offense_stage_summary(metadata: dict[str, object], opponent_race: str | None = None,
+                                generation: str | None = None) -> dict[str, object]:
     """Validate v34's staged-offense scalar and parallel state traces.
 
     The v31-v33 diagnostics do not have these fields. Their absence is kept as
     ``legacy_absent`` so old scorecards remain useful and comparable.
     """
+    generation = generation or _diagnostic_generation(metadata)
     scalar_defaults: dict[str, object] = {
         "zerg_offense_stage_released": False,
         "zerg_offense_stage_remote_target_events": 0,
@@ -1111,7 +1286,7 @@ def _zerg_offense_stage_summary(metadata: dict[str, object], opponent_race: str 
         grade = "review" if review_flags else "pass"
         telemetry_status = "complete" if not missing else "partial"
     return {
-        "generation": "v34" if feature_present else "legacy",
+        "generation": generation if feature_present and generation in {"v34", "v35", "v36"} else "v34" if feature_present else "legacy",
         "opponent_race": race,
         "expected_active": expected_active,
         "expected_inactive": expected_inactive,
@@ -1223,7 +1398,9 @@ def read_diagnostic_events(metadata: dict[str, object], root: Path) -> dict[str,
     return result
 
 
-def _diagnostic_summary(metadata: dict[str, object], root: Path, opponent_race: str | None = None) -> dict[str, object]:
+def _diagnostic_summary(metadata: dict[str, object], root: Path, opponent_race: str | None = None,
+                        candidate_name: object = None) -> dict[str, object]:
+    generation = _diagnostic_generation(metadata, candidate_name)
     categories = metadata.get("command_categories")
     errors = metadata.get("command_error_counts")
     metadata_path = _resolve_path(metadata.get("metadata_path"), root)
@@ -1331,10 +1508,11 @@ def _diagnostic_summary(metadata: dict[str, object], root: Path, opponent_race: 
         "zerg_nonreserve_remote_attack_orders": metadata.get("zerg_nonreserve_remote_attack_orders"),
     }
     result["events"] = read_diagnostic_events(metadata, root)
-    result["emergency_bridge"] = _emergency_bridge_summary(metadata, opponent_race)
-    result["telemetry_generation"] = _diagnostic_generation(metadata)
-    result["construction_pending"] = _construction_pending_summary(metadata, opponent_race)
-    result["zerg_offense_stage"] = _zerg_offense_stage_summary(metadata, opponent_race)
+    result["emergency_bridge"] = _emergency_bridge_summary(metadata, opponent_race, generation)
+    result["telemetry_generation"] = generation
+    result["construction_pending"] = _construction_pending_summary(metadata, opponent_race, generation)
+    result["probe_reserve"] = _probe_reserve_summary(metadata, opponent_race, generation)
+    result["zerg_offense_stage"] = _zerg_offense_stage_summary(metadata, opponent_race, generation)
     return result
 
 
@@ -1453,7 +1631,7 @@ def score_kestrel_match(manifest: dict[str, object], manifest_path: Path, screp:
     candidate_player = candidate.get("player")
     replay_records = [r for r in manifest.get("replays", []) if isinstance(r, dict)]
     candidate_replay = next((r for r in replay_records if r.get("player") == candidate_player), None)
-    diagnostic = _diagnostic_summary(diagnostic_metadata, root, opponent_race)
+    diagnostic = _diagnostic_summary(diagnostic_metadata, root, opponent_race, candidate_name)
     game.update({
         "candidate_player": candidate_player,
         "candidate_result_metadata": diagnostic_metadata,
@@ -1466,6 +1644,7 @@ def score_kestrel_match(manifest: dict[str, object], manifest_path: Path, screp:
         "diagnostic": diagnostic,
         "emergency_bridge": diagnostic["emergency_bridge"],
         "construction_pending": diagnostic["construction_pending"],
+        "probe_reserve": diagnostic["probe_reserve"],
         "zerg_offense_stage": diagnostic["zerg_offense_stage"],
         "outcome_performance": outcome_performance(diagnostic_metadata),
     })
@@ -1541,6 +1720,7 @@ def score_kestrel_match(manifest: dict[str, object], manifest_path: Path, screp:
     if diagnostic.get("metadata_file_mismatches"): integrity_reasons.append("diagnostic_mismatch")
     if (diagnostic.get("emergency_bridge") or {}).get("review_flags"): integrity_reasons.append("emergency_mechanism_review")
     if (diagnostic.get("construction_pending") or {}).get("review_flags"): integrity_reasons.append("construction_mechanism_review")
+    if (diagnostic.get("probe_reserve") or {}).get("review_flags"): integrity_reasons.append("probe_reserve_review")
     if (diagnostic.get("zerg_offense_stage") or {}).get("review_flags"): integrity_reasons.append("zerg_offense_stage_review")
     if not candidate_parsed: integrity_reasons.append("candidate_replay_missing")
     if candidate_parsed and not candidate_parsed.get("manifest_hash_matches"): integrity_reasons.append("candidate_replay_hash")
@@ -1773,7 +1953,7 @@ def main() -> int:
     }
     episode_games = [
         (bridge.get("episodes") or {}) for bridge in bridge_games
-        if isinstance(bridge.get("episodes"), dict) and (bridge.get("episodes") or {}).get("generation") == "v35"
+        if isinstance(bridge.get("episodes"), dict) and (bridge.get("episodes") or {}).get("generation") in {"v35", "v36"}
     ]
     aggregate["emergency_bridge"]["episodes"] = _aggregate_emergency_episode_summaries(episode_games)
     stage_games = [g.get("zerg_offense_stage") for g in games if isinstance(g.get("zerg_offense_stage"), dict)]
@@ -1782,7 +1962,7 @@ def main() -> int:
     aggregate["zerg_offense_stage"] = {
         "games": len(stage_games),
         "generations": {generation: sum(stage.get("generation") == generation for stage in stage_games)
-                         for generation in ("v34", "legacy")},
+                         for generation in ("v34", "v35", "v36", "legacy")},
         "grades": {grade: sum((stage.get("quantitative_grade") or {}).get("grade") == grade for stage in stage_games)
                    for grade in ("pass", "untested", "review", "legacy_absent")},
         "threshold_observed": sum((stage.get("peak_surplus") or 0) >= 6 for stage in stage_games),
@@ -1810,7 +1990,7 @@ def main() -> int:
     aggregate["construction_pending"] = {
         "games": len(construction_games),
         "generations": {generation: sum(item.get("generation") == generation for item in construction_games)
-                         for generation in ("v35", "legacy")},
+                         for generation in ("v35", "v36", "legacy")},
         "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade for item in construction_games)
                    for grade in ("pass", "untested", "review", "legacy_absent")},
         "accepted_builds": sum(len((item.get("accepted_builds") or {}).get("rows", [])) for item in construction_games),
@@ -1821,6 +2001,22 @@ def main() -> int:
         for flag in item.get("review_flags", []):
             construction_review_flags[flag] = construction_review_flags.get(flag, 0) + 1
     aggregate["construction_pending"]["review_flags"] = dict(sorted(construction_review_flags.items()))
+    reserve_games = [g.get("probe_reserve") for g in games if isinstance(g.get("probe_reserve"), dict)]
+    reserve_review_flags: dict[str, int] = {}
+    aggregate["probe_reserve"] = {
+        "games": len(reserve_games),
+        "generations": {generation: sum(item.get("generation") == generation for item in reserve_games)
+                         for generation in ("v36", "legacy")},
+        "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade for item in reserve_games)
+                   for grade in ("pass", "untested", "review", "legacy_absent")},
+        "reserve_blocks": sum((item.get("reserve_blocks") or {}).get("count", 0) for item in reserve_games),
+        "accepted_probe_trains": sum(len(item.get("accepted_probe_train_frames", [])) for item in reserve_games),
+        "review_flags": reserve_review_flags,
+    }
+    for item in reserve_games:
+        for flag in item.get("review_flags", []):
+            reserve_review_flags[flag] = reserve_review_flags.get(flag, 0) + 1
+    aggregate["probe_reserve"]["review_flags"] = dict(sorted(reserve_review_flags.items()))
     output = Path(args.output).resolve() if args.output else experiment_dir / "hillclimb-scorecard.json"
     scorecard = {"schema_version": 1, "experiment_id": args.experiment_id,
                  "candidate_name": candidate_name, "ledger_path": str(ledger_path),

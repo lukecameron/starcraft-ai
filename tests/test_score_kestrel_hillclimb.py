@@ -157,6 +157,63 @@ class KestrelScorecardTests(TestCase):
         })
         return metadata
 
+    @staticmethod
+    def v36_metadata() -> dict[str, object]:
+        metadata = KestrelScorecardTests.v35_metadata()
+        metadata.update({
+            "accepted_probe_train_frames": [40, 150],
+            "probe_reserve_block_frames": [60, 90],
+            "probe_reserve_block_minerals": [220, 299],
+            "opening_probe_reserve": 250,
+            "max_opening_probe_reserve": 250,
+            "first_probe_reserve_window_frame": 50,
+            "probe_reserve_window_end_frame": 150,
+            "probe_reserve_block_count": 2,
+            "first_pylon_accepted_frame": 50,
+            "second_gateway_current_frame": 150,
+        })
+        return metadata
+
+    def test_v36_candidate_name_retains_v35_and_v34_schema_checks(self):
+        metadata = self.v36_metadata()
+        self.assertEqual(scorer._diagnostic_generation(metadata), "v35")
+        self.assertEqual(scorer._diagnostic_generation(metadata, "Kestrel-v36-opening-reserve"), "v36")
+
+        construction = scorer._construction_pending_summary(metadata, "Zerg", "v36")
+        self.assertEqual(construction["generation"], "v36")
+        episode = scorer._emergency_episode_summary(metadata, "Zerg", "v36")
+        self.assertEqual(episode["generation"], "v36")
+        bridge = scorer._emergency_bridge_summary(metadata, "Zerg", "v36")
+        self.assertEqual(bridge["generation"], "v36")
+        self.assertEqual(bridge["release_threshold"], 3)
+        self.assertEqual(bridge["episodes"]["generation"], "v36")
+        stage = scorer._zerg_offense_stage_summary(metadata, "Zerg", "v36")
+        self.assertEqual(stage["generation"], "v36")
+
+    def test_v36_probe_reserve_summary_checks_alignment_window_and_resumption(self):
+        summary = scorer._probe_reserve_summary(self.v36_metadata(), "Zerg", "v36")
+        self.assertEqual(summary["generation"], "v36")
+        self.assertEqual(summary["quantitative_grade"]["grade"], "pass")
+        self.assertEqual(summary["reserve_blocks"]["count"], 2)
+        self.assertTrue(summary["checks"]["probe_train_absence"])
+        self.assertTrue(summary["checks"]["post_window_resumption"])
+
+    def test_v36_probe_reserve_summary_rejects_bad_minerals_and_non_zerg_activity(self):
+        metadata = self.v36_metadata()
+        metadata["probe_reserve_block_minerals"] = [199, 300]
+        metadata["max_opening_probe_reserve"] = 0
+        summary = scorer._probe_reserve_summary(metadata, "Terran", "v36")
+        self.assertIn("probe_reserve_block_minerals_out_of_range", summary["review_flags"])
+        self.assertIn("non_zerg_probe_reserve_activity", summary["review_flags"])
+        self.assertEqual(summary["quantitative_grade"]["grade"], "review")
+
+    def test_v36_missing_reserve_telemetry_is_reviewable(self):
+        summary = scorer._probe_reserve_summary(self.v35_metadata(), "Zerg", "v36")
+        self.assertEqual(summary["generation"], "v36")
+        self.assertEqual(summary["telemetry_status"], "partial")
+        self.assertEqual(summary["quantitative_grade"]["grade"], "review")
+        self.assertIn("probe_reserve_required_fields_missing", summary["review_flags"])
+
     def test_v35_extracts_construction_baselines_and_episode_trace(self):
         metadata = self.v35_metadata()
 
@@ -682,3 +739,26 @@ class KestrelScorecardTests(TestCase):
             self.assertEqual(result["opponent"], "Opponent fallback")
             self.assertTrue(result["emergency_bridge"]["expected_inactive"])
             self.assertEqual(len(result["replays"]), 2)
+
+    def test_score_match_exposes_v36_probe_reserve_and_integrity_review(self):
+        metadata = self.v36_metadata()
+        metadata.pop("max_opening_probe_reserve")
+        candidate_name = "Kestrel-v36-opening-reserve"
+        manifest = {
+            "run_id": "v36-reserve-review",
+            "status": "completed",
+            "outcome_verified": True,
+            "players": [
+                {"player": 1, "name": candidate_name, "return_code": 0, "result_metadata": metadata},
+                {"player": 2, "name": "ZZZK-v1", "return_code": 0,
+                 "environment": {"BWAPI_CONFIG_AUTO_MENU__RACE": "Zerg"},
+                 "result_metadata": {"winner": True}},
+            ],
+            "replays": [],
+        }
+        result = scorer.score_kestrel_match(manifest, Path("manifest.json"), Path("screp"),
+                                            candidate_name=candidate_name)
+
+        self.assertEqual(result["probe_reserve"]["generation"], "v36")
+        self.assertIn("probe_reserve_required_fields_missing", result["probe_reserve"]["review_flags"])
+        self.assertIn("probe_reserve_review", result["integrity"]["reasons"])
