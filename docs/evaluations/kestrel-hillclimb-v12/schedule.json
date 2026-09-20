@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "experiment_id": "kestrel-hillclimb-v12",
+  "registered_at": "2026-09-21",
+  "eval_plan_sha256": "ff74942ad7abde62e084138be272ec08e7ed724445f713ce8590345eecad1d32",
+  "purpose": "Exploratory five-way Kestrel v33 two-Probe emergency Zerg bridge hill-climb",
+  "hypothesis": "A threat-qualified bridge of at most two eligible Probes will cover a real local non-worker Zerg threat until two completed combat units exist, while preserving v32's stable three-unit reserve and all non-Zerg behavior.",
+  "stop_condition": "Run exactly five fresh attempts concurrently; retain every result and stop after two consecutive infrastructure failures, a 900-second cohort cap, or completion. Do not retry, reseed, or replace attempts.",
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "wall_timeout_seconds": 300,
+  "cohort_wall_cap_seconds": 900,
+  "stop_after_consecutive_invalid": 2,
+  "candidate": {
+    "name": "Kestrel-v33-two-Probe-emergency-Zerg-bridge",
+    "path": "artifacts/builds/1d77b4483ea0fa21db1df9d8b45e15364986b793a2745b2c570f0db2fb55b632/kestrel-opening-v33-candidate/Kestrel.dylib",
+    "race": "Protoss",
+    "sha256": "1d77b4483ea0fa21db1df9d8b45e15364986b793a2745b2c570f0db2fb55b632",
+    "ownership": "Ours",
+    "origin": "Original",
+    "author": "Luke Cameron",
+    "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+  },
+  "base_candidate": {
+    "experiment_id": "kestrel-hillclimb-v11",
+    "name": "Kestrel-v32-stable-three-unit-Zerg-reserve",
+    "policy": "Exact v32 base; only the registered two-Probe emergency bridge is added."
+  },
+  "opponents": {
+    "zzzk": {
+      "name": "ZZZKBot",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "race": "Zerg",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748",
+      "ownership": "Ours",
+      "origin": "Port",
+      "author": "Chris Coxe",
+      "source_url": "https://github.com/chriscoxe/ZZZKBot"
+    },
+    "uab-t": {
+      "name": "UAlbertaBot-Terran",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "race": "Terran",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9",
+      "ownership": "Ours",
+      "origin": "Port",
+      "author": "David Churchill",
+      "source_url": "https://github.com/davechurchill/ualbertabot"
+    },
+    "uab-p": {
+      "name": "UAlbertaBot-Protoss",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "race": "Protoss",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9",
+      "ownership": "Ours",
+      "origin": "Port",
+      "author": "David Churchill",
+      "source_url": "https://github.com/davechurchill/ualbertabot"
+    },
+    "mcrave": {
+      "name": "McRave-9Pool-treatment",
+      "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+      "race": "Zerg",
+      "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e",
+      "ownership": "Ours",
+      "origin": "Fork",
+      "author": "Christian McCrave",
+      "source_url": "https://github.com/Cmccrave/McRave"
+    },
+    "stardust": {
+      "name": "Stardust-repaired",
+      "path": "artifacts/builds/1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa/stardust-emptytimer-repair/Stardust.dylib",
+      "race": "Protoss",
+      "sha256": "1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa",
+      "ownership": "Ours",
+      "origin": "Fork",
+      "author": "Bruce Mackenzie Nielsen",
+      "source_url": "https://github.com/bmnielsen/Stardust"
+    }
+  },
+  "games": [
+    {
+      "opponent": "zzzk",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9921,
+      "candidate_player": 1
+    },
+    {
+      "opponent": "uab-t",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9922,
+      "candidate_player": 2
+    },
+    {
+      "opponent": "uab-p",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9923,
+      "candidate_player": 1
+    },
+    {
+      "opponent": "mcrave",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9924,
+      "candidate_player": 2
+    },
+    {
+      "opponent": "stardust",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9925,
+      "candidate_player": 1
+    }
+  ],
+  "required_files": [
+    {
+      "path": "docs/evaluations/kestrel-hillclimb-v12/EVAL_PLAN.md",
+      "sha256": "ff74942ad7abde62e084138be272ec08e7ed724445f713ce8590345eecad1d32"
+    },
+    {
+      "path": "patches/kestrel-v32-to-v33-two-probe-emergency-zerg-bridge.patch",
+      "sha256": "e1765155cff50b27e306b16f6b9c6d562ea9d1aae5746ed1d74854228b3d7276"
+    }
+  ],
+  "policy_base_experiment_id": "kestrel-hillclimb-v11",
+  "diagnostic_motivation_experiment_id": "kestrel-first-engagement-diagnostic-v1",
+  "replaces_candidate": "Kestrel-v32-stable-three-unit-Zerg-reserve",
+  "notes": [
+    "The candidate must compile against native OpenBW and official BWAPI 4.4 headers before launch.",
+    "The emergency bridge is eligible only for a visible, detected, non-worker, attack-capable local Zerg threat while completed combat army is below two; it assigns at most two eligible Probes.",
+    "Current emergency defenders are excluded from economy and build selection and release when the threat clears or army reaches two.",
+    "All v32 stable-reserve gates remain mandatory; emergency telemetry must be zero or its documented -1 sentinel in all non-Zerg lanes.",
+    "No fixed 384-fps gate applies; report durable frames per second and callback performance descriptively while enforcing wall caps and lifecycle gates.",
+    "Advancement requires every integrity, regression, emergency-bridge, and retained v32 reserve gate plus at least one verified win."
+  ]
+}

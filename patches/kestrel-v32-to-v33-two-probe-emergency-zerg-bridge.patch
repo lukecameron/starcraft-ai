@@ -1,0 +1,382 @@
+--- a/third_party/kestrel-opening-v32-candidate/Kestrel.cpp
++++ b/third_party/kestrel-opening-v33-candidate/Kestrel.cpp
+@@ -115,6 +115,42 @@
+     int zergReserveHomeMoveRepeatOrders_ = 0;
+     int zergReserveHomeMoveMaxAcceptedPerUnit_ = 0;
+     int zergReserveHomeMoveMinAcceptedRepeatInterval_ = -1;
++    // Zerg-only emergency worker bridge. Membership is held by persistent
++    // probe ID until the local threat clears, two combat units complete, or
++    // the probe dies; it is never inferred from the current order/position.
++    std::vector<int> emergencyDefenderIds_;
++    std::vector<int> pendingEmergencyGatherIds_;
++    std::vector<int> emergencyAssignedIds_;
++    std::vector<int> emergencyAssignmentFrames_;
++    std::vector<int> emergencyAssignmentSizes_;
++    std::vector<int> emergencyReleaseFrames_;
++    std::vector<int> emergencyReleaseSizes_;
++    std::vector<int> emergencyReleaseArmyTwoFlags_;
++    bool emergencyThreatQualifiedLastPass_ = false;
++    int emergencyTriggerFrame_ = -1;
++    int emergencyTriggerEvents_ = 0;
++    int emergencyAssignments_ = 0;
++    int emergencyAssignmentBatches_ = 0;
++    int emergencyFirstAssignmentFrame_ = -1;
++    int emergencyFirstAssignmentSize_ = 0;
++    int emergencyMaxAssignmentBatch_ = 0;
++    int emergencyPeakDefenders_ = 0;
++    int emergencyAcceptedAttackOrders_ = 0;
++    int emergencyReleases_ = 0;
++    int emergencyFirstReleaseFrame_ = -1;
++    int emergencyThreatClearReleaseEvents_ = 0;
++    int emergencyThreatClearReleasedDefenders_ = 0;
++    int emergencyFirstThreatClearReleaseFrame_ = -1;
++    int emergencyArmyTwoReleaseEvents_ = 0;
++    int emergencyArmyTwoReleasedDefenders_ = 0;
++    int emergencyFirstArmyTwoReleaseFrame_ = -1;
++    int emergencyDefenderDeaths_ = 0;
++    int emergencyBuildSelectionExclusions_ = 0;
++    int emergencyEconomyExclusions_ = 0;
++    int emergencyPostReleaseGatherOrders_ = 0;
++    int emergencyPostReleaseBuildOrders_ = 0;
++    int emergencyArmyAtTrigger_ = -1;
++    int emergencyLocalCombatAtTrigger_ = -1;
+     struct AttackRequest {
+         int targetId;
+         int frame;
+@@ -248,7 +284,62 @@
+             << ",\"zerg_reserve_home_move_repeat_units\":" << zergReserveHomeMoveRepeatUnits_.size()
+             << ",\"zerg_reserve_home_move_max_accepted_per_unit\":" << zergReserveHomeMoveMaxAcceptedPerUnit_
+             << ",\"zerg_reserve_home_move_min_accepted_repeat_interval\":" << zergReserveHomeMoveMinAcceptedRepeatInterval_
+-            << "}\n";
++            << ",\"emergency_trigger_frame\":" << emergencyTriggerFrame_
++            << ",\"emergency_trigger_events\":" << emergencyTriggerEvents_
++            << ",\"emergency_assignments\":" << emergencyAssignments_
++            << ",\"emergency_assignment_batches\":" << emergencyAssignmentBatches_
++            << ",\"emergency_first_assignment_frame\":" << emergencyFirstAssignmentFrame_
++            << ",\"emergency_first_assignment_size\":" << emergencyFirstAssignmentSize_
++            << ",\"emergency_max_assignment_batch\":" << emergencyMaxAssignmentBatch_
++            << ",\"emergency_peak_defenders\":" << emergencyPeakDefenders_
++            << ",\"emergency_current_defenders\":" << emergencyDefenderIds_.size()
++            << ",\"emergency_accepted_attack_orders\":" << emergencyAcceptedAttackOrders_
++            << ",\"emergency_releases\":" << emergencyReleases_
++            << ",\"emergency_first_release_frame\":" << emergencyFirstReleaseFrame_
++            << ",\"emergency_threat_clear_release_events\":" << emergencyThreatClearReleaseEvents_
++            << ",\"emergency_threat_clear_released_defenders\":" << emergencyThreatClearReleasedDefenders_
++            << ",\"emergency_first_threat_clear_release_frame\":" << emergencyFirstThreatClearReleaseFrame_
++            << ",\"emergency_army_two_release_events\":" << emergencyArmyTwoReleaseEvents_
++            << ",\"emergency_army_two_released_defenders\":" << emergencyArmyTwoReleasedDefenders_
++            << ",\"emergency_first_army_two_release_frame\":" << emergencyFirstArmyTwoReleaseFrame_
++            << ",\"emergency_defender_deaths\":" << emergencyDefenderDeaths_
++            << ",\"emergency_build_selection_exclusions\":" << emergencyBuildSelectionExclusions_
++            << ",\"emergency_economy_exclusions\":" << emergencyEconomyExclusions_
++            << ",\"emergency_post_release_gather_orders\":" << emergencyPostReleaseGatherOrders_
++            << ",\"emergency_post_release_build_orders\":" << emergencyPostReleaseBuildOrders_
++            << ",\"emergency_army_at_trigger\":" << emergencyArmyAtTrigger_
++            << ",\"emergency_local_combat_at_trigger\":" << emergencyLocalCombatAtTrigger_
++            << ",\"emergency_assigned_probe_ids\":[";
++        for (size_t index = 0; index < emergencyAssignedIds_.size(); ++index) {
++            if (index) out << ',';
++            out << emergencyAssignedIds_[index];
++        }
++        out << "],\"emergency_assignment_frames\":[";
++        for (size_t index = 0; index < emergencyAssignmentFrames_.size(); ++index) {
++            if (index) out << ',';
++            out << emergencyAssignmentFrames_[index];
++        }
++        out << "],\"emergency_assignment_sizes\":[";
++        for (size_t index = 0; index < emergencyAssignmentSizes_.size(); ++index) {
++            if (index) out << ',';
++            out << emergencyAssignmentSizes_[index];
++        }
++        out << "],\"emergency_release_frames\":[";
++        for (size_t index = 0; index < emergencyReleaseFrames_.size(); ++index) {
++            if (index) out << ',';
++            out << emergencyReleaseFrames_[index];
++        }
++        out << "],\"emergency_release_sizes\":[";
++        for (size_t index = 0; index < emergencyReleaseSizes_.size(); ++index) {
++            if (index) out << ',';
++            out << emergencyReleaseSizes_[index];
++        }
++        out << "],\"emergency_release_army_two_flags\":[";
++        for (size_t index = 0; index < emergencyReleaseArmyTwoFlags_.size(); ++index) {
++            if (index) out << ',';
++            out << emergencyReleaseArmyTwoFlags_[index];
++        }
++        out << "]}\n";
+         out.close();
+         if (out) {
+             std::remove("bwapi-data/write/diagnostic.json");
+@@ -271,6 +362,150 @@
+ 
+     bool isZergReserve(int id) const {
+         return std::find(zergReserveIds_.begin(), zergReserveIds_.end(), id) != zergReserveIds_.end();
++    }
++
++    bool isEmergencyDefender(int id) const {
++        return std::find(emergencyDefenderIds_.begin(), emergencyDefenderIds_.end(), id) != emergencyDefenderIds_.end();
++    }
++
++    bool wasEmergencyDefender(int id) const {
++        return std::find(pendingEmergencyGatherIds_.begin(), pendingEmergencyGatherIds_.end(), id) != pendingEmergencyGatherIds_.end();
++    }
++
++    void forgetPendingEmergencyGather(int id) {
++        pendingEmergencyGatherIds_.erase(
++            std::remove(pendingEmergencyGatherIds_.begin(), pendingEmergencyGatherIds_.end(), id),
++            pendingEmergencyGatherIds_.end());
++    }
++
++    bool removeEmergencyDefender(int id, bool death) {
++        const auto found = std::find(emergencyDefenderIds_.begin(), emergencyDefenderIds_.end(), id);
++        if (found == emergencyDefenderIds_.end()) return false;
++        emergencyDefenderIds_.erase(found);
++        attackRequests_.erase(id);
++        if (death) ++emergencyDefenderDeaths_;
++        return true;
++    }
++
++    BWAPI::Unit nearestEmergencyThreat(const BWAPI::Position& home) const {
++        BWAPI::Unit threat = nullptr;
++        int nearest = 12 * 32;
++        for (auto enemy : BWAPI::Broodwar->getAllUnits()) {
++            if (!enemy->exists() || !enemy->isVisible() || !enemy->isDetected() || enemy->isFlying() ||
++                enemy->getType().isWorker() || !enemy->getType().canAttack() ||
++                !BWAPI::Broodwar->self()->isEnemy(enemy->getPlayer())) continue;
++            const int distance = enemy->getDistance(home);
++            if (distance >= 12 * 32 || distance > nearest) continue;
++            if (!threat || distance < nearest || enemy->getID() < threat->getID()) {
++                nearest = distance;
++                threat = enemy;
++            }
++        }
++        return threat;
++    }
++
++    void releaseEmergencyDefenders(int frame, bool armyTwo) {
++        const int released = static_cast<int>(emergencyDefenderIds_.size());
++        emergencyReleaseFrames_.push_back(frame);
++        emergencyReleaseSizes_.push_back(released);
++        emergencyReleaseArmyTwoFlags_.push_back(armyTwo ? 1 : 0);
++        for (int id : emergencyDefenderIds_) {
++            if (!wasEmergencyDefender(id)) pendingEmergencyGatherIds_.push_back(id);
++            ++emergencyReleases_;
++            attackRequests_.erase(id);
++        }
++        if (!emergencyDefenderIds_.empty() && emergencyFirstReleaseFrame_ < 0)
++            emergencyFirstReleaseFrame_ = frame;
++        if (armyTwo) {
++            ++emergencyArmyTwoReleaseEvents_;
++            emergencyArmyTwoReleasedDefenders_ += released;
++            if (emergencyFirstArmyTwoReleaseFrame_ < 0) emergencyFirstArmyTwoReleaseFrame_ = frame;
++        } else {
++            ++emergencyThreatClearReleaseEvents_;
++            emergencyThreatClearReleasedDefenders_ += released;
++            if (emergencyFirstThreatClearReleaseFrame_ < 0) emergencyFirstThreatClearReleaseFrame_ = frame;
++        }
++        emergencyDefenderIds_.clear();
++    }
++
++    void updateEmergencyDefenseAssignments(const BWAPI::Position& home, int frame) {
++        if (!knownZerg_) return;
++
++        for (auto it = emergencyDefenderIds_.begin(); it != emergencyDefenderIds_.end();) {
++            if (unitById(*it)) {
++                ++it;
++            } else {
++                const int deadId = *it;
++                it = emergencyDefenderIds_.erase(it);
++                attackRequests_.erase(deadId);
++                ++emergencyDefenderDeaths_;
++            }
++        }
++
++        const int army = count(BWAPI::UnitTypes::Protoss_Zealot, true) +
++                         count(BWAPI::UnitTypes::Protoss_Dragoon, true);
++        BWAPI::Unit threat = nearestEmergencyThreat(home);
++        if (!threat || army >= 2) {
++            if (!emergencyDefenderIds_.empty()) releaseEmergencyDefenders(frame, army >= 2);
++            emergencyThreatQualifiedLastPass_ = false;
++            return;
++        }
++
++        if (emergencyTriggerFrame_ < 0) {
++            emergencyTriggerFrame_ = frame;
++            emergencyArmyAtTrigger_ = army;
++            emergencyLocalCombatAtTrigger_ = 0;
++            for (auto unit : BWAPI::Broodwar->self()->getUnits()) {
++                if (unit->exists() && unit->isCompleted() &&
++                    (unit->getType() == BWAPI::UnitTypes::Protoss_Zealot ||
++                     unit->getType() == BWAPI::UnitTypes::Protoss_Dragoon) &&
++                    unit->getDistance(home) < 12 * 32) {
++                    ++emergencyLocalCombatAtTrigger_;
++                }
++            }
++        }
++        if (!emergencyThreatQualifiedLastPass_) ++emergencyTriggerEvents_;
++        emergencyThreatQualifiedLastPass_ = true;
++
++        const int completedProbes = count(BWAPI::UnitTypes::Protoss_Probe, true);
++        const int availableSlots = std::min(2 - static_cast<int>(emergencyDefenderIds_.size()),
++                                            completedProbes - 4 - static_cast<int>(emergencyDefenderIds_.size()));
++        if (availableSlots <= 0) {
++            emergencyPeakDefenders_ = std::max(emergencyPeakDefenders_, static_cast<int>(emergencyDefenderIds_.size()));
++            return;
++        }
++
++        std::vector<BWAPI::Unit> probes;
++        for (auto probe : BWAPI::Broodwar->self()->getUnits()) {
++            if (!probe->exists() || !probe->isCompleted() || probe->getType() != BWAPI::UnitTypes::Protoss_Probe ||
++                isEmergencyDefender(probe->getID()) || probe->getID() == builderId_ || probe->getID() == scoutId_ ||
++                probe->isGatheringGas() || probe->isConstructing() || !probe->canAttack(threat)) continue;
++            probes.push_back(probe);
++        }
++        std::sort(probes.begin(), probes.end(), [threat](BWAPI::Unit a, BWAPI::Unit b) {
++            const int aDistance = a->getDistance(threat);
++            const int bDistance = b->getDistance(threat);
++            if (aDistance != bDistance) return aDistance < bDistance;
++            return a->getID() < b->getID();
++        });
++        const int assignments = std::min(availableSlots, static_cast<int>(probes.size()));
++        if (assignments > 0) {
++            ++emergencyAssignmentBatches_;
++            emergencyAssignmentFrames_.push_back(frame);
++            emergencyAssignmentSizes_.push_back(assignments);
++            emergencyMaxAssignmentBatch_ = std::max(emergencyMaxAssignmentBatch_, assignments);
++            if (emergencyFirstAssignmentFrame_ < 0) {
++                emergencyFirstAssignmentFrame_ = frame;
++                emergencyFirstAssignmentSize_ = assignments;
++            }
++        }
++        for (int index = 0; index < assignments; ++index) {
++            const int id = probes[static_cast<size_t>(index)]->getID();
++            emergencyDefenderIds_.push_back(id);
++            emergencyAssignedIds_.push_back(id);
++            ++emergencyAssignments_;
++        }
++        emergencyPeakDefenders_ = std::max(emergencyPeakDefenders_, static_cast<int>(emergencyDefenderIds_.size()));
+     }
+ 
+     bool removeZergReserve(int id) {
+@@ -369,6 +604,10 @@
+         for (auto unit : sorted(BWAPI::Broodwar->self()->getUnits())) {
+             if (!unit->exists() || !unit->isCompleted() || unit->getType() != BWAPI::UnitTypes::Protoss_Probe) continue;
+             if (!allowScout && unit->getID() == scoutId_) continue;
++            if (isEmergencyDefender(unit->getID())) {
++                ++emergencyBuildSelectionExclusions_;
++                continue;
++            }
+             if (unit->isGatheringGas()) {
+                 recordGasWorkerGuard(unit, "available_probe");
+                 continue;
+@@ -423,6 +662,10 @@
+         builderId_ = worker->getID();
+         const bool accepted = issue(worker->build(type, tile), BuildCommand);
+         if (accepted) {
++            if (wasEmergencyDefender(worker->getID())) {
++                ++emergencyPostReleaseBuildOrders_;
++                forgetPendingEmergencyGather(worker->getID());
++            }
+             lastAcceptedBuildFrame_ = frame;
+             if (firstZealotTrainFrame_ >= 0) ++acceptedStructuresAfterFirstZealot_;
+             if (type == BWAPI::UnitTypes::Protoss_Pylon && firstPylonAcceptedFrame_ < 0) firstPylonAcceptedFrame_ = frame;
+@@ -460,6 +703,10 @@
+         builderId_ = worker->getID();
+         const bool accepted = issue(worker->build(BWAPI::UnitTypes::Protoss_Assimilator, best->getTilePosition()), BuildCommand);
+         if (accepted) {
++            if (wasEmergencyDefender(worker->getID())) {
++                ++emergencyPostReleaseBuildOrders_;
++                forgetPendingEmergencyGather(worker->getID());
++            }
+             lastAcceptedBuildFrame_ = frame;
+             if (firstZealotTrainFrame_ >= 0) ++acceptedStructuresAfterFirstZealot_;
+             pendingBuildType_ = BWAPI::UnitTypes::Protoss_Assimilator;
+@@ -555,7 +802,12 @@
+         }
+         for (auto worker : sorted(self->getUnits())) {
+             if (!worker->exists() || !worker->isCompleted() || worker->getType() != BWAPI::UnitTypes::Protoss_Probe) continue;
+-            if (worker->getID() == scoutId_ || worker->getID() == builderId_ || worker->isConstructing() || worker->isGatheringMinerals() || worker->isGatheringGas()) continue;
++            if (worker->getID() == scoutId_ || worker->getID() == builderId_ ||
++                worker->isConstructing() || worker->isGatheringMinerals() || worker->isGatheringGas()) continue;
++            if (isEmergencyDefender(worker->getID())) {
++                ++emergencyEconomyExclusions_;
++                continue;
++            }
+             BWAPI::Unit target = nullptr;
+             int best = std::numeric_limits<int>::max();
+             const bool wantGas = count(BWAPI::UnitTypes::Protoss_Assimilator, true) > 0 && self->gas() < 250 && gasWorkers < 3;
+@@ -566,7 +818,13 @@
+                 const int distance = worker->getDistance(resource);
+                 if (distance < best) { best = distance; target = resource; }
+             }
+-            if (target && issue(worker->gather(target), GatherCommand) && wantGas) ++gasWorkers;
++            if (target && issue(worker->gather(target), GatherCommand)) {
++                if (wasEmergencyDefender(worker->getID())) {
++                    ++emergencyPostReleaseGatherOrders_;
++                    forgetPendingEmergencyGather(worker->getID());
++                }
++                if (wantGas) ++gasWorkers;
++            }
+         }
+     }
+ 
+@@ -636,7 +894,7 @@
+         if (scoutId_ < 0 && count(BWAPI::UnitTypes::Protoss_Probe) >= 9) {
+             for (auto probe : sorted(BWAPI::Broodwar->self()->getUnits())) {
+                 if (probe->exists() && probe->isCompleted() && probe->getType() == BWAPI::UnitTypes::Protoss_Probe &&
+-                    probe->getID() != builderId_ && !probe->isConstructing()) {
++                    probe->getID() != builderId_ && !isEmergencyDefender(probe->getID()) && !probe->isConstructing()) {
+                     scoutId_ = probe->getID();
+                     break;
+                 }
+@@ -646,8 +904,9 @@
+             if (!unit->exists() || !unit->isCompleted()) continue;
+             const bool combat = unit->getType() == BWAPI::UnitTypes::Protoss_Zealot || unit->getType() == BWAPI::UnitTypes::Protoss_Dragoon;
+             const bool scout = unit->getID() == scoutId_;
+-            if (!combat && !scout) continue;
+-            BWAPI::Unit enemy = visibleEnemyTarget(unit);
++            const bool defender = isEmergencyDefender(unit->getID());
++            if (!combat && !scout && !defender) continue;
++            BWAPI::Unit enemy = defender ? nearestEmergencyThreat(home) : visibleEnemyTarget(unit);
+             const bool zergReserve = knownZerg_ && combat && isZergReserve(unit->getID());
+             if (zergReserve) {
+                 const bool localThreat = enemy && enemy->getDistance(home) < homeRadius;
+@@ -675,6 +934,20 @@
+                 unit->getType() == BWAPI::UnitTypes::Protoss_Zealot && localCompletedZealots < 2) {
+                 if (unit->getDistance(home) > 4 * 32 && !unit->isMoving()) issue(unit->move(home), AttackCommand);
+                 attackRequests_.erase(unit->getID());
++                continue;
++            }
++            if (defender) {
++                if (!enemy) {
++                    attackRequests_.erase(unit->getID());
++                    continue;
++                }
++                const auto previous = attackRequests_.find(unit->getID());
++                const bool targetChanged = previous == attackRequests_.end() || previous->second.targetId != enemy->getID();
++                if (targetChanged || frame - previous->second.frame >= 96) {
++                    const bool accepted = issue(unit->attack(enemy), AttackCommand);
++                    attackRequests_[unit->getID()] = {enemy->getID(), frame};
++                    if (accepted) ++emergencyAcceptedAttackOrders_;
++                }
+                 continue;
+             }
+             if (unit->isAttacking() && unit->getOrderTarget()) continue;
+@@ -785,6 +1058,7 @@
+         }
+         const int cadence = std::max(6, game.getLatencyFrames());
+         if (frame % cadence != 0) return;
++        updateEmergencyDefenseAssignments(home, frame);
+         assignEconomy();
+         trainUnits();
+         constructOpening();
+@@ -812,6 +1086,9 @@
+ 
+     void onUnitDestroy(BWAPI::Unit unit) override {
+         if (!unit || !BWAPI::Broodwar->self() || unit->getPlayer() != BWAPI::Broodwar->self()) return;
++        if (removeEmergencyDefender(unit->getID(), true)) {
++            forgetPendingEmergencyGather(unit->getID());
++        }
+         if (knownZerg_) removeZergReserve(unit->getID());
+         if (unit->getType() != BWAPI::UnitTypes::Protoss_Zealot || firstHomeThreatFrame_ < 0 ||
+             firstHomeZealotLossFrame_ >= 0) return;
