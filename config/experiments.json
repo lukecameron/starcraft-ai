@@ -1780,6 +1780,44 @@
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
       },
       "matched_parent_experiment": "kestrel-hillclimb-v21"
+    },
+    {
+      "id": "kestrel-hillclimb-v23",
+      "title": "Kestrel v43 second-Zealot reserve diagnostic",
+      "date": "2026-09-21",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "A known-Zerg 100-mineral Probe reserve from second-Gateway current until the second accepted Zealot train prevents post-Gateway Probe spending and yields two local defenders on both failed P2 ZZZK lanes without treatment leakage or retained-policy regression.",
+      "notes": "All five fixed rows completed with ten independently verified replay copies. V43 advanced the second Zealot replay command by 138, 90, 180, and 12 frames across the four Zerg lanes; Benzene improved to two defenders and a win, while both primary P2 lanes still had one defender at pressure. Same-frame reserve/Probe events also failed the registered inclusive trace gate.",
+      "conclusion": "Rejected because both primary two-defender gates and the inclusive protected-interval trace gate failed. The reserve improved Benzene but could not complete the second defender before primary pressure. V43 does not advance and no v23 game enters Elo.",
+      "evidence_run_ids": [
+        "20260920T215006-dc13ce0caf72",
+        "20260920T215006-a8d0da4f9a13",
+        "20260920T215006-4c23fcecced6",
+        "20260920T215006-38cb5aa358d2",
+        "20260920T215006-fe12f40698f9"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v23",
+      "candidate_binary_sha256": "234dcc4b0dc57ce386c19d19f249546c62986b1806396fb3d2fcb615b5f62287",
+      "candidate_source_sha256": "1d0783bac7b559bae28616a7d19d00dd77d70c94c43c3091a69171cf09a636cf",
+      "candidate_source_combo_sha256": "6259f12081942c6368bd9bfa33a800bd0c5e966a8c9d6922227234502ff90daa",
+      "candidate_patch_sha256": "40f36042d9f1390274b8f04afff45b59d8011f9e1f60f9e7e405c833232242ce",
+      "candidate_build_sidecar_sha256": "20d440c5d4845bf81fc5fe04c96a0231df76e79036b82b8f380a3cf794d1f503",
+      "plan_sha256": "95249c1b444ca20ef50f56063cd3fc51f943779732472df542c5c5b2be54ef91",
+      "registered_schedule_sha256": "cb81a0916a19fc0aa383ea1c2da460e8ff040d176afc54247c095bfd60a46784",
+      "schedule_sha256": "bec5be688a47d893d05d51c009820af33c143081b373303c33d10396bffe874c",
+      "ledger_sha256": "faa831af17a52f4180b62f0af00e84da9e1f812b1b99e3056f00a0aca5524cc5",
+      "scorecard_sha256": "26c2a209333564a66e237295398648dd9b4299feccc843ed2ef935e970321dfc",
+      "integrity_audit_sha256": "7d448d26715bb27204e77f592179a1144ffb4bbe25918e8edc6a0c9110cd67d1",
+      "result_sha256": "bcb3727c62d153670ae18a4eadf5c7859d755c6218a428703852f81ca2f17bc3",
+      "result_path": "docs/evaluations/kestrel-hillclimb-v23/RESULT.md",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "author": "Luke Cameron",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      },
+      "matched_parent_experiment": "kestrel-hillclimb-v22"
     }
   ]
 }
