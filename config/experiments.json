@@ -933,6 +933,20 @@
         "20260920T080605-421e6f8cfebe",
         "20260920T080618-93e99ecac705"
       ]
+    },
+    {
+      "id": "mcrave-visibility-grid-v1",
+      "title": "Check cached map bounds for McRave visibility updates",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "INCONCLUSIVE",
+      "hypothesis": "Restricting visibility iteration to the loaded map rectangle will reduce McRave CPU per frame without changing visibility results.",
+      "notes": "Phase 1 passed with 2,314,338,304 gameplay comparisons, zero mismatches and all eight boundary sentinels. The diagnostic-free candidate compiled natively and against 114 official BWAPI headers. Phase 2 stopped on its first attempt because the local socket was unavailable before game start; no retry or replacement was made.",
+      "conclusion": "Inconclusive: the correctness shadow passed, but the registered performance cohort had no valid game. The candidate was not advanced or adopted, and the prior direct-bounds rejection remains unchanged.",
+      "evidence_run_ids": [
+        "20260920T081003-a879044ab3cc",
+        "20260920T081512-101a3a250076"
+      ]
     }
   ]
 }

@@ -1,0 +1,202 @@
+{
+  "allowed_kill_events": [
+    {
+      "action_id": 87,
+      "source": "controller_not_occupied_after_action"
+    },
+    {
+      "action_id": -1,
+      "source": "transport_callback"
+    }
+  ],
+  "attempts": [
+    {
+      "arm": "control",
+      "attempt": 1,
+      "candidate": {
+        "name": "McRave-control",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "race": "Zerg",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "candidate_bot_seed": 9601,
+      "candidate_player": 1,
+      "map": "sscai/(2)Benzene.scx",
+      "opponent": {
+        "name": "UAlbertaBot-Zerg",
+        "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+        "race": "Zerg",
+        "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+      },
+      "pair": 1,
+      "scenario_seed": 9601
+    },
+    {
+      "arm": "candidate",
+      "attempt": 2,
+      "candidate": {
+        "name": "McRave-visibility-candidate",
+        "path": "artifacts/builds/d01e80fe6c856af8ed0e1e7f9100983bdc25dbafe52f4fdee8bcb702d92eab9a/mcrave-visibility-grid-candidate/McRave.dylib",
+        "race": "Zerg",
+        "sha256": "d01e80fe6c856af8ed0e1e7f9100983bdc25dbafe52f4fdee8bcb702d92eab9a"
+      },
+      "candidate_bot_seed": 9601,
+      "candidate_player": 1,
+      "map": "sscai/(2)Benzene.scx",
+      "opponent": {
+        "name": "UAlbertaBot-Zerg",
+        "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+        "race": "Zerg",
+        "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+      },
+      "pair": 1,
+      "scenario_seed": 9601
+    },
+    {
+      "arm": "candidate",
+      "attempt": 3,
+      "candidate": {
+        "name": "McRave-visibility-candidate",
+        "path": "artifacts/builds/d01e80fe6c856af8ed0e1e7f9100983bdc25dbafe52f4fdee8bcb702d92eab9a/mcrave-visibility-grid-candidate/McRave.dylib",
+        "race": "Zerg",
+        "sha256": "d01e80fe6c856af8ed0e1e7f9100983bdc25dbafe52f4fdee8bcb702d92eab9a"
+      },
+      "candidate_bot_seed": 9602,
+      "candidate_player": 2,
+      "map": "sscai/(2)Destination.scx",
+      "opponent": {
+        "name": "UAlbertaBot-Zerg",
+        "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+        "race": "Zerg",
+        "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+      },
+      "pair": 2,
+      "scenario_seed": 9602
+    },
+    {
+      "arm": "control",
+      "attempt": 4,
+      "candidate": {
+        "name": "McRave-control",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "race": "Zerg",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "candidate_bot_seed": 9602,
+      "candidate_player": 2,
+      "map": "sscai/(2)Destination.scx",
+      "opponent": {
+        "name": "UAlbertaBot-Zerg",
+        "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+        "race": "Zerg",
+        "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+      },
+      "pair": 2,
+      "scenario_seed": 9602
+    },
+    {
+      "arm": "control",
+      "attempt": 5,
+      "candidate": {
+        "name": "McRave-control",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "race": "Zerg",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "candidate_bot_seed": 9603,
+      "candidate_player": 2,
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "opponent": {
+        "name": "UAlbertaBot-Zerg",
+        "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+        "race": "Zerg",
+        "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+      },
+      "pair": 3,
+      "scenario_seed": 9603
+    },
+    {
+      "arm": "candidate",
+      "attempt": 6,
+      "candidate": {
+        "name": "McRave-visibility-candidate",
+        "path": "artifacts/builds/d01e80fe6c856af8ed0e1e7f9100983bdc25dbafe52f4fdee8bcb702d92eab9a/mcrave-visibility-grid-candidate/McRave.dylib",
+        "race": "Zerg",
+        "sha256": "d01e80fe6c856af8ed0e1e7f9100983bdc25dbafe52f4fdee8bcb702d92eab9a"
+      },
+      "candidate_bot_seed": 9603,
+      "candidate_player": 2,
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "opponent": {
+        "name": "UAlbertaBot-Zerg",
+        "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+        "race": "Zerg",
+        "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+      },
+      "pair": 3,
+      "scenario_seed": 9603
+    },
+    {
+      "arm": "candidate",
+      "attempt": 7,
+      "candidate": {
+        "name": "McRave-visibility-candidate",
+        "path": "artifacts/builds/d01e80fe6c856af8ed0e1e7f9100983bdc25dbafe52f4fdee8bcb702d92eab9a/mcrave-visibility-grid-candidate/McRave.dylib",
+        "race": "Zerg",
+        "sha256": "d01e80fe6c856af8ed0e1e7f9100983bdc25dbafe52f4fdee8bcb702d92eab9a"
+      },
+      "candidate_bot_seed": 9604,
+      "candidate_player": 1,
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "opponent": {
+        "name": "UAlbertaBot-Zerg",
+        "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+        "race": "Zerg",
+        "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+      },
+      "pair": 4,
+      "scenario_seed": 9604
+    },
+    {
+      "arm": "control",
+      "attempt": 8,
+      "candidate": {
+        "name": "McRave-control",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "race": "Zerg",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "candidate_bot_seed": 9604,
+      "candidate_player": 1,
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "opponent": {
+        "name": "UAlbertaBot-Zerg",
+        "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+        "race": "Zerg",
+        "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+      },
+      "pair": 4,
+      "scenario_seed": 9604
+    }
+  ],
+  "cohort_wall_cap_seconds": 1200,
+  "eval_plan_sha256": "1e368f55a20723077b31679a0bcb81f7b19fa3233277472fec154c2c73cf9a2c",
+  "experiment_id": "mcrave-visibility-grid-v1-phase2",
+  "game_data_dir": "third_party/game-data/runtime",
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "purpose": "McRave visibility-grid bounds four-pair performance screen",
+  "required_files": [
+    {
+      "path": "docs/evaluations/mcrave-visibility-grid-v1/EVAL_PLAN.md",
+      "sha256": "1e368f55a20723077b31679a0bcb81f7b19fa3233277472fec154c2c73cf9a2c"
+    },
+    {
+      "path": "scripts/run_match.py",
+      "sha256": "d0a0eee0d932fc279b2ee53831ddf82accf7042a8b7be52e73f144deeb191cbe"
+    }
+  ],
+  "schema_version": 1,
+  "stop_after_consecutive_invalid": 1,
+  "wall_timeout_seconds": 120
+}
