@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "experiment_id": "openbw-terminal-drain-control-stardust-v1",
+  "title": "Terminal drain control: stardust",
+  "hypothesis": "Keeping terminal peers connected until explicit leave avoids reciprocal winner corruption in the four historical target scenarios.",
+  "stop_condition": "One registered control, no retry.",
+  "purpose": "Engine correctness repair validation",
+  "wall_timeout_seconds": 180,
+  "candidate": {
+    "name": "Stardust repaired fork",
+    "race": "Protoss",
+    "path": "artifacts/builds/1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa/stardust-emptytimer-repair/Stardust.dylib",
+    "sha256": "1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa"
+  },
+  "opponents": {
+    "ualberta-t": {
+      "name": "UAlbertaBot-T",
+      "race": "Terran",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+    }
+  },
+  "games": [
+    {
+      "opponent": "ualberta-t",
+      "map": "sscai/(2)Destination.scx",
+      "candidate_player": 1,
+      "scenario_seed": 5301
+    }
+  ],
+  "execution": {
+    "concurrency": 2,
+    "learning_state": "fresh isolated read/write",
+    "performance_scope": "observational engine correctness test"
+  }
+}

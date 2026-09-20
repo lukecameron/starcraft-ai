@@ -1,0 +1,42 @@
+--- a/bots/kestrel/Kestrel.cpp
++++ b/bots/kestrel/Kestrel.cpp
+@@ -6,7 +6,6 @@
+ #include <ctime>
+ #include <fstream>
+ #include <limits>
+-#include <unordered_map>
+ #include <vector>
+ 
+ #ifdef _WIN32
+@@ -35,12 +34,6 @@
+     int maxGateways_ = 0;
+     int maxZealots_ = 0;
+     int maxDragoons_ = 0;
+-    struct AttackRequest {
+-        int targetId;
+-        int frame;
+-        bool accepted;
+-    };
+-    std::unordered_map<int, AttackRequest> attackRequests_;
+     double callbackCpuSeconds_ = 0.0;
+     std::vector<double> callbackMs_;
+ 
+@@ -297,17 +290,9 @@
+             if (unit->isAttacking() && unit->getOrderTarget()) continue;
+             BWAPI::Unit enemy = visibleEnemyTarget(unit);
+             if (enemy) {
+-                const int frame = BWAPI::Broodwar->getFrameCount();
+-                const auto previous = attackRequests_.find(unit->getID());
+-                const bool targetChanged = previous == attackRequests_.end() || previous->second.targetId != enemy->getID();
+-                const int retryFrames = previous != attackRequests_.end() && previous->second.accepted ? 96 : 24;
+-                if (targetChanged || frame - previous->second.frame >= retryFrames) {
+-                    const bool accepted = issue(unit->attack(enemy));
+-                    attackRequests_[unit->getID()] = {enemy->getID(), frame, accepted};
+-                }
++                if (unit->getOrderTarget() != enemy) issue(unit->attack(enemy));
+                 continue;
+             }
+-            attackRequests_.erase(unit->getID());
+             BWAPI::Position target = BWAPI::Positions::None;
+             if (scout || army >= 4) target = unexploredStart(unit);
+             if (target.isValid() && unit->getTargetPosition() != target) issue(unit->attack(target));

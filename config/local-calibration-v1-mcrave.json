@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "launcher": "artifacts/builds/27ea649cb3def9a724df077adaae3e62f16c9de8fbfbc9850ee485af5fbd88cb/openbw-kill-path-diagnostic/BWAPILauncher",
+  "library_path": "artifacts/builds/27ea649cb3def9a724df077adaae3e62f16c9de8fbfbc9850ee485af5fbd88cb/openbw-kill-path-diagnostic",
+  "game_data_dir": "third_party/game-data/runtime",
+  "experiment_id": "local-calibration-v1-mcrave",
+  "title": "Local league calibration: McRave memo fork",
+  "hypothesis": "Five exact build/race nodes can form a connected, clean local comparison graph on two previously unused maps; uncertainty will remain explicit and no BASIL calibration or strength promotion is implied.",
+  "stop_condition": "Exactly four games, two fixed matchups with swapped protocol player slots. No retries or replacement seeds. Existing runner stops after two consecutive infrastructure failures.",
+  "purpose": "Preregistered initial local league calibration",
+  "wall_timeout_seconds": 180,
+  "candidate": {
+    "name": "McRave memo fork",
+    "race": "Zerg",
+    "path": "artifacts/builds/04521befa41bb3873783b215493abf3a071414d2a5315cdea68fc7a67f4415ec/mcrave-as-memo-candidate/McRave.dylib",
+    "sha256": "04521befa41bb3873783b215493abf3a071414d2a5315cdea68fc7a67f4415ec"
+  },
+  "opponents": {
+    "zzzk": {
+      "name": "ZZZKBot",
+      "race": "Zerg",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+    },
+    "stardust": {
+      "name": "Stardust repaired fork",
+      "race": "Protoss",
+      "path": "artifacts/builds/1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa/stardust-emptytimer-repair/Stardust.dylib",
+      "sha256": "1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa"
+    }
+  },
+  "games": [
+    {
+      "opponent": "zzzk",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 6301,
+      "candidate_player": 1,
+      "candidate_bot_seed": 6301
+    },
+    {
+      "opponent": "zzzk",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 6301,
+      "candidate_player": 2,
+      "candidate_bot_seed": 6301
+    },
+    {
+      "opponent": "stardust",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 6302,
+      "candidate_player": 1,
+      "candidate_bot_seed": 6302
+    },
+    {
+      "opponent": "stardust",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 6302,
+      "candidate_player": 2,
+      "candidate_bot_seed": 6302
+    }
+  ],
+  "execution": {
+    "concurrency": 2,
+    "learning_state": "fresh empty isolated read/write",
+    "performance_scope": "Development overlap allowed; timings observational only, no throughput adoption claim"
+  }
+}

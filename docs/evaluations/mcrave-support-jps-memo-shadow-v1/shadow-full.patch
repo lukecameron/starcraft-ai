@@ -1,0 +1,1219 @@
+diff --git a/Source/BWEB/BWEB.cpp b/Source/BWEB/BWEB.cpp
+index 1312a49..5abf347 100644
+--- a/Source/BWEB/BWEB.cpp
++++ b/Source/BWEB/BWEB.cpp
+@@ -433,4 +433,4 @@ namespace BWEB::Map
+         auto direction2 = Position(-dy2, dx2) + ((n1 + n2) / 2);
+         return make_pair(direction1, direction2);
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/Source/BWEB/Block.cpp b/Source/BWEB/Block.cpp
+index c57e97e..f9d8256 100644
+--- a/Source/BWEB/Block.cpp
++++ b/Source/BWEB/Block.cpp
+@@ -49,8 +49,11 @@ namespace BWEB::Blocks {
+         void addToBlockGrid(TilePosition start, TilePosition end, BlockType type)
+         {
+             for (int x = start.x; x < end.x; x++) {
+-                for (int y = start.y; y < end.y; y++)
++                for (int y = start.y; y < end.y; y++) {
++                    if (x < 0 || y < 0 || x >= Broodwar->mapWidth() || y >= Broodwar->mapHeight())
++                        continue;
+                     blockGrid[x][y] = type;
++                }
+             }
+         }
+ 
+@@ -609,4 +612,4 @@ namespace BWEB::Blocks {
+         }
+         return bestBlock;
+     }
+-} // namespace BWEB::Blocks
+\ No newline at end of file
++} // namespace BWEB::Blocks
+diff --git a/Source/BWEB/PathFind.cpp b/Source/BWEB/PathFind.cpp
+index dc399e4..5c5905f 100644
+--- a/Source/BWEB/PathFind.cpp
++++ b/Source/BWEB/PathFind.cpp
+@@ -31,7 +31,6 @@ namespace BWEB {
+             return (index.find(source) == index.end()) || (index.find(target) == index.end()); 
+         }
+ 
+-        int oneDim(TilePosition tile) { return (tile.y * Broodwar->mapWidth()) + tile.x; }
+         int currentId = 0;
+         TileData tileData[65536];
+     } // namespace
+@@ -78,11 +77,81 @@ namespace BWEB {
+         }
+     }
+ 
++    void Path::generateJPSMemoShadow(function<bool(const TilePosition &)> passedWalkable, long long &requests, long long &evaluations)
++    {
++        const int width = Broodwar->mapWidth();
++        const int height = Broodwar->mapHeight();
++        vector<unsigned char> ready((width + 1) * (height + 1), 0);
++        vector<unsigned char> values((width + 1) * (height + 1), 0);
++        requests = 0;
++        evaluations = 0;
++        dist = 0.0;
++        reachable = false;
++        tiles.clear();
++        if (!expectReachable(source, target))
++            return;
++
++        const auto isWalkable = [&](const int x, const int y) {
++            const TilePosition tile(x, y);
++            if (x > width || y > height || x < 0 || y < 0)
++                return false;
++            if (tile == source || tile == target)
++                return true;
++            requests++;
++            const int index = y * (width + 1) + x;
++            if (!ready[index]) {
++                values[index] = passedWalkable(tile) ? 1 : 0;
++                ready[index] = 1;
++                evaluations++;
++            }
++            return values[index] != 0;
++        };
++
++        vector<TilePosition> newJPSPath;
++        if (JPS::findPath(newJPSPath, isWalkable, source.x, source.y, target.x, target.y)) {
++            Position current = Position(source);
++            tiles.push_back(source);
++            for (auto &t : newJPSPath) {
++                dist += Position(t).getDistance(current);
++                current = Position(t);
++                tiles.push_back(t);
++            }
++            reachable = true;
++            if (reverse)
++                std::reverse(tiles.begin(), tiles.end());
++        }
++    }
++
+     void Path::generateAS(function<double(const TilePosition &)> passedHeuristic, function<bool(const TilePosition &)> isWalkable)
+     {
+         if (!source.isValid() || !target.isValid() || !expectReachable(source, target))
+             return;
+ 
++        const int width = Broodwar->mapWidth();
++        const int height = Broodwar->mapHeight();
++        const auto indexOf = [width](const TilePosition &tile) { return (tile.y * width) + tile.x; };
++        const int mapSize = width * height;
++        vector<double> heuristicValues(mapSize);
++        vector<unsigned char> heuristicReady(mapSize, 0);
++        vector<unsigned char> walkableValues(mapSize);
++        vector<unsigned char> walkableReady(mapSize, 0);
++        const auto memoHeuristic = [&](const TilePosition &tile) {
++            const int index = indexOf(tile);
++            if (!heuristicReady[index]) {
++                heuristicValues[index] = passedHeuristic(tile);
++                heuristicReady[index] = 1;
++            }
++            return heuristicValues[index];
++        };
++        const auto memoWalkable = [&](const TilePosition &tile) {
++            const int index = indexOf(tile);
++            if (!walkableReady[index]) {
++                walkableValues[index] = isWalkable(tile) ? 1 : 0;
++                walkableReady[index] = 1;
++            }
++            return walkableValues[index] != 0;
++        };
++
+         // Reset IDs
+         currentId++;
+         if (currentId == INT_MAX) {
+@@ -98,7 +167,7 @@ namespace BWEB {
+         tiles.clear();
+ 
+         // Start at the target
+-        int startIdx                     = oneDim(target);
++        int startIdx                     = indexOf(target);
+         tileData[startIdx].g             = 0;
+         tileData[startIdx].lastVisitedId = currentId;
+         tileData[startIdx].isClosed      = false;
+@@ -111,7 +180,7 @@ namespace BWEB {
+             Node current = openQueue.top();
+             openQueue.pop();
+ 
+-            int currIdx = oneDim(current.tile);
++            int currIdx = indexOf(current.tile);
+ 
+             // Check if visited already
+             if (tileData[currIdx].isClosed && tileData[currIdx].lastVisitedId == currentId)
+@@ -123,7 +192,7 @@ namespace BWEB {
+                 TilePosition step = current.tile;
+                 while (step != target) {
+                     tiles.push_back(step);
+-                    step = tileData[oneDim(step)].parent;
++                    step = tileData[indexOf(step)].parent;
+                 }
+                 tiles.push_back(target);
+                 if (reverse)
+@@ -135,19 +204,19 @@ namespace BWEB {
+ 
+             for (const auto &d : eightDir) {
+                 TilePosition next = current.tile + d;
+-                if (!next.isValid())
++                if (next.x < 0 || next.y < 0 || next.x >= width || next.y >= height)
+                     continue;
+ 
+                 // Costs calcs
+-                double moveCost = ((d.x != 0 && d.y != 0) ? 45.248 : 32.0) + passedHeuristic(next);
++                double moveCost = ((d.x != 0 && d.y != 0) ? 45.248 : 32.0) + memoHeuristic(next);
+                 double currG    = tileData[currIdx].g + moveCost;
+-                auto &nextData = tileData[oneDim(next)];
++                auto &nextData = tileData[indexOf(next)];
+ 
+                 // Walkability checks
+-                if (!isWalkable(next))
++                if (!memoWalkable(next))
+                     continue;
+                 if (d.x != 0 && d.y != 0) {
+-                    if (!isWalkable({current.tile.x + d.x, current.tile.y}) || !isWalkable({current.tile.x, current.tile.y + d.y}))
++                    if (!memoWalkable({current.tile.x + d.x, current.tile.y}) || !memoWalkable({current.tile.x, current.tile.y + d.y}))
+                         continue;
+                 }
+ 
+@@ -178,4 +247,4 @@ namespace BWEB {
+             return true;
+         return false;
+     }
+-} // namespace BWEB
+\ No newline at end of file
++} // namespace BWEB
+diff --git a/Source/BWEB/PathFind.h b/Source/BWEB/PathFind.h
+index 3515c93..57293ba 100644
+--- a/Source/BWEB/PathFind.h
++++ b/Source/BWEB/PathFind.h
+@@ -53,6 +53,7 @@ namespace BWEB {
+ 
+         /// <summary> Creates a path from the source to the target using JPS with your provided walkable function. </summary>
+         void generateJPS(std::function<bool(const BWAPI::TilePosition &)>);
++        void generateJPSMemoShadow(std::function<bool(const BWAPI::TilePosition &)>, long long &, long long &);
+ 
+         /// <summary> Creates a path from the source to the target using A* with your provided heuristic and walkable functions. </summary>
+         void generateAS(std::function<double(const BWAPI::TilePosition &)> h, std::function<bool(const BWAPI::TilePosition &)> w);
+diff --git a/Source/BWEB/Station.cpp b/Source/BWEB/Station.cpp
+index 7ce4e74..2969a1f 100644
+--- a/Source/BWEB/Station.cpp
++++ b/Source/BWEB/Station.cpp
+@@ -471,7 +471,7 @@ namespace BWEB {
+                         Map::isPlaceable(Zerg_Sunken_Colony, base->Location() + defense)) {
+                         mediumTiles.insert(base->Location() + medium);
+                         smallTiles.insert(base->Location() + small);
+-                        defenses.insert(defense);
++                        defenses.insert(base->Location() + defense);
+                         break;
+                     }
+                 }
+@@ -728,4 +728,4 @@ namespace BWEB::Stations {
+     const Station *getStartingNatural() { return startNatStation; }
+ 
+     const vector<Station> &getStations() { return stations; }
+-} // namespace BWEB::Stations
+\ No newline at end of file
++} // namespace BWEB::Stations
+diff --git a/Source/BWEB/Wall.h b/Source/BWEB/Wall.h
+index d2e1ace..9dd3e4c 100644
+--- a/Source/BWEB/Wall.h
++++ b/Source/BWEB/Wall.h
+@@ -88,7 +88,8 @@ namespace BWEB {
+             auto ptr = defenses.find(row);
+             if (ptr != defenses.end())
+                 return (ptr->second);
+-            return {};
++            static const set<TilePosition> empty;
++            return empty;
+         }
+ 
+         /// <summary> Returns the TilePosition belonging to the opening of the wall. </summary>
+diff --git a/Source/BWEM/area.cpp b/Source/BWEM/area.cpp
+index 171491a..877107b 100644
+--- a/Source/BWEM/area.cpp
++++ b/Source/BWEM/area.cpp
+@@ -18,7 +18,7 @@
+ #include "winutils.h"
+ #include "bwapiExt.h"
+ 
+-#include "BaseFinder\BaseFinder.h"
++#include "BaseFinder/BaseFinder.h"
+ 
+ using namespace BWAPI;
+ using namespace BWAPI::UnitTypes::Enum;
+@@ -352,4 +352,3 @@ namespace BWEM {
+ } // namespace BWEM
+ 
+ 
+-
+diff --git a/Source/BWEM/defs.h b/Source/BWEM/defs.h
+index a83079b..b96eb35 100644
+--- a/Source/BWEM/defs.h
++++ b/Source/BWEM/defs.h
+@@ -31,7 +31,9 @@ namespace detail
+ #define bwem_assert_throw(expr)                    ;//bwem_assert_throw_plus(expr, "")
+ 
+ 
++#ifndef BWEM_USE_WINUTILS
+ #define BWEM_USE_WINUTILS 1        // enable(1) or disable(0) the compilation of winutils.cpp
++#endif
+                                 // winutils.h provides optional utils that require the windows headers.
+ 
+ #define BWEM_USE_MAP_PRINTER 1    // enable(1) or disable(0) the compilation of mapPrinter.cpp
+@@ -86,4 +88,3 @@ const int max_tiles_between_StartingLocation_and_its_AssignedBase = 3;
+ 
+ 
+ #endif
+-
+diff --git a/Source/BWEM/mapImpl.cpp b/Source/BWEM/mapImpl.cpp
+index ead7edf..de3e5df 100644
+--- a/Source/BWEM/mapImpl.cpp
++++ b/Source/BWEM/mapImpl.cpp
+@@ -13,7 +13,7 @@
+ #include "bwapiExt.h"
+ #include "winutils.h"
+ 
+-#include "BaseFinder\BaseFinder.h"
++#include "BaseFinder/BaseFinder.h"
+ 
+ 
+ using namespace BWAPI;
+@@ -790,4 +790,3 @@ namespace BWEM {
+ } // namespace BWEM::detail
+ 
+ 
+-
+diff --git a/Source/Horizon/Horizon.cpp b/Source/Horizon/Horizon.cpp
+index ad60eaa..ebc6392 100644
+--- a/Source/Horizon/Horizon.cpp
++++ b/Source/Horizon/Horizon.cpp
+@@ -72,7 +72,7 @@ namespace McRave::Horizon {
+ 
+     void simulate(UnitInfo &unit)
+     {
+-        auto &unitTarget = unit.getTarget();
++        auto unitTarget = unit.getTarget();
+         if (!unitTarget)
+             return;
+ 
+@@ -251,4 +251,4 @@ namespace McRave::Horizon {
+                 unit.setSimValue(solo);
+         }
+     }
+-} // namespace McRave::Horizon
+\ No newline at end of file
++} // namespace McRave::Horizon
+diff --git a/Source/McRave/Builds/All/BuildOrder.cpp b/Source/McRave/Builds/All/BuildOrder.cpp
+index dee4ec8..5a52e5a 100644
+--- a/Source/McRave/Builds/All/BuildOrder.cpp
++++ b/Source/McRave/Builds/All/BuildOrder.cpp
+@@ -280,7 +280,7 @@ namespace McRave::BuildOrder {
+         vector<UnitType> checkedAlready;
+ 
+         // Add any buildable requisite buildings to make this unit
+-        std::function<void(UnitType)> addBuildableRequisites = [&](auto &t) {
++        std::function<void(UnitType)> addBuildableRequisites = [&](UnitType t) {
+             for (auto &[parent, _] : t.requiredUnits()) {
+                 if (parent == Zerg_Larva || parent.isWorker())
+                     continue;
+@@ -382,4 +382,4 @@ namespace McRave::BuildOrder {
+     string getCurrentBuild() { return currentBuild; }
+     string getCurrentOpener() { return currentOpener; }
+     string getCurrentTransition() { return currentTransition; }
+-} // namespace McRave::BuildOrder
+\ No newline at end of file
++} // namespace McRave::BuildOrder
+diff --git a/Source/McRave/Info/Building/Buildings.cpp b/Source/McRave/Info/Building/Buildings.cpp
+index 877eea3..db8b88c 100644
+--- a/Source/McRave/Info/Building/Buildings.cpp
++++ b/Source/McRave/Info/Building/Buildings.cpp
+@@ -31,7 +31,7 @@ namespace McRave::Buildings {
+                 if (Util::contains(wall.getDefenses(), building.getTilePosition()))
+                     return &wall;
+             }
+-            return false;
++            return nullptr;
+         }
+ 
+         const BWEB::Station* isStationDefense(UnitInfo &building)
+@@ -40,7 +40,7 @@ namespace McRave::Buildings {
+                 if (Util::contains(station.getDefenses(), building.getTilePosition()) || building.getTilePosition() == station.getPocketDefense())
+                     return &station;
+             }
+-            return false;
++            return nullptr;
+         }
+ 
+         bool willDieToAttacks(UnitInfo &building)
+@@ -245,4 +245,4 @@ namespace McRave::Buildings {
+     set<TilePosition> &getUnpoweredPositions() { return unpoweredPositions; }
+     set<Position> &getLarvaPositions() { return larvaPositions; }
+     set<Position> &getEggPositions() { return eggPositions; }
+-} // namespace McRave::Buildings
+\ No newline at end of file
++} // namespace McRave::Buildings
+diff --git a/Source/McRave/Info/Resource/Resources.cpp b/Source/McRave/Info/Resource/Resources.cpp
+index caf2e76..e1e12b7 100644
+--- a/Source/McRave/Info/Resource/Resources.cpp
++++ b/Source/McRave/Info/Resource/Resources.cpp
+@@ -335,7 +335,7 @@ namespace McRave::Resources {
+ 
+     void removeResource(Unit unit)
+     {
+-        auto &resource = getResourceInfo(unit);
++        auto resource = getResourceInfo(unit);
+ 
+         if (resource) {
+ 
+@@ -383,4 +383,4 @@ namespace McRave::Resources {
+     set<shared_ptr<ResourceInfo>> &getMyMinerals() { return myMinerals; }
+     set<shared_ptr<ResourceInfo>> &getMyGas() { return myGas; }
+     set<shared_ptr<ResourceInfo>> &getMyBoulders() { return myBoulders; }
+-} // namespace McRave::Resources
+\ No newline at end of file
++} // namespace McRave::Resources
+diff --git a/Source/McRave/Info/Unit/Pathing.cpp b/Source/McRave/Info/Unit/Pathing.cpp
+index 78955b1..2183d7b 100644
+--- a/Source/McRave/Info/Unit/Pathing.cpp
++++ b/Source/McRave/Info/Unit/Pathing.cpp
+@@ -94,7 +94,7 @@ namespace McRave::Pathing {
+             return positions;
+         }
+ 
+-        auto lineGenerator = [&](UnitInfo &enemy, Position biasTowards) {
++        auto lineGenerator = [](UnitInfo &enemy, Position biasTowards) {
+             vector<Position> result;
+             Position dir = biasTowards - enemy.getPosition();
+ 
+@@ -114,7 +114,7 @@ namespace McRave::Pathing {
+             return result;
+         };
+ 
+-        auto circleGenerator = [&](UnitInfo &enemy, Position biasTowards) {
++        auto circleGenerator = [](UnitInfo &enemy, Position biasTowards) {
+             std::vector<Position> result;
+ 
+             double radius = std::max(enemy.getType().width(), enemy.getType().height()) * 0.8;
+@@ -127,7 +127,7 @@ namespace McRave::Pathing {
+             return result;
+         };
+ 
+-        auto squareGenerator = [&](UnitInfo &enemy, Position biasTowards) {
++        auto squareGenerator = [](UnitInfo &enemy, Position biasTowards) {
+             std::vector<Position> result;
+             int offset = std::max(enemy.getType().width(), enemy.getType().height()) - 4;
+             for (int dx = -1; dx <= 1; ++dx) {
+@@ -302,7 +302,7 @@ namespace McRave::Pathing {
+     {
+         auto occludedCount = 0;
+ 
+-        const auto validPathPoint = [&](auto &p) {
++        const auto validPathPoint = [&](const auto &p) {
+             if (unit.isFlying())
+                 return p.getDistance(unit.getPosition()) >= 96.0;
+ 
+@@ -329,4 +329,4 @@ namespace McRave::Pathing {
+         updatePositions();
+         Visuals::endPerfTest("Pathing");
+     }
+-} // namespace McRave::Pathing
+\ No newline at end of file
++} // namespace McRave::Pathing
+diff --git a/Source/McRave/Info/Unit/Targeting.cpp b/Source/McRave/Info/Unit/Targeting.cpp
+index dfc2337..5f4d702 100644
+--- a/Source/McRave/Info/Unit/Targeting.cpp
++++ b/Source/McRave/Info/Unit/Targeting.cpp
+@@ -315,7 +315,7 @@ namespace McRave::Targets {
+     Priority queenPriority(UnitInfo &unit, UnitInfo &target)
+     {
+         for (auto &t : target.getUnitsTargetingThis()) {
+-            if (auto &targeter = t.lock()) {
++            if (auto targeter = t.lock()) {
+                 if (targeter->getType() == Zerg_Queen)
+                     return Priority::Ignore;
+             }
+@@ -449,7 +449,7 @@ namespace McRave::Targets {
+     {
+         combatTargeters = 0;
+         for (auto &t : target.getUnitsTargetingThis()) {
+-            if (auto &targeter = t.lock()) {
++            if (auto targeter = t.lock()) {
+                 if (targeter->getRole() == Role::Combat)
+                     combatTargeters++;
+             }
+@@ -820,7 +820,7 @@ namespace McRave::Targets {
+ 
+             // Enemy units are assumed targets or order targets
+             if (unit.unit()->exists() && unit.unit()->getOrderTarget()) {
+-                auto &targetInfo = Units::getUnitInfo(unit.unit()->getOrderTarget());
++                auto targetInfo = Units::getUnitInfo(unit.unit()->getOrderTarget());
+                 if (targetInfo) {
+                     unit.setTarget(&*targetInfo);
+                     targetInfo->addTargeter(unit);
+@@ -836,8 +836,8 @@ namespace McRave::Targets {
+ 
+     void updateStatistics()
+     {
+-        auto &enemyStrength = Players::getStrength(PlayerState::Enemy);
+-        auto &myStrength    = Players::getStrength(PlayerState::Self);
++        auto enemyStrength = Players::getStrength(PlayerState::Enemy);
++        auto myStrength    = Players::getStrength(PlayerState::Self);
+ 
+         maxPriority = 1.0;
+         earliest    = 999999;
+@@ -893,4 +893,4 @@ namespace McRave::Targets {
+         drawTargeting();
+         Visuals::endPerfTest("Targeting");
+     }
+-} // namespace McRave::Targets
+\ No newline at end of file
++} // namespace McRave::Targets
+diff --git a/Source/McRave/Info/Unit/UnitInfo.cpp b/Source/McRave/Info/Unit/UnitInfo.cpp
+index 62e6eb1..631e824 100644
+--- a/Source/McRave/Info/Unit/UnitInfo.cpp
++++ b/Source/McRave/Info/Unit/UnitInfo.cpp
+@@ -1157,5 +1157,5 @@ namespace McRave {
+                (type == UnitTypes::Zerg_Defiler && getEnergy() < 150 && com(UnitTypes::Zerg_Zergling) > 0);
+     }
+ 
+-    void UnitInfo::setResource(ResourceInfo *unit) { unit ? resource = unit->weak_from_this() : resource.reset(); }
+-} // namespace McRave
+\ No newline at end of file
++    void UnitInfo::setResource(ResourceInfo *unit) { if (unit) resource = unit->weak_from_this(); else resource.reset(); }
++} // namespace McRave
+diff --git a/Source/McRave/Info/Unit/UnitInfo.h b/Source/McRave/Info/Unit/UnitInfo.h
+index d65f176..af011fa 100644
+--- a/Source/McRave/Info/Unit/UnitInfo.h
++++ b/Source/McRave/Info/Unit/UnitInfo.h
+@@ -206,7 +206,7 @@ namespace McRave {
+ 
+         // Commander
+         std::weak_ptr<UnitInfo> getCommander() { return commander; }
+-        void setCommander(UnitInfo *unit) { unit ? commander = unit->weak_from_this() : commander.reset(); }
++        void setCommander(UnitInfo *unit) { if (unit) commander = unit->weak_from_this(); else commander.reset(); }
+         bool hasCommander() { return !commander.expired(); }
+ 
+         bool canMirrorCommander(UnitInfo &otherUnit)
+@@ -234,8 +234,8 @@ namespace McRave {
+         void setGoalType(GoalType newGoalType) { gType = newGoalType; }
+ 
+         // Paths
+-        void setMarchPath(BWEB::Path &newPath) { marchPath = newPath; }
+-        void setRetreatPath(BWEB::Path &newPath) { retreatPath = newPath; }
++        void setMarchPath(BWEB::Path newPath) { marchPath = std::move(newPath); }
++        void setRetreatPath(BWEB::Path newPath) { retreatPath = std::move(newPath); }
+         BWEB::Path &getMarchPath() { return marchPath; }
+         BWEB::Path &getRetreatPath() { return retreatPath; }
+         bool hasSameMarchPath(Position source, Position target) { return marchPath.getSource() == TilePosition(source) && marchPath.getTarget() == TilePosition(target); }
+@@ -296,7 +296,7 @@ namespace McRave {
+ 
+         // Simulation
+         std::weak_ptr<UnitInfo> getSimTarget() { return simTarget; }
+-        void setSimTarget(UnitInfo *unit) { unit ? simTarget = unit->weak_from_this() : simTarget.reset(); }
++        void setSimTarget(UnitInfo *unit) { if (unit) simTarget = unit->weak_from_this(); else simTarget.reset(); }
+         bool hasSimTarget() { return !simTarget.expired(); }
+         double getSimValue() { return simValue; }
+         SimState getSimState() { return sState; }
+@@ -320,7 +320,7 @@ namespace McRave {
+ 
+         // Targets
+         std::shared_ptr<UnitInfo> getTarget() { return target_.lock(); }
+-        void setTarget(UnitInfo *unit) { unit ? target_ = unit->weak_from_this() : target_.reset(); }
++        void setTarget(UnitInfo *unit) { if (unit) target_ = unit->weak_from_this(); else target_.reset(); }
+         std::vector<std::weak_ptr<UnitInfo>> &getUnitsTargetingThis() { return unitsTargetingThis; }
+         std::vector<std::weak_ptr<UnitInfo>> &getUnitsInEngageOfThis() { return unitsInEngageOfThis; }
+         bool isTargetedBySplash() { return targetedBySplash; }
+@@ -337,7 +337,7 @@ namespace McRave {
+ 
+         // Transport
+         std::weak_ptr<UnitInfo> getTransport() { return transport; }
+-        void setTransport(UnitInfo *unit) { unit ? transport = unit->weak_from_this() : transport.reset(); }
++        void setTransport(UnitInfo *unit) { if (unit) transport = unit->weak_from_this(); else transport.reset(); }
+         bool hasTransport() { return !transport.expired(); }
+         TransportState getTransportState() { return tState; }
+         void setTransportState(TransportState newState) { tState = newState; }
+diff --git a/Source/McRave/Info/Unit/UnitMath.cpp b/Source/McRave/Info/Unit/UnitMath.cpp
+index 9c1cdac..2c13752 100644
+--- a/Source/McRave/Info/Unit/UnitMath.cpp
++++ b/Source/McRave/Info/Unit/UnitMath.cpp
+@@ -32,7 +32,7 @@ namespace McRave::Math {
+             double cnt = 0.0;
+             for (auto &i : unit.unit()->getInterceptors()) {
+                 if (i && !i->exists()) {
+-                    auto &interceptor = Units::getUnitInfo(i);
++                    auto interceptor = Units::getUnitInfo(i);
+                     if (interceptor)
+                         cnt += interceptor->getMaxGroundStrength();
+                 }
+@@ -63,7 +63,7 @@ namespace McRave::Math {
+             double cnt = 0.0;
+             for (auto &i : unit.unit()->getInterceptors()) {
+                 if (i && !i->exists()) {
+-                    auto &interceptor = Units::getUnitInfo(i);
++                    auto interceptor = Units::getUnitInfo(i);
+                     if (interceptor)
+                         cnt += interceptor->getMaxAirStrength();
+                 }
+@@ -487,4 +487,4 @@ namespace McRave {
+ 
+         Broodwar->drawTextMap(unit.getPosition(), "%.4f", priority);
+     }
+-} // namespace McRave
+\ No newline at end of file
++} // namespace McRave
+diff --git a/Source/McRave/Macro/Expanding/Expanding.cpp b/Source/McRave/Macro/Expanding/Expanding.cpp
+index 96946bc..13155be 100644
+--- a/Source/McRave/Macro/Expanding/Expanding.cpp
++++ b/Source/McRave/Macro/Expanding/Expanding.cpp
+@@ -23,9 +23,9 @@ namespace McRave::Expansion {
+             // Check if any base goes through enemy territory currently
+             dangerousStations.clear();
+             for (auto &station : BWEB::Stations::getStations()) {
+-                auto &path = Stations::getPathBetween(Terrain::getMyMain(), &station);
++                auto path = Stations::getPathBetween(Terrain::getMyMain(), &station);
+                 if (!path.getTiles().empty()) {
+-                    auto danger = Util::findPointOnPath(path, [&](auto &p) { return Terrain::inTerritory(PlayerState::Enemy, p); });
++                    auto danger = Util::findPointOnPath(path, [&](const auto &p) { return Terrain::inTerritory(PlayerState::Enemy, p); });
+ 
+                     if (danger.isValid())
+                         dangerousStations.push_back(&station);
+@@ -52,7 +52,7 @@ namespace McRave::Expansion {
+             // Create a map of blocking neutrals per station
+             blockingNeutrals.clear();
+             for (auto &[station, path] : Stations::getStationNetwork(Terrain::getMyMain())) {
+-                Util::testPointOnPath(path, [&](Position &p) {
++                Util::testPointOnPath(path, [&](const Position &p) {
+                     auto type = BWEB::Map::isUsed(TilePosition(p));
+                     if (type != UnitTypes::None) {
+                         const auto closestNeutral = Util::getClosestUnit(p, PlayerState::Neutral, [&](auto &u) { return u->getType() == type; });
+@@ -230,4 +230,4 @@ namespace McRave::Expansion {
+ 
+     bool expansionBlockersExists() { return blockersExists; }
+     vector<const BWEB::Station *> getExpandOrder() { return expansionOrder; }
+-} // namespace McRave::Expansion
+\ No newline at end of file
++} // namespace McRave::Expansion
+diff --git a/Source/McRave/Macro/Planning/Planning.cpp b/Source/McRave/Macro/Planning/Planning.cpp
+index 98c9cb5..7828045 100644
+--- a/Source/McRave/Macro/Planning/Planning.cpp
++++ b/Source/McRave/Macro/Planning/Planning.cpp
+@@ -42,7 +42,7 @@ namespace McRave::Planning {
+ 
+         bool creepOrPowerReadyOnArrival(UnitType building, TilePosition here, UnitInfo &builder)
+         {
+-            const auto adjacentToHatch = [&](auto &hatch) { return (here.x - hatch.x >= -2 && here.x - hatch.x <= 4 && here.y - hatch.y >= -2 && here.y - hatch.y <= 3); };
++            const auto adjacentToHatch = [&](const auto &hatch) { return (here.x - hatch.x >= -2 && here.x - hatch.x <= 4 && here.y - hatch.y >= -2 && here.y - hatch.y <= 3); };
+ 
+             // TODO: Impl
+             if (building.requiresPsi()) {
+@@ -1101,4 +1101,4 @@ namespace McRave::Planning {
+     int getPlannedMineral() { return plannedMineral; }
+     int getPlannedGas() { return plannedGas; }
+     const BWEB::Station *getCurrentExpansion() { return currentExpansion; }
+-} // namespace McRave::Planning
+\ No newline at end of file
++} // namespace McRave::Planning
+diff --git a/Source/McRave/Main/Dll.cpp b/Source/McRave/Main/Dll.cpp
+index cfe6d10..4e13a44 100644
+--- a/Source/McRave/Main/Dll.cpp
++++ b/Source/McRave/Main/Dll.cpp
+@@ -1,8 +1,17 @@
+ #include <BWAPI.h>
++#ifdef _WIN32
+ #include <Windows.h>
++#endif
+ #include "Header.h"
+ 
+-extern "C" __declspec(dllexport) void gameInit(BWAPI::Game* game) { BWAPI::BroodwarPtr = game; }
++#ifdef _WIN32
++#define MCRAVE_EXPORT __declspec(dllexport)
++#else
++#define MCRAVE_EXPORT __attribute__((visibility("default")))
++#endif
++
++extern "C" MCRAVE_EXPORT void gameInit(BWAPI::Game* game) { BWAPI::BroodwarPtr = game; }
++#ifdef _WIN32
+ BOOL APIENTRY DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
+ {
+     switch (ul_reason_for_call)
+@@ -14,8 +23,9 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserve
+     }
+     return TRUE;
+ }
++#endif
+ 
+-extern "C" __declspec(dllexport) BWAPI::AIModule* newAIModule()
++extern "C" MCRAVE_EXPORT BWAPI::AIModule* newAIModule()
+ {
+     return new McRaveModule();
+ }
+diff --git a/Source/McRave/Main/McRave.cpp b/Source/McRave/Main/McRave.cpp
+index 0c0f6b0..d43f915 100644
+--- a/Source/McRave/Main/McRave.cpp
++++ b/Source/McRave/Main/McRave.cpp
+@@ -7,6 +7,7 @@
+ #include "Builds/All/BuildOrder.h"
+ #include "Builds/All/Learning.h"
+ #include "Events.h"
++#include "JpsMemoShadow.h"
+ #include "Header.h"
+ #include "Info/Building/Buildings.h"
+ #include "Info/Resource/Resources.h"
+@@ -33,13 +34,67 @@
+ #include "Strategy/Goals/Goals.h"
+ #include "Strategy/Spy/Spy.h"
+ #include "Util.h"
++#include <cstdlib>
++#include <fstream>
++#include <limits>
++#include <stdexcept>
+ 
+ using namespace BWAPI;
+ using namespace std;
+ using namespace McRave;
+ 
++namespace {
++bool evaluationSeedSet = false;
++unsigned evaluationSeed = 0;
++
++void applyEvaluationSeed()
++{
++#ifndef _WIN32
++    const auto raw = std::getenv("MATCH_BOT_SEED");
++    if (!raw)
++        return;
++    if (!*raw)
++        throw runtime_error("MATCH_BOT_SEED must be a decimal uint32");
++
++    unsigned long long value = 0;
++    for (auto p = raw; *p; ++p) {
++        if (*p < '0' || *p > '9')
++            throw runtime_error("MATCH_BOT_SEED must be a decimal uint32");
++        value = value * 10 + unsigned(*p - '0');
++        if (value > numeric_limits<unsigned>::max())
++            throw runtime_error("MATCH_BOT_SEED exceeds uint32");
++    }
++    evaluationSeed = unsigned(value);
++    evaluationSeedSet = true;
++    std::srand(evaluationSeed);
++#endif
++}
++
++void writeDiagnostics(bool ended, bool winner)
++{
++    int drones = 0, hatcheries = 0, spawningPools = 0, zerglings = 0;
++    for (auto unit : Broodwar->self()->getUnits()) {
++        auto type = unit->getType();
++        drones += type == UnitTypes::Zerg_Drone;
++        hatcheries += type == UnitTypes::Zerg_Hatchery || type == UnitTypes::Zerg_Lair || type == UnitTypes::Zerg_Hive;
++        spawningPools += type == UnitTypes::Zerg_Spawning_Pool;
++        zerglings += type == UnitTypes::Zerg_Zergling;
++    }
++    ofstream output("bwapi-data/write/diagnostic.json", ios::trunc);
++    output << "{\"frame_count\":" << Broodwar->getFrameCount()
++           << ",\"winner\":" << (ended ? (winner ? "true" : "false") : "null")
++           << ",\"ended\":" << (ended ? "true" : "false")
++           << ",\"latency_frames\":" << Broodwar->getLatencyFrames()
++           << ",\"bot_seed\":" << (evaluationSeedSet ? to_string(evaluationSeed) : "null")
++           << ",\"drones\":" << drones << ",\"hatcheries\":" << hatcheries
++           << ",\"spawning_pools\":" << spawningPools << ",\"zerglings\":" << zerglings << "}\n";
++}
++}
++
+ void McRaveModule::onStart()
+ {
++    applyEvaluationSeed();
++    writeDiagnostics(false, false);
+     Visuals::onStart();
+     Util::onStart();
+     Players::onStart();
+@@ -64,6 +119,8 @@ void McRaveModule::onStart()
+ 
+ void McRaveModule::onEnd(bool isWinner)
+ {
++    JpsMemoShadow::write();
++    writeDiagnostics(true, isWinner);
+     // @McRave ☑ has taken "drop all your weapons at the end of a csgo match" to the ai scene
+     for (auto &unit : Units::getUnits(PlayerState::Self))
+         unit->setMarkForDeath(true);
+@@ -80,6 +137,10 @@ void McRaveModule::onFrame()
+ 
+     if (Util::getTime() > Time(59, 59))
+         Broodwar->leaveGame();
++    if (Broodwar->getFrameCount() % 240 == 0)
++        writeDiagnostics(false, false);
++    if (Broodwar->getFrameCount() % 240 == 0)
++        JpsMemoShadow::write();
+ 
+     // Update game state
+     Visuals::endPerfTest("BWAPI");
+diff --git a/Source/McRave/Main/Visuals.cpp b/Source/McRave/Main/Visuals.cpp
+index d000820..385822d 100644
+--- a/Source/McRave/Main/Visuals.cpp
++++ b/Source/McRave/Main/Visuals.cpp
+@@ -1,7 +1,9 @@
+ #include "Visuals.h"
+ 
+ #include <chrono>
++#ifdef _WIN32
+ #include <windows.h>
++#endif
+ 
+ #include "Builds/All/BuildOrder.h"
+ #include "Builds/All/Learning.h"
+@@ -229,6 +231,7 @@ namespace McRave::Visuals {
+ 
+         void getCurrentWindow()
+         {
++#ifdef _WIN32
+             // Thanks random cpp forum user
+             char wnd_title[256];
+             string str_title;
+@@ -236,12 +239,15 @@ namespace McRave::Visuals {
+             GetWindowText(hwnd, wnd_title, sizeof(wnd_title));
+             str_title   = string(wnd_title);
+             gameFocused = (str_title == "Brood War");
++#else
++            gameFocused = true;
++#endif
+         }
+     } // namespace
+ 
+     bool isDrawingEnabled(DrawingType type) { return Util::contains(enabledDrawings, type); }
+ 
+-    Text::Enum getTextColor() {}
++    Text::Enum getTextColor() { return textColor; }
+ 
+     void centerCameraOn(Position here) { Broodwar->setScreenPosition(here - Position(320, 180)); }
+ 
+@@ -250,7 +256,7 @@ namespace McRave::Visuals {
+         // TODO: This is obviously not doing anything, but I wrote it at some point for "fixing" dark green, but this doesn't work
+         // BWAPIs green text doesn't point to the right color so this will be seen occasionally
+         int color     = Broodwar->self()->getColor();
+-        int textColor = color == 185 ? textColor = Text::DarkGreen : Broodwar->self()->getTextColor();
++        textColor = color == 185 ? Text::DarkGreen : static_cast<Text::Enum>(Broodwar->self()->getTextColor());
+ 
+         enabledDrawings.push_back(DrawingType::Builds);
+         enabledDrawings.push_back(DrawingType::Scores);
+@@ -410,4 +416,4 @@ namespace McRave::Visuals {
+     }
+     void drawLine(WalkPosition here, WalkPosition there, Color color) { drawLine(Position(here), Position(there), color); }
+     void drawLine(TilePosition here, TilePosition there, Color color) { drawLine(Position(here), Position(there), color); }
+-} // namespace McRave::Visuals
+\ No newline at end of file
++} // namespace McRave::Visuals
+diff --git a/Source/McRave/Map/Grids/Grids.cpp b/Source/McRave/Map/Grids/Grids.cpp
+index d09b46b..969efb3 100644
+--- a/Source/McRave/Map/Grids/Grids.cpp
++++ b/Source/McRave/Map/Grids/Grids.cpp
+@@ -348,7 +348,7 @@ namespace McRave::Grids {
+         void drawCollision()
+         {
+             BWAPI::Broodwar->setTextSize(BWAPI::Text::Size::Small);
+-            const auto drawThisWalk = [&](auto &w) {
++            const auto drawThisWalk = [&](const auto &w) {
+                 auto vertical   = getVCollision(w, PlayerState::All);
+                 auto horizontal = getHCollision(w, PlayerState::All);
+                 auto full       = getFCollision(w, PlayerState::All);
+@@ -482,4 +482,4 @@ namespace McRave::Grids {
+     int getLastVisibleFrame(Position here) { return selfGrid[gridTileScale * (here.y / 32) + (here.x / 32)].visible; }
+     int getLastVisibleFrame(WalkPosition here) { return selfGrid[gridTileScale * (here.y / 4) + (here.x / 4)].visible; }
+     int getLastVisibleFrame(TilePosition here) { return selfGrid[gridTileScale * here.y + here.x].visible; }
+-} // namespace McRave::Grids
+\ No newline at end of file
++} // namespace McRave::Grids
+diff --git a/Source/McRave/Map/Stations/Stations.h b/Source/McRave/Map/Stations/Stations.h
+index 1d534e4..1dcdb25 100644
+--- a/Source/McRave/Map/Stations/Stations.h
++++ b/Source/McRave/Map/Stations/Stations.h
+@@ -55,7 +55,7 @@ namespace McRave::Stations {
+     template <typename F> //
+     const BWEB::Station *getClosestStationAir(BWAPI::Position here, PlayerState player, F &&pred)
+     {
+-        auto &list                          = getStations(player);
++        auto list                           = getStations(player);
+         auto distBest                       = DBL_MAX;
+         const BWEB::Station *closestStation = nullptr;
+         for (auto &station : list) {
+@@ -76,7 +76,7 @@ namespace McRave::Stations {
+     template <typename F> //
+     const BWEB::Station *getClosestStationGround(BWAPI::Position here, PlayerState player, F &&pred)
+     {
+-        auto &list                          = getStations(player);
++        auto list                           = getStations(player);
+         auto distBest                       = DBL_MAX;
+         const BWEB::Station *closestStation = nullptr;
+         for (auto &station : list) {
+diff --git a/Source/McRave/Map/Walls/Walls.cpp b/Source/McRave/Map/Walls/Walls.cpp
+index 01b1dc1..f4763cc 100644
+--- a/Source/McRave/Map/Walls/Walls.cpp
++++ b/Source/McRave/Map/Walls/Walls.cpp
+@@ -355,9 +355,9 @@ namespace McRave::Walls {
+ 
+     int needGroundDefenses(BWEB::Wall *const wall) { return desiredGroundDefenses[wall]; }
+     int needAirDefenses(BWEB::Wall *const wall) { return desiredAirDefenses[wall]; }
+-    int getCompleteTypeCount(BWEB::Wall *const wall, UnitType type) {}
+-    int getIncompleteTypeCount(BWEB::Wall *const wall, UnitType type) {}
+-    int getTotalTypeCount(BWEB::Wall *const wall, UnitType type) {}
++    int getCompleteTypeCount(BWEB::Wall *const wall, UnitType type) { return wallMap[wall].comType[type]; }
++    int getIncompleteTypeCount(BWEB::Wall *const wall, UnitType type) { return wallMap[wall].visType[type] - wallMap[wall].comType[type]; }
++    int getTotalTypeCount(BWEB::Wall *const wall, UnitType type) { return wallMap[wall].totalType[type]; }
+     BWEB::Wall *const getMainWall() { return mainWall; }
+     BWEB::Wall *const getNaturalWall() { return naturalWall; }
+-} // namespace McRave::Walls
+\ No newline at end of file
++} // namespace McRave::Walls
+diff --git a/Source/McRave/Micro/All/Commands.cpp b/Source/McRave/Micro/All/Commands.cpp
+index efc84ac..0316e96 100644
+--- a/Source/McRave/Micro/All/Commands.cpp
++++ b/Source/McRave/Micro/All/Commands.cpp
+@@ -71,8 +71,8 @@ namespace McRave::Command {
+ 
+             // Create the score context
+             ScoreContext context(unit.shared_from_this());
+-            const auto penalizeEdge   = [&](auto &p) { return clamp(nearestEdge.getDistance(p) / 96.0, 1.0, 5.00); };
+-            const auto penalizeCorner = [&](auto &p) { return clamp(nearestCorner.getDistance(p) / 160.0, 1.0, 5.00); };
++            const auto penalizeEdge   = [&](const auto &p) { return clamp(nearestEdge.getDistance(p) / 96.0, 1.0, 5.00); };
++            const auto penalizeCorner = [&](const auto &p) { return clamp(nearestCorner.getDistance(p) / 160.0, 1.0, 5.00); };
+ 
+             // Pre calculate existing costs
+             auto existingEdgeCost   = max(penalizeEdge(unit.getPosition()), penalizeEdge(unit.getNavigation()));
+@@ -429,7 +429,7 @@ namespace McRave::Command {
+         // Get a position away from the target
+         else if (kiteFromThreat) {
+ 
+-            const auto threatCalc = [&](auto &p) {
++            const auto threatCalc = [&](Position p) {
+                 if (!unit.isFlying() && !Util::findTerrainWalkable(p, unit.getType()))
+                     return FLT_MAX;
+                 auto threat = unit.isFlying() ? Grids::getAirThreat(p, PlayerState::Enemy) : Grids::getGroundThreat(p, PlayerState::Enemy);
+@@ -736,7 +736,7 @@ namespace McRave::Command {
+                 score = 1.0 * Util::fastReciprocal(grdDist);
+ 
+             for (auto &c : unit.getAssignedCargo()) {
+-                if (auto &cargo = c.lock()) {
++                if (auto cargo = c.lock()) {
+ 
+                     // If we're trying to load
+                     if (unit.getTransportState() == TransportState::Loading)
+@@ -755,4 +755,4 @@ namespace McRave::Command {
+         }
+         return false;
+     }
+-} // namespace McRave::Command
+\ No newline at end of file
++} // namespace McRave::Command
+diff --git a/Source/McRave/Micro/All/Specials.cpp b/Source/McRave/Micro/All/Specials.cpp
+index 43fc653..0a47b7f 100644
+--- a/Source/McRave/Micro/All/Specials.cpp
++++ b/Source/McRave/Micro/All/Specials.cpp
+@@ -558,7 +558,7 @@ namespace McRave::Command {
+             // If within range of an intermediate point within engaging distance
+             if (!unit.targetsFriendly() && castSwarmPath) {
+ 
+-                auto pos = Util::findPointOnPath(unit.getMarchPath(), [&](auto &p) {
++                auto pos = Util::findPointOnPath(unit.getMarchPath(), [&](const auto &p) {
+                     auto distSelf = p.getDistance(unit.getPosition());
+                     auto distMin  = 200.0;
+                     auto dist     = p.getDistance(target->getPosition());
+@@ -867,4 +867,4 @@ namespace McRave::Command {
+         return castSelf(unit) || castTarget(unit) || burrow(unit) || click(unit) || siege(unit) || repair(unit) || morph(unit) || train(unit) || returnResource(unit) || clearNeutral(unit) ||
+                build(unit) || lift(unit) || gather(unit);
+     }
+-} // namespace McRave::Command
+\ No newline at end of file
++} // namespace McRave::Command
+diff --git a/Source/McRave/Micro/Combat/Clusters.cpp b/Source/McRave/Micro/Combat/Clusters.cpp
+index e29945a..361e7af 100644
+--- a/Source/McRave/Micro/Combat/Clusters.cpp
++++ b/Source/McRave/Micro/Combat/Clusters.cpp
+@@ -115,7 +115,7 @@ namespace McRave::Combat::Clusters {
+             // Every other node looks at neighbor and tries to add it, if enough neighbors
+             int x = 0;
+             while (!nodeQueue.empty()) {
+-                auto &node = nodeQueue.front();
++                auto node = nodeQueue.front();
+                 nodeQueue.pop();
+ 
+                 if (int(newCluster.units.size()) >= maxsize && !node->unit->isFlying())
+@@ -411,4 +411,4 @@ namespace McRave::Combat::Clusters {
+             return true;
+         return false;
+     }
+-} // namespace McRave::Combat::Clusters
+\ No newline at end of file
++} // namespace McRave::Combat::Clusters
+diff --git a/Source/McRave/Micro/Combat/Navigation.cpp b/Source/McRave/Micro/Combat/Navigation.cpp
+index 9e1cdcb..354971a 100644
+--- a/Source/McRave/Micro/Combat/Navigation.cpp
++++ b/Source/McRave/Micro/Combat/Navigation.cpp
+@@ -182,7 +182,7 @@ namespace McRave::Combat::Navigation {
+             return abs(d - M_PI);
+         };
+ 
+-        const auto threatCalc = [&](auto &p) {
++        const auto threatCalc = [&](Position p) {
+             auto threat  = double(Grids::getAirThreat(p, PlayerState::Enemy));
+             auto density = double(Grids::getAirDensity(p, PlayerState::Self));
+ 
+@@ -360,4 +360,4 @@ namespace McRave::Combat::Navigation {
+             }
+         }
+     }
+-} // namespace McRave::Combat::Navigation
+\ No newline at end of file
++} // namespace McRave::Combat::Navigation
+diff --git a/Source/McRave/Micro/Combat/State.cpp b/Source/McRave/Micro/Combat/State.cpp
+index e64d518..946a306 100644
+--- a/Source/McRave/Micro/Combat/State.cpp
++++ b/Source/McRave/Micro/Combat/State.cpp
+@@ -16,7 +16,7 @@ namespace McRave::Combat::State {
+ 
+     vector<UnitType> staticRetreatTypes;
+ 
+-    const auto unlockedOrVis = [&](auto &t) { return vis(t) > 0 || BuildOrder::isUnitUnlocked(t); };
++    const auto unlockedOrVis = [](const auto &t) { return vis(t) > 0 || BuildOrder::isUnitUnlocked(t); };
+ 
+     void updatePStaticStates()
+     {
+@@ -30,7 +30,8 @@ namespace McRave::Combat::State {
+         }
+ 
+         // Carriers
+-        static bool carrierCountReady = carrierCountReady || com(Protoss_Carrier) >= 4;
++        static bool carrierCountReady = false;
++        carrierCountReady = carrierCountReady || com(Protoss_Carrier) >= 4;
+         if (!BuildOrder::isPressure(Protoss_Carrier) && unlockedOrVis(Protoss_Carrier)) {
+             if (Players::PvT()) {
+                 if (!carrierCountReady)
+@@ -685,4 +686,4 @@ namespace McRave::Combat::State {
+         auto itr = find(staticRetreatTypes.begin(), staticRetreatTypes.end(), type);
+         return itr != staticRetreatTypes.end();
+     }
+-} // namespace McRave::Combat::State
+\ No newline at end of file
++} // namespace McRave::Combat::State
+diff --git a/Source/McRave/Micro/Scout/Scouts.cpp b/Source/McRave/Micro/Scout/Scouts.cpp
+index cacde64..c6c3ada 100644
+--- a/Source/McRave/Micro/Scout/Scouts.cpp
++++ b/Source/McRave/Micro/Scout/Scouts.cpp
+@@ -216,7 +216,7 @@ namespace McRave::Scouts {
+ 
+             // For each tile on this path, mark as being an "enemyTile"
+             auto enemyNatArea = Terrain::getEnemyNatural()->getBase()->GetArea();
+-            Util::testAllPointOnPath(path, [&](auto &pos) {
++            Util::testAllPointOnPath(path, [&](const auto &pos) {
+                 if (pos.getDistance(Terrain::getEnemyNatural()->getBase()->Center()) > 1500.0)
+                     return;
+ 
+@@ -676,9 +676,9 @@ namespace McRave::Scouts {
+             // Army scouting between my natural and enemy natural
+             BWEB::Path newPath(start, end, Zerg_Zergling);
+             newPath.generateJPS([&](auto t) { return newPath.terrainWalkable(t); });
+-            auto primarySafeTarget   = Util::findPointOnPath(newPath, [&](auto &t) { return Grids::getGroundThreat(t, PlayerState::Enemy) <= 0.1; });
++            auto primarySafeTarget   = Util::findPointOnPath(newPath, [&](const auto &t) { return Grids::getGroundThreat(t, PlayerState::Enemy) <= 0.1; });
+             auto secondarySafeTarget = Util::findPointOnPath(newPath,
+-                                                             [&](auto &t) { return Position(t).getDistance(primarySafeTarget) > 96.0 && Grids::getGroundThreat(t, PlayerState::Enemy) <= 0.1; });
++                                                             [&](const auto &t) { return Position(t).getDistance(primarySafeTarget) > 96.0 && Grids::getGroundThreat(t, PlayerState::Enemy) <= 0.1; });
+ 
+             army.center = primarySafeTarget;
+             army.addTargets(secondarySafeTarget, 96);
+@@ -1215,4 +1215,4 @@ namespace McRave::Scouts {
+             return scoutOrderFirstOverlord;
+         return scoutOrder;
+     }
+-} // namespace McRave::Scouts
+\ No newline at end of file
++} // namespace McRave::Scouts
+diff --git a/Source/McRave/Micro/Support/Support.cpp b/Source/McRave/Micro/Support/Support.cpp
+index 79528e9..31b2bfd 100644
+--- a/Source/McRave/Micro/Support/Support.cpp
++++ b/Source/McRave/Micro/Support/Support.cpp
+@@ -7,6 +7,8 @@
+ #include "Map/Terrain/Terrain.h"
+ #include "Micro/All/Commands.h"
+ #include "Micro/Combat/Combat.h"
++#include "Main/JpsMemoShadow.h"
++#include <chrono>
+ #include "Strategy/Spy/Spy.h"
+ 
+ using namespace BWAPI;
+@@ -180,10 +182,21 @@ namespace McRave::Support {
+                 const auto yMax       = Broodwar->mapHeight() - 4;
+                 const auto centerDist = min(Terrain::getMainPosition().getDistance(mapBWEM.Center()), unit.getPosition().getDistance(mapBWEM.Center()));
+                 BWEB::Path newPath(unit.getPosition(), unit.getDestination(), unit.getType());
+-                newPath.generateJPS([&](const TilePosition &t) {
++                const auto walkable = [&](const TilePosition &t) {
+                     return !Terrain::inTerritory(PlayerState::Enemy, Position(t)) && t.isValid() &&
+                            (t.x < 4 || t.y < 4 || t.x > xMax || t.y > yMax || Position(t).getDistance(mapBWEM.Center()) >= centerDist);
+-                });
++                };
++                BWEB::Path shadowPath(unit.getPosition(), unit.getDestination(), unit.getType());
++                long long memoRequests = 0, memoEvaluations = 0, rawCalls = 0;
++                const auto memoStart = chrono::steady_clock::now();
++                shadowPath.generateJPSMemoShadow(walkable, memoRequests, memoEvaluations);
++                const auto memoEnd = chrono::steady_clock::now();
++                const auto rawStart = chrono::steady_clock::now();
++                newPath.generateJPS([&](const TilePosition &t) { rawCalls++; return walkable(t); });
++                const auto rawEnd = chrono::steady_clock::now();
++                JpsMemoShadow::record(newPath, shadowPath, rawCalls, memoRequests, memoEvaluations,
++                                      chrono::duration_cast<chrono::nanoseconds>(rawEnd - rawStart).count(),
++                                      chrono::duration_cast<chrono::nanoseconds>(memoEnd - memoStart).count());
+                 unit.setMarchPath(newPath);
+             }
+             Visuals::drawPath(unit.getMarchPath());
+@@ -234,4 +247,4 @@ namespace McRave::Support {
+         updateUnits();
+         Visuals::endPerfTest("Support");
+     }
+-} // namespace McRave::Support
+\ No newline at end of file
++} // namespace McRave::Support
+diff --git a/Source/McRave/Micro/Transport/Transports.cpp b/Source/McRave/Micro/Transport/Transports.cpp
+index f8a0caa..10dc336 100644
+--- a/Source/McRave/Micro/Transport/Transports.cpp
++++ b/Source/McRave/Micro/Transport/Transports.cpp
+@@ -72,7 +72,7 @@ namespace McRave::Transports {
+ 
+             // Calculate cargo size allocated (but not necessarily loaded)
+             for (auto &c : cargoList) {
+-                if (auto &cargo = c.lock())
++                if (auto cargo = c.lock())
+                     cargoSize += cargo->getType().spaceRequired();
+             }
+ 
+@@ -227,7 +227,7 @@ namespace McRave::Transports {
+             UnitInfo *closestCargo = nullptr;
+             auto distBest          = DBL_MAX;
+             for (auto &c : unit.getAssignedCargo()) {
+-                auto &cargo = c.lock();
++                auto cargo = c.lock();
+ 
+                 auto dist = cargo->getPosition().getDistance(unit.getPosition());
+                 if (dist < distBest && !cargo->unit()->isLoaded()) {
+@@ -239,7 +239,7 @@ namespace McRave::Transports {
+             // If list isn't empty, our destination is the first valid one
+             auto engageDestination = unit.getPosition();
+             for (auto &c : unit.getAssignedCargo()) {
+-                auto &cargo = c.lock();
++                auto cargo = c.lock();
+                 if (cargo->getDestination().isValid()) {
+                     engageDestination = cargo->getDestination();
+                     break;
+@@ -315,7 +315,7 @@ namespace McRave::Transports {
+         // If unit has a transport, remove it from the transports cargo, then set transport to nullptr
+         if (unit.hasTransport()) {
+             auto &cargoList = unit.getTransport().lock()->getAssignedCargo();
+-            for (auto &cargo = cargoList.begin(); cargo != cargoList.end(); cargo++) {
++            for (auto cargo = cargoList.begin(); cargo != cargoList.end(); cargo++) {
+                 if (cargo->lock() && cargo->lock() == unit.shared_from_this()) {
+                     cargoList.erase(cargo);
+                     break;
+@@ -326,7 +326,7 @@ namespace McRave::Transports {
+ 
+         // If unit is a transport, set the transport of all cargo to nullptr
+         for (auto &c : unit.getAssignedCargo()) {
+-            if (auto &cargo = c.lock())
++            if (auto cargo = c.lock())
+                 cargo->setTransport(nullptr);
+         }
+     }
+@@ -359,4 +359,4 @@ namespace McRave::Transports {
+ //    if (Terrain::isIslandMap() && worker.getBuildLocation().isValid() && mapBWEM.GetArea(worker.getTilePosition()) == mapBWEM.GetArea(worker.getBuildLocation()))
+ //        return true;
+ //    return false;
+-//};
+\ No newline at end of file
++//};
+diff --git a/Source/McRave/Micro/Worker/Workers.cpp b/Source/McRave/Micro/Worker/Workers.cpp
+index cd90ab6..9d79b40 100644
+--- a/Source/McRave/Micro/Worker/Workers.cpp
++++ b/Source/McRave/Micro/Worker/Workers.cpp
+@@ -124,8 +124,8 @@ namespace McRave::Workers {
+                         safeStations.push_back(station);
+ 
+                     else if (canTransferWorkers()) {
+-                        auto &path     = Stations::getPathBetween(closestStation, station);
+-                        auto threatPos = Util::findPointOnPath(path, [&](auto &t) { return Grids::getGroundThreat(t, PlayerState::Enemy) > 0.0; });
++                        auto path      = Stations::getPathBetween(closestStation, station);
++                        auto threatPos = Util::findPointOnPath(path, [&](const auto &t) { return Grids::getGroundThreat(t, PlayerState::Enemy) > 0.0; });
+                         if (!threatPos)
+                             safeStations.push_back(station);
+                     }
+@@ -491,4 +491,4 @@ namespace McRave::Workers {
+     int getMineralWorkers() { return minWorkers; }
+     int getGasWorkers() { return gasWorkers; }
+     int getBoulderWorkers() { return boulderWorkers; }
+-} // namespace McRave::Workers
+\ No newline at end of file
++} // namespace McRave::Workers
+diff --git a/Source/McRave/Strategy/Goals/Goals.cpp b/Source/McRave/Strategy/Goals/Goals.cpp
+index c28bcae..d21102f 100644
+--- a/Source/McRave/Strategy/Goals/Goals.cpp
++++ b/Source/McRave/Strategy/Goals/Goals.cpp
+@@ -86,14 +86,38 @@ namespace McRave::Goals {
+ 
+             auto assignable = [&](auto &u) { return canAssignGoal(u, gType) && u->getType() == type; };
+ 
+-            auto getClosest = [&]() { return type.isFlyer() ? Util::getClosestUnit(here, PlayerState::Self, assignable) : Util::getClosestUnitGround(here, PlayerState::Self, assignable); };
++            if (count <= 0)
++                return;
+ 
+-            // Get new assignment
+-            for (int current = 0; current < count; current++) {
+-                auto closest = getClosest();
+-                if (closest) {
+-                    closest->setGoal(here);
+-                    closest->setGoalType(gType);
++            if (type.isFlyer()) {
++                for (int current = 0; current < count; current++) {
++                    auto closest = Util::getClosestUnit(here, PlayerState::Self, assignable);
++                    if (closest) {
++                        closest->setGoal(here);
++                        closest->setGoalType(gType);
++                    }
++                }
++            }
++            else {
++                vector<pair<shared_ptr<UnitInfo>, double>> candidates;
++                for (auto &unit : Units::getUnits(PlayerState::Self)) {
++                    if (assignable(unit))
++                        candidates.emplace_back(unit, BWEB::Map::getGroundDistance(here, unit->getPosition()));
++                }
++
++                for (int current = 0; current < count; current++) {
++                    auto distBest  = DBL_MAX;
++                    UnitInfo *best = nullptr;
++                    for (auto &[unit, distance] : candidates) {
++                        if (assignable(unit) && distance < distBest) {
++                            best     = &*unit;
++                            distBest = distance;
++                        }
++                    }
++                    if (best) {
++                        best->setGoal(here);
++                        best->setGoalType(gType);
++                    }
+                 }
+             }
+         }
+@@ -585,7 +609,7 @@ namespace McRave::Goals {
+             //}
+ 
+             // Before we have a spore, we need to defend overlords
+-            auto &stations    = Stations::getStations(PlayerState::Self);
++            auto stations     = Stations::getStations(PlayerState::Self);
+             auto mainStations = int(count_if(stations.begin(), stations.end(), [&](auto &s) { return s->isMain(); }));
+ 
+             // Before Hydras have upgrades, defend vulnerable bases, put lings on defense too
+@@ -702,4 +726,4 @@ namespace McRave::Goals {
+         updateCampaignGoals();
+         Visuals::endPerfTest("Goals");
+     }
+-} // namespace McRave::Goals
+\ No newline at end of file
++} // namespace McRave::Goals

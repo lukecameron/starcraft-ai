@@ -1,0 +1,21 @@
+cmake_minimum_required(VERSION 3.24)
+project(kestrel LANGUAGES CXX)
+
+if(NOT BWAPI_ROOT OR NOT BWAPI_BUILD)
+  message(FATAL_ERROR "Set BWAPI_ROOT and BWAPI_BUILD")
+endif()
+
+add_library(Kestrel MODULE Kestrel.cpp)
+set_target_properties(Kestrel PROPERTIES PREFIX "" SUFFIX ".dylib")
+target_compile_features(Kestrel PRIVATE cxx_std_14)
+target_compile_options(Kestrel PRIVATE -Wall -Wextra -Werror)
+target_include_directories(Kestrel SYSTEM PRIVATE "${BWAPI_ROOT}/bwapi/include")
+target_link_directories(Kestrel PRIVATE "${BWAPI_BUILD}/lib")
+target_link_libraries(Kestrel PRIVATE BWAPILIB)
+
+if(BWAPI_OFFICIAL_ROOT)
+  add_library(KestrelOfficialHeaders OBJECT EXCLUDE_FROM_ALL Kestrel.cpp)
+  target_compile_features(KestrelOfficialHeaders PRIVATE cxx_std_14)
+  target_compile_options(KestrelOfficialHeaders PRIVATE -Wall -Wextra -Werror)
+  target_include_directories(KestrelOfficialHeaders SYSTEM PRIVATE "${BWAPI_OFFICIAL_ROOT}/bwapi/include")
+endif()

@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "launcher": "artifacts/builds/27ea649cb3def9a724df077adaae3e62f16c9de8fbfbc9850ee485af5fbd88cb/openbw-kill-path-diagnostic/BWAPILauncher",
+  "library_path": "artifacts/builds/27ea649cb3def9a724df077adaae3e62f16c9de8fbfbc9850ee485af5fbd88cb/openbw-kill-path-diagnostic",
+  "game_data_dir": "third_party/game-data/runtime",
+  "experiment_id": "local-calibration-v1-uab-t",
+  "title": "Local league calibration: UAlbertaBot-T",
+  "hypothesis": "Five exact build/race nodes can form a connected, clean local comparison graph on two previously unused maps; uncertainty will remain explicit and no BASIL calibration or strength promotion is implied.",
+  "stop_condition": "Exactly four games, two fixed matchups with swapped protocol player slots. No retries or replacement seeds. Existing runner stops after two consecutive infrastructure failures.",
+  "purpose": "Preregistered initial local league calibration",
+  "wall_timeout_seconds": 180,
+  "candidate": {
+    "name": "UAlbertaBot-T",
+    "race": "Terran",
+    "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+    "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+  },
+  "opponents": {
+    "uab-p": {
+      "name": "UAlbertaBot-P",
+      "race": "Protoss",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+    },
+    "zzzk": {
+      "name": "ZZZKBot",
+      "race": "Zerg",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+    }
+  },
+  "games": [
+    {
+      "opponent": "uab-p",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 6201,
+      "candidate_player": 1
+    },
+    {
+      "opponent": "uab-p",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 6201,
+      "candidate_player": 2
+    },
+    {
+      "opponent": "zzzk",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 6202,
+      "candidate_player": 1
+    },
+    {
+      "opponent": "zzzk",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 6202,
+      "candidate_player": 2
+    }
+  ],
+  "execution": {
+    "concurrency": 2,
+    "learning_state": "fresh empty isolated read/write",
+    "performance_scope": "Development overlap allowed; timings observational only, no throughput adoption claim"
+  }
+}

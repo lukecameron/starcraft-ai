@@ -1,0 +1,298 @@
+diff --git a/sync.h b/sync.h
+index 19cbab6..7c8e7fe 100644
+--- a/sync.h
++++ b/sync.h
+@@ -7,15 +7,49 @@
+ #include "replay_saver.h"
+ 
+ #include <chrono>
++#include <cstdio>
++#include <cerrno>
++#include <cstdlib>
+ #include <random>
+ #include <thread>
+ #include <functional>
++#include <memory>
+ #include <type_traits>
+ #include <typeinfo>
+ 
+ namespace bwgame {
+ 
+ struct sync_state {
++	struct scenario_control_t {
++		bool enabled = false;
++		uint32_t seed = 0;
++		uint32_t player_id = 0;
++	};
++
++	static scenario_control_t scenario_control() {
++		const char* seed_str = std::getenv("OPENBW_SCENARIO_SEED");
++		const char* player_id_str = std::getenv("OPENBW_SCENARIO_PLAYER_ID");
++		if (!seed_str && !player_id_str) return {};
++		if (!seed_str || !player_id_str) error("OPENBW_SCENARIO_SEED and OPENBW_SCENARIO_PLAYER_ID must be set together");
++		auto parse_uint32 = [](const char* name, const char* value) {
++			if (!*value) error("%s must be a decimal uint32", name);
++			for (const char* p = value; *p; ++p) {
++				if (*p < '0' || *p > '9') error("%s must be a decimal uint32", name);
++			}
++			char* end = nullptr;
++			errno = 0;
++			unsigned long long parsed = std::strtoull(value, &end, 10);
++			if (errno || !end || *end || parsed > 0xffffffffull) error("%s must be a decimal uint32", name);
++			return (uint32_t)parsed;
++		};
++		scenario_control_t r;
++		r.enabled = true;
++		r.seed = parse_uint32("OPENBW_SCENARIO_SEED", seed_str);
++		r.player_id = parse_uint32("OPENBW_SCENARIO_PLAYER_ID", player_id_str);
++		if (!r.player_id) error("OPENBW_SCENARIO_PLAYER_ID must be nonzero");
++		return r;
++	}
++
+ 	struct scheduled_action {
+ 		uint8_t frame;
+ 		size_t data_begin;
+@@ -32,6 +66,13 @@ struct sync_state {
+ 	struct uid_t {
+ 		std::array<uint32_t, 8> vals{};
+ 		static uid_t generate() {
++			auto scenario = sync_state::scenario_control();
++			if (scenario.enabled) {
++				uid_t r;
++				r.vals = {{0x53434149u, 0x4f50454eu, 0x42575343u, 0x454e4152u,
++					0x494f4944u, scenario.player_id, ~scenario.player_id, scenario.player_id ^ 0xa5a5a5a5u}};
++				return r;
++			}
+ 			uid_t r;
+ 			std::array<uint32_t, 8> arr;
+ 			arr[0] = 42;
+@@ -84,6 +125,7 @@ struct sync_state {
+ 		a_string name;
+ 		bool game_started = false;
+ 		bool has_greeted = false;
++		bool terminal_disconnect_deferred = false;
+ 		std::chrono::steady_clock::time_point last_synced;
+ 	};
+ 
+@@ -383,14 +425,14 @@ struct sync_functions: action_functions {
+ 				sync_state::uid_t uid;
+ 				for (auto& v : uid.vals) v = r.template get<uint32_t>();
+ 				if (get_client(uid)) {
+-					this->kill_client(client);
++					this->kill_client(client, false, "duplicate_uid");
+ 				} else {
+ 					size_t clients_with_uid = 0;
+ 					for (auto* c : ptr(sync_st.clients)) {
+ 						if (c->has_uid) ++clients_with_uid;
+ 					}
+ 					if (clients_with_uid >= 2) {
+-						this->kill_client(client);
++						this->kill_client(client, false, "too_many_clients");
+ 					} else {
+ 						client->uid = uid;
+ 						client->has_uid = true;
+@@ -426,7 +468,7 @@ struct sync_functions: action_functions {
+ 				break;
+ 			}
+ 			default:
+-				if (!client->has_uid) kill_client(client);
++				if (!client->has_uid) kill_client(client, false, "message_before_uid");
+ 				else {
+ 					r.seek(t);
+ 					funcs.schedule_action(client, r);
+@@ -460,7 +502,16 @@ struct sync_functions: action_functions {
+ 			return w;
+ 		}
+ 
+-		void kill_client(sync_state::client_t* client, bool player_left = false) {
++		void kill_client(sync_state::client_t* client, bool player_left = false, const char* source = "unspecified", int action_id = -1, int hash_index = -1, uint32_t remote_hash = 0, uint32_t local_hash = 0) {
++			std::fprintf(stderr,
++				"{\"openbw_sync_diagnostic\":1,\"event\":\"kill_client\",\"source\":\"%s\",\"game_frame\":%d,\"sync_frame\":%d,\"local_slot\":%d,\"peer_slot\":%d,\"peer_controller\":%d,\"peer_victory\":%d,\"action_id\":%d,\"hash_index\":%d,\"remote_hash\":%u,\"local_hash\":%u}\n",
++				source, st.current_frame, sync_st.sync_frame,
++				sync_st.local_client ? sync_st.local_client->player_slot : -1,
++				client->player_slot,
++				client->player_slot >= 0 ? (int)st.players.at(client->player_slot).controller : -1,
++				client->player_slot >= 0 ? st.players.at(client->player_slot).victory_state : -1,
++				action_id, hash_index, remote_hash, local_hash);
++			std::fflush(stderr);
+ 			if (client->player_slot != -1) {
+ 				if (sync_st.game_started) {
+ 					auto w = get_player_left_action(player_left);
+@@ -589,14 +640,14 @@ struct sync_functions: action_functions {
+ 			sync_st.sync_frame = frame;
+ 			server.allow_send(h, false);
+ 			server.set_on_message(h, std::bind(&syncer_t::on_message, this, c, std::placeholders::_1, std::placeholders::_2));
+-			server.set_on_kill(h, std::bind(&syncer_t::kill_client, this, c, false));
++			server.set_on_kill(h, std::bind(&syncer_t::kill_client, this, c, false, "transport_callback", -1, -1, 0, 0));
+ 		}
+ 		void on_message(sync_state::client_t* client, const void* data, size_t size) {
+ 			data_loading::data_reader_le r((const uint8_t*)data, (const uint8_t*)data + size);
+ 			if (!client->has_greeted) {
+ 				auto v = r.get<uint32_t>();
+ 				if (v != greeting_value) {
+-					kill_client(client);
++					kill_client(client, false, "bad_greeting");
+ 				} else client->has_greeted = true;
+ 				return;
+ 			}
+@@ -615,7 +666,7 @@ struct sync_functions: action_functions {
+ 				++i;
+ 				if (now - c->last_synced >= std::chrono::seconds(60)) {
+ 					if ((int8_t)(sync_st.sync_frame - c->frame) >= (int8_t)sync_st.latency) {
+-						kill_client(c);
++						kill_client(c, false, "sync_timeout");
+ 					}
+ 				}
+ 			}
+@@ -687,6 +738,8 @@ struct sync_functions: action_functions {
+ 			a_string seed_str;
+ 			for (auto& v : sync_st.clients) seed_str += v.uid.str();
+ 			uint32_t rand_state = seed ^ data_loading::crc32_t()((const uint8_t*)seed_str.data(), seed_str.size());
++			auto scenario = sync_state::scenario_control();
++			if (scenario.enabled) rand_state = scenario.seed;
+ 			st.lcg_rand_state = rand_state;
+ 
+ 			for (int i = 0; i != 12; ++i) {
+@@ -795,8 +848,9 @@ struct sync_functions: action_functions {
+ 								case sync_messages::id_insync_check: {
+ 									uint8_t index = r.template get<uint8_t>();
+ 									uint32_t hash = r.template get<uint32_t>();
+-									if (hash != sync_st.insync_hash.at(index)) {
+-										this->kill_client(client);
++									uint32_t local_hash = sync_st.insync_hash.at(index);
++									if (hash != local_hash) {
++										this->kill_client(client, false, "insync_hash_mismatch", -1, index, hash, local_hash);
+ 									}
+ 									break;
+ 								}
+@@ -830,6 +884,23 @@ struct sync_functions: action_functions {
+ 							} else {
+ 								r.seek(r.tell() - 1);
+ 							}
++							if (sync_message_id != 87 && st.players.at(client->player_slot).victory_state == 2 &&
++								st.players.at(client->player_slot).controller != player_t::controller_occupied) {
++								// Natural defeat can reach this client one simulation frame
++								// before its peer. Discard the defeated player's pending game
++								// commands without closing the transport or recording actions
++								// that must not execute during replay. LeaveGame still cleans up.
++								if (client == sync_st.local_client) {
++									this->clear_scheduled_actions(client);
++									return false;
++								}
++								if (!client->terminal_disconnect_deferred) {
++									std::fprintf(stderr, "{\"openbw_sync_diagnostic\":1,\"event\":\"deferred_terminal_disconnect\",\"game_frame\":%d,\"peer_slot\":%d,\"action_id\":%d}\n", st.current_frame, client->player_slot, sync_message_id);
++									std::fflush(stderr);
++									client->terminal_disconnect_deferred = true;
++								}
++								return true;
++							}
+ 							if (sync_st.save_replay) {
+ 								size_t t = r.tell();
+ 								size_t n = r.left();
+@@ -838,7 +909,7 @@ struct sync_functions: action_functions {
+ 							}
+ 							funcs.read_action(client->player_slot, r);
+ 							if (st.players.at(client->player_slot).controller != player_t::controller_occupied) {
+-								if (client != sync_st.local_client) this->kill_client(client);
++								if (client != sync_st.local_client) this->kill_client(client, false, "controller_not_occupied_after_action", sync_message_id);
+ 								else this->clear_scheduled_actions(client);
+ 								return false;
+ 							}
+@@ -917,7 +988,7 @@ struct sync_functions: action_functions {
+ 						}
+ 						break;
+ 					case sync_messages::id_leave_game:
+-						if (client != sync_st.local_client) this->kill_client(client);
++						if (client != sync_st.local_client) this->kill_client(client, false, "pregame_leave_message");
+ 						else this->clear_scheduled_actions(client);
+ 						return false;
+ 					default: error("unknown pre game message id %d", id);
+@@ -972,11 +1043,11 @@ struct sync_functions: action_functions {
+ 					}
+ 					return false;
+ 				};
+-				bool timed_out = false;
+-				server.set_timeout(std::chrono::milliseconds(50), [&]{
+-					timed_out = true;
++				auto timed_out = std::make_shared<bool>(false);
++				server.set_timeout(std::chrono::milliseconds(50), [timed_out]{
++					*timed_out = true;
+ 				});
+-				while (!any_scheduled_actions() && !timed_out) {
++				while (!any_scheduled_actions() && !*timed_out) {
+ 					server.run_one(std::bind(&syncer_t::on_new_client, this, std::placeholders::_1));
+ 				}
+ 				if (!pred()) {
+@@ -996,17 +1067,17 @@ struct sync_functions: action_functions {
+ 		}
+ 
+ 		void final_sync() {
+-			bool timed_out = false;
+-			server.set_timeout(std::chrono::milliseconds(250), [&]{
+-				timed_out = true;
++			auto timed_out = std::make_shared<bool>(false);
++			server.set_timeout(std::chrono::milliseconds(250), [timed_out]{
++				*timed_out = true;
+ 			});
+-			while (!sync_st.local_client->scheduled_actions.empty() && !timed_out) {
++			while (!sync_st.local_client->scheduled_actions.empty() && !*timed_out) {
+ 				sync_next_frame();
+ 				server.poll(std::bind(&syncer_t::on_new_client, this, std::placeholders::_1));
+-				while (!all_clients_in_sync() && !timed_out) {
++				while (!all_clients_in_sync() && !*timed_out) {
+ 					server.run_one(std::bind(&syncer_t::on_new_client, this, std::placeholders::_1));
+ 				}
+-				if (!timed_out) process_messages();
++				if (!*timed_out) process_messages();
+ 			}
+ 		}
+ 
+diff --git a/sync_server_asio_socket.h b/sync_server_asio_socket.h
+index 3078078..808aef0 100644
+--- a/sync_server_asio_socket.h
++++ b/sync_server_asio_socket.h
+@@ -23,7 +23,7 @@ namespace bwgame {
+ 
+ template<typename socket_T>
+ struct sync_server_asio_socket {
+-	
++	bool shutting_down = false;
+ 	asio::io_service io_service;
+ 	asio::io_service::work work{io_service};
+ 	asio::steady_timer timer{io_service};
+@@ -31,15 +31,18 @@ struct sync_server_asio_socket {
+ 	template<typename T, typename release_F>
+ 	struct async_handle_t {
+ 		T* obj;
++		bool* shutting_down;
+ 		release_F release_f;
+-		async_handle_t(T* obj, release_F&& release_f) : obj(obj), release_f(release_f) {
++		async_handle_t(T* obj, bool* shutting_down, release_F&& release_f)
++			: obj(obj), shutting_down(shutting_down), release_f(release_f) {
+ 			++obj->async_count;
+ 		}
+ 		~async_handle_t() {
+-			if (!--obj->async_count) release_f(obj);
++			if (!*shutting_down && !--obj->async_count) release_f(obj);
+ 		}
+-		async_handle_t(const async_handle_t& n) : obj(n.obj), release_f(n.release_f) {
+-			++obj->async_count;
++		async_handle_t(const async_handle_t& n)
++			: obj(n.obj), shutting_down(n.shutting_down), release_f(n.release_f) {
++			if (!*shutting_down) ++obj->async_count;
+ 		}
+ 		operator T*() const {
+ 			return obj;
+@@ -50,7 +53,11 @@ struct sync_server_asio_socket {
+ 	};
+ 	template<typename T, typename release_F>
+ 	async_handle_t<T, release_F> async_handle(T* obj, release_F&&f) {
+-		return async_handle_t<T, release_F>(obj, std::forward<release_F>(f));
++		return async_handle_t<T, release_F>(obj, &shutting_down, std::forward<release_F>(f));
++	}
++
++	~sync_server_asio_socket() {
++		shutting_down = true;
+ 	}
+ 	
+ 	const size_t recv_size = 0x1000;

@@ -378,6 +378,107 @@
       "run_ids": [
         "20260920T050142-3662b2986e1a"
       ]
+    },
+    {
+      "id": "local-calibration-v1",
+      "title": "Calibrate a local league on two new maps",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Five exact build/race configurations complete twelve clean comparisons and form a connected graph on two previously unused maps.",
+      "notes": "All twelve attempted; nine clean and three conflicting-winner outcomes. All24 replays parse and match owner frames. Local estimates retain broad model-dependent intervals and prior sensitivity.",
+      "conclusion": "The clean-cohort gate failed. Show the nine reviewed games as a partial uncalibrated league; investigate McRave\u2013Stardust terminal integrity and McRave losses on Heartbreak Ridge. No promotion or BASIL estimate.",
+      "evidence_run_ids": [
+        "20260920T055717-7842246af878",
+        "20260920T055717-5eafb5ffe760",
+        "20260920T055755-fa9bfeecf7e3",
+        "20260920T055806-9849fdd619bb",
+        "20260920T055957-9180cc81d9d6",
+        "20260920T055957-dbc37782f33c",
+        "20260920T060001-8170b3b9c82a",
+        "20260920T060003-99301845c9b1",
+        "20260920T060306-47ba9d7473b9",
+        "20260920T060306-9cf5c734d9b3",
+        "20260920T060312-129fdb979771",
+        "20260920T060313-04864e92d9bc"
+      ]
+    },
+    {
+      "id": "local-calibration-v1-stardust",
+      "title": "Local calibration: Stardust comparisons",
+      "date": "2026-09-20",
+      "status": "completed",
+      "notes": "Part of the preregistered twelve-game local-calibration-v1 cohort. See the parent evaluation for the decision and uncertainty.",
+      "conclusion": "Included only after per-game review; failures remain unscored. This sub-batch alone does not promote a bot."
+    },
+    {
+      "id": "local-calibration-v1-uab-t",
+      "title": "Local calibration: UAlberta comparisons",
+      "date": "2026-09-20",
+      "status": "completed",
+      "notes": "Part of the preregistered twelve-game local-calibration-v1 cohort. See the parent evaluation for the decision and uncertainty.",
+      "conclusion": "Included only after per-game review; failures remain unscored. This sub-batch alone does not promote a bot."
+    },
+    {
+      "id": "local-calibration-v1-mcrave",
+      "title": "Local calibration: McRave comparisons",
+      "date": "2026-09-20",
+      "status": "completed",
+      "notes": "Part of the preregistered twelve-game local-calibration-v1 cohort. See the parent evaluation for the decision and uncertainty.",
+      "conclusion": "Included only after per-game review; failures remain unscored. This sub-batch alone does not promote a bot."
+    },
+    {
+      "id": "kestrel-smoke-v0",
+      "title": "First native game for Kestrel, our original bot",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Kestrel completes a real headless match and demonstrates economy, production, scouting and combat.",
+      "notes": "Both processes exited cleanly and both replays parsed. Kestrel lost to WorkerRush; repeated building commands and no trained combat unit failed the lifecycle gate.",
+      "conclusion": "Keep the first replay and fix pending construction management before further strength evaluation. A diagnostic-fixture loss is not a calibrated rating.",
+      "evidence_run_ids": [
+        "20260920T060144-b9ed2a9e5aad"
+      ]
+    },
+    {
+      "id": "kestrel-build-reservation-v2",
+      "title": "Kestrel completes its production and combat lifecycle",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Preserving the pending builder allows the original lifecycle to complete with at most 12 pylon/gateway build commands.",
+      "notes": "Kestrel won its WorkerRush diagnostic smoke. Replay and telemetry show 27 probes,5 pylons,4 gateways,9 zealots and 2 dragoons at peak; both replays parse and terminal results agree.",
+      "conclusion": "The lifecycle passed, but 16 build commands exceed the registered 12-command ceiling. Retain as the first working lifecycle reference; continue command management. This fixture is not a rating anchor.",
+      "evidence_run_ids": [
+        "20260920T060713-1258ac57a72c"
+      ]
+    },
+    {
+      "id": "kestrel-benchmark-probe-v4",
+      "title": "Kestrel faces ZZZK and UAlberta",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "The original bot completes two benchmark games with plausible production, fewer rejected commands and at least 384 durablefps.",
+      "notes": "Both games completed with opposing outcomes and parsed replays; Kestrel lost both. ZZZK:2557fps and 18% commands rejected. UAlberta:3287fps and 71% rejected;16 pylon/gateway orders.",
+      "conclusion": "Compatibility and lifecycle passed, but the command-quality gate failed. Fix repeated attack requests before expanding the strength cohort. Two losses do not provide a calibrated Elo.",
+      "evidence_run_ids": [
+        "20260920T061023-430740c71f57",
+        "20260920T061035-54dd2cefee96"
+      ]
+    },
+    {
+      "id": "mcrave-path-regeneration-v1",
+      "title": "Measure repeated McRave path searches",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "ADOPT",
+      "hypothesis": "A bounded real-game diagnostic identifies a directly observed regeneration case representing at least 20% and 100 generated paths for a semantics-preserving shadow comparison.",
+      "notes": "Support generated 24,676 JPS results;23,795 were unreachable. Combat march generated 36,180 and retreat 33,569. Match ended cleanly with two retained replays.",
+      "conclusion": "Adopt the next diagnostic step only: test fresh per-search JPS callback memoization and count cheap rejection separately. No caching across frames, speed claim or bot promotion.",
+      "evidence_run_ids": [
+        "20260920T060444-344951b48e0f"
+      ]
     }
   ]
 }

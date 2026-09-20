@@ -1,0 +1,202 @@
+--- a/bots/kestrel/Kestrel.cpp
++++ b/bots/kestrel/Kestrel.cpp
+@@ -6,7 +6,6 @@
+ #include <ctime>
+ #include <fstream>
+ #include <limits>
+-#include <unordered_map>
+ #include <vector>
+ 
+ #ifdef _WIN32
+@@ -26,21 +25,6 @@
+     int rejected_ = 0;
+     int latency_ = -1;
+     int nextStartIndex_ = 0;
+-    BWAPI::UnitType pendingBuildType_ = BWAPI::UnitTypes::None;
+-    int pendingBuildBaseline_ = 0;
+-    int pendingBuildFrame_ = -10000;
+-    int pendingBuildFirstFrame_ = -10000;
+-    int maxProbes_ = 0;
+-    int maxPylons_ = 0;
+-    int maxGateways_ = 0;
+-    int maxZealots_ = 0;
+-    int maxDragoons_ = 0;
+-    struct AttackRequest {
+-        int targetId;
+-        int frame;
+-        bool accepted;
+-    };
+-    std::unordered_map<int, AttackRequest> attackRequests_;
+     double callbackCpuSeconds_ = 0.0;
+     std::vector<double> callbackMs_;
+ 
+@@ -76,11 +60,9 @@
+             << ",\"callback_cpu_seconds\":" << callbackCpuSeconds_
+             << ",\"callback_wall_p99_ms\":" << p99
+             << ",\"callback_wall_max_ms\":" << maximum
+-            << ",\"max_probes\":" << maxProbes_
+-            << ",\"max_pylons\":" << maxPylons_
+-            << ",\"max_gateways\":" << maxGateways_
+-            << ",\"max_zealots\":" << maxZealots_
+-            << ",\"max_dragoons\":" << maxDragoons_
++            << ",\"probes\":" << game.self()->allUnitCount(BWAPI::UnitTypes::Protoss_Probe)
++            << ",\"zealots\":" << game.self()->allUnitCount(BWAPI::UnitTypes::Protoss_Zealot)
++            << ",\"dragoons\":" << game.self()->allUnitCount(BWAPI::UnitTypes::Protoss_Dragoon)
+             << "}\n";
+         out.close();
+         if (out) {
+@@ -111,46 +93,17 @@
+                              : BWAPI::Broodwar->self()->allUnitCount(type);
+     }
+ 
+-    bool constructionPending() {
+-        if (pendingBuildType_ == BWAPI::UnitTypes::None) return false;
+-        if (count(pendingBuildType_) > pendingBuildBaseline_) {
+-            pendingBuildType_ = BWAPI::UnitTypes::None;
+-            builderId_ = -1;
+-            return false;
+-        }
+-        const int frame = BWAPI::Broodwar->getFrameCount();
+-        if (frame - pendingBuildFrame_ < 240) return true;
+-        BWAPI::Unit builder = unitById(builderId_);
+-        if (builder && frame - pendingBuildFirstFrame_ < 480 &&
+-            (builder->isConstructing() || builder->getOrder() == BWAPI::Orders::PlaceBuilding)) {
+-            pendingBuildFrame_ = frame;
+-            return true;
+-        }
+-        return false;
+-    }
+-
+     bool build(BWAPI::UnitType type, BWAPI::TilePosition near) {
+-        const int frame = BWAPI::Broodwar->getFrameCount();
+-        if (constructionPending()) return false;
+         BWAPI::Unit worker = unitById(builderId_);
+         if (!worker || worker->isConstructing() || worker->getID() == scoutId_) worker = availableProbe();
+         if (!worker) return false;
+         const BWAPI::TilePosition tile = BWAPI::Broodwar->getBuildLocation(type, near, 32, false);
+         if (!tile.isValid()) return false;
+         builderId_ = worker->getID();
+-        const bool accepted = issue(worker->build(type, tile));
+-        if (accepted) {
+-            pendingBuildType_ = type;
+-            pendingBuildBaseline_ = count(type);
+-            pendingBuildFrame_ = frame;
+-            pendingBuildFirstFrame_ = frame;
+-        }
+-        return accepted;
++        return issue(worker->build(type, tile));
+     }
+ 
+     bool buildAssimilator() {
+-        const int frame = BWAPI::Broodwar->getFrameCount();
+-        if (constructionPending()) return false;
+         BWAPI::Unit worker = availableProbe();
+         if (!worker) return false;
+         BWAPI::Unit best = nullptr;
+@@ -163,14 +116,7 @@
+         }
+         if (!best || bestDistance > 400) return false;
+         builderId_ = worker->getID();
+-        const bool accepted = issue(worker->build(BWAPI::UnitTypes::Protoss_Assimilator, best->getTilePosition()));
+-        if (accepted) {
+-            pendingBuildType_ = BWAPI::UnitTypes::Protoss_Assimilator;
+-            pendingBuildBaseline_ = count(pendingBuildType_);
+-            pendingBuildFrame_ = frame;
+-            pendingBuildFirstFrame_ = frame;
+-        }
+-        return accepted;
++        return issue(worker->build(BWAPI::UnitTypes::Protoss_Assimilator, best->getTilePosition()));
+     }
+ 
+     void trainUnits() {
+@@ -196,10 +142,7 @@
+         const BWAPI::TilePosition home = self->getStartLocation();
+         const int supplyUsed = self->supplyUsed();
+         const int supplyTotal = self->supplyTotal();
+-        if (constructionPending()) return;
+-        const int pylons = count(BWAPI::UnitTypes::Protoss_Pylon);
+-        const int completedPylons = count(BWAPI::UnitTypes::Protoss_Pylon, true);
+-        if (supplyTotal - supplyUsed <= 4 && pylons < 5 && pylons == completedPylons && self->minerals() >= 100) {
++        if (supplyTotal - supplyUsed <= 4 && count(BWAPI::UnitTypes::Protoss_Pylon) < 5 && self->minerals() >= 100) {
+             if (build(BWAPI::UnitTypes::Protoss_Pylon, home)) return;
+         }
+         const int gateways = count(BWAPI::UnitTypes::Protoss_Gateway);
+@@ -229,7 +172,7 @@
+         }
+         for (auto worker : sorted(self->getUnits())) {
+             if (!worker->exists() || !worker->isCompleted() || worker->getType() != BWAPI::UnitTypes::Protoss_Probe) continue;
+-            if (worker->getID() == scoutId_ || worker->getID() == builderId_ || worker->isConstructing() || worker->isGatheringMinerals() || worker->isGatheringGas()) continue;
++            if (worker->getID() == scoutId_ || worker->isConstructing() || worker->isGatheringMinerals() || worker->isGatheringGas()) continue;
+             BWAPI::Unit target = nullptr;
+             int best = std::numeric_limits<int>::max();
+             const bool wantGas = count(BWAPI::UnitTypes::Protoss_Assimilator, true) > 0 && self->gas() < 250 && gasWorkers < 3;
+@@ -244,14 +187,14 @@
+         }
+     }
+ 
+-    BWAPI::Unit visibleEnemyTarget(BWAPI::Unit from) const {
+-        BWAPI::Unit target = nullptr;
++    BWAPI::Position visibleEnemyTarget(BWAPI::Unit from) const {
++        BWAPI::Position target = BWAPI::Positions::None;
+         int best = std::numeric_limits<int>::max();
+         for (auto enemy : BWAPI::Broodwar->getAllUnits()) {
+             if (!enemy->exists() || !enemy->isVisible() || !BWAPI::Broodwar->self()->isEnemy(enemy->getPlayer())) continue;
+             if (enemy->isFlying() || !enemy->isDetected()) continue;
+             const int distance = from->getDistance(enemy);
+-            if (distance < best) { best = distance; target = enemy; }
++            if (distance < best) { best = distance; target = enemy->getPosition(); }
+         }
+         return target;
+     }
+@@ -281,13 +224,8 @@
+     void scoutAndFight() {
+         const int army = count(BWAPI::UnitTypes::Protoss_Zealot, true) + count(BWAPI::UnitTypes::Protoss_Dragoon, true);
+         if (scoutId_ < 0 && count(BWAPI::UnitTypes::Protoss_Probe) >= 9) {
+-            for (auto probe : sorted(BWAPI::Broodwar->self()->getUnits())) {
+-                if (probe->exists() && probe->isCompleted() && probe->getType() == BWAPI::UnitTypes::Protoss_Probe &&
+-                    probe->getID() != builderId_ && !probe->isConstructing()) {
+-                    scoutId_ = probe->getID();
+-                    break;
+-                }
+-            }
++            BWAPI::Unit probe = availableProbe(true);
++            if (probe) scoutId_ = probe->getID();
+         }
+         for (auto unit : sorted(BWAPI::Broodwar->self()->getUnits())) {
+             if (!unit->exists() || !unit->isCompleted()) continue;
+@@ -295,21 +233,8 @@
+             const bool scout = unit->getID() == scoutId_;
+             if (!combat && !scout) continue;
+             if (unit->isAttacking() && unit->getOrderTarget()) continue;
+-            BWAPI::Unit enemy = visibleEnemyTarget(unit);
+-            if (enemy) {
+-                const int frame = BWAPI::Broodwar->getFrameCount();
+-                const auto previous = attackRequests_.find(unit->getID());
+-                const bool targetChanged = previous == attackRequests_.end() || previous->second.targetId != enemy->getID();
+-                const int retryFrames = previous != attackRequests_.end() && previous->second.accepted ? 96 : 24;
+-                if (targetChanged || frame - previous->second.frame >= retryFrames) {
+-                    const bool accepted = issue(unit->attack(enemy));
+-                    attackRequests_[unit->getID()] = {enemy->getID(), frame, accepted};
+-                }
+-                continue;
+-            }
+-            attackRequests_.erase(unit->getID());
+-            BWAPI::Position target = BWAPI::Positions::None;
+-            if (scout || army >= 4) target = unexploredStart(unit);
++            BWAPI::Position target = visibleEnemyTarget(unit);
++            if (!target.isValid() && (scout || army >= 4)) target = unexploredStart(unit);
+             if (target.isValid() && unit->getTargetPosition() != target) issue(unit->attack(target));
+         }
+     }
+@@ -317,11 +242,6 @@
+     void play() {
+         auto& game = *BWAPI::BroodwarPtr;
+         if (!game.self() || game.isReplay()) return;
+-        maxProbes_ = std::max(maxProbes_, count(BWAPI::UnitTypes::Protoss_Probe));
+-        maxPylons_ = std::max(maxPylons_, count(BWAPI::UnitTypes::Protoss_Pylon));
+-        maxGateways_ = std::max(maxGateways_, count(BWAPI::UnitTypes::Protoss_Gateway));
+-        maxZealots_ = std::max(maxZealots_, count(BWAPI::UnitTypes::Protoss_Zealot));
+-        maxDragoons_ = std::max(maxDragoons_, count(BWAPI::UnitTypes::Protoss_Dragoon));
+         const int frame = game.getFrameCount();
+         const int cadence = std::max(6, game.getLatencyFrames());
+         if (frame % cadence != 0) return;

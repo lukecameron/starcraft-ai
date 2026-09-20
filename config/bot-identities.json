@@ -51,6 +51,9 @@
         },
         "04521befa41bb3873783b215493abf3a071414d2a5315cdea68fc7a67f4415ec": {
           "origin": "fork"
+        },
+        "b31bb168c91830d6fdef76b91136c0ff0b8337ce5713173edbbb9d0ae0d6fe99": {
+          "origin": "fork"
         }
       }
     },
@@ -109,6 +112,15 @@
       "author": "Starcraft AI project",
       "author_url": null,
       "source_url": "https://github.com/lukecameron/starcraft-ai"
+    },
+    "Kestrel.dylib": {
+      "name": "Kestrel",
+      "ownership": "project",
+      "origin": "original",
+      "upstream_name": null,
+      "author": "Luke Cameron",
+      "author_url": "https://github.com/lukecameron",
+      "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
     }
   }
 }

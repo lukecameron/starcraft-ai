@@ -5,6 +5,11 @@ import argparse, json, math, shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
+try:
+    from .local_ratings import build_league
+except ImportError:
+    from local_ratings import build_league
+
 BOT_NAMES={"WorkerRush.dylib":"WorkerRush","Idle.dylib":"Idle","McRave.dylib":"McRave","ZZZKBot.dylib":"ZZZKBot","UAlbertaBot.dylib":"UAlbertaBot"}
 EXPERIMENT_DECISIONS={"ADOPT","REJECT","INCONCLUSIVE"}
 
@@ -137,7 +142,7 @@ def export(root, output):
     opponents=load_json(root/"config/opponents.json",{"opponents":[],"provisional_buckets":[]}); ratings=[]
     for item in opponents.get("opponents",[]) if isinstance(opponents,dict) else []:
         if isinstance(item,dict):
-            r=item.get("ratings",{}); obs=item.get("basil_observation",{}); ratings.append({"id":item.get("id"),"name":item.get("display_name"),"race":(item.get("races") or [None])[0],"rating":r.get("basil_elo"),"observed":r.get("basil_observed"),"observed_timestamp":obs.get("lastUpdated"),"source_url":item.get("source_url"),"author":item.get("author"),"author_url":item.get("author_url"),"ownership":"upstream","origin":"upstream","license":item.get("license"),"version":item.get("version",{}),"status":item.get("openbw_status")})
+            r=item.get("ratings",{}); obs=item.get("basil_observation",{}); ratings.append({"id":item.get("id"),"name":item.get("display_name"),"race":(item.get("races") or [None])[0],"rating":r.get("basil_elo"),"observed":r.get("basil_observed"),"observed_timestamp":obs.get("lastUpdated"),"source_url":item.get("source_url"),"author":item.get("author"),"author_url":item.get("author_url"),"ownership":"upstream","origin":"upstream","license":item.get("license"),"version":item.get("version",{}),"status":item.get("openbw_status"),"played":obs.get("played"),"won":obs.get("won"),"lost":obs.get("lost"),"crashed":obs.get("crashed")})
     replay_dir=output/"replays"
     for run in runs:
         for replay in run.get("replays",[]) if isinstance(run,dict) else []:
@@ -147,6 +152,7 @@ def export(root, output):
                 shutil.copyfile(source_path,replay_dir/target); replay["replay_path"]="replays/"+target
     current_basil=[{"id":x.get("id"),"name":x.get("name"),"date":x.get("observed"),"rating":x.get("rating"),"source_url":x.get("source_url")} for x in ratings if x.get("rating") is not None]
     snapshot={"schema_version":1,"generated_at":datetime.now(timezone.utc).isoformat(timespec="seconds"),"runs":runs,"experiments":experiments,"ratings":ratings or (fallback.get("ratings",[]) if isinstance(fallback,dict) else []),"rating_buckets":opponents.get("provisional_buckets",[]) if isinstance(opponents,dict) else (fallback.get("rating_buckets",[]) if isinstance(fallback,dict) else []),"basil_history":append_unique(fallback.get("basil_history",[]) if isinstance(fallback,dict) else [],current_basil,("id","date","rating")),"local_elo_history":append_unique(fallback.get("local_elo_history",[]) if isinstance(fallback,dict) else [],local_history(artifact_experiments),("id","date","rating"))}
+    snapshot["local_league"]=build_league(root,runs,fallback.get("local_league",{}) if isinstance(fallback,dict) else {})
     serialized=json.dumps(snapshot,indent=2,sort_keys=True)+"\n"; (output/"data.json").write_text(serialized,encoding="utf-8")
     if has_raw_artifacts: (root/"dashboard/data.json").write_text(serialized,encoding="utf-8")
     shutil.copyfile(root/"dashboard/index.html",output/"index.html"); return snapshot

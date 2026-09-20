@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "experiment_id": "openbw-terminal-drain-control-mcrave-v1",
+  "title": "Terminal drain control: mcrave",
+  "hypothesis": "Keeping terminal peers connected until explicit leave avoids reciprocal winner corruption in the four historical target scenarios.",
+  "stop_condition": "One registered control, no retry.",
+  "purpose": "Engine correctness repair validation",
+  "wall_timeout_seconds": 180,
+  "candidate": {
+    "name": "McRave memo fork",
+    "race": "Zerg",
+    "path": "artifacts/builds/04521befa41bb3873783b215493abf3a071414d2a5315cdea68fc7a67f4415ec/mcrave-as-memo-candidate/McRave.dylib",
+    "sha256": "04521befa41bb3873783b215493abf3a071414d2a5315cdea68fc7a67f4415ec"
+  },
+  "opponents": {
+    "zzzk": {
+      "name": "ZZZKBot",
+      "race": "Zerg",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+    }
+  },
+  "games": [
+    {
+      "opponent": "zzzk",
+      "map": "sscai/(2)Benzene.scx",
+      "candidate_player": 1,
+      "scenario_seed": 1001,
+      "candidate_bot_seed": 1001
+    }
+  ],
+  "execution": {
+    "concurrency": 2,
+    "learning_state": "fresh isolated read/write",
+    "performance_scope": "observational engine correctness test"
+  }
+}
