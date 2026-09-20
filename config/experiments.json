@@ -1636,6 +1636,77 @@
         "author": "Luke Cameron",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
       }
+    },
+    {
+      "id": "kestrel-hillclimb-v19",
+      "title": "Kestrel v40 nearest-Gateway-Probe screen \u2014 infrastructure invalid",
+      "date": "2026-09-21",
+      "status": "completed",
+      "decision": "INCONCLUSIVE",
+      "hypothesis": "Nearest eligible Probe selection for the first two Gateways removes slot-sensitive builder travel delay and yields two completed local defenders at early Zerg pressure without regressing v38 behavior.",
+      "notes": "Five launchers started concurrently inside a restricted socket environment and exited in 0.21-0.23 seconds with Error: connect: No such file or directory. No replay, result metadata, logical frame or gameplay observation exists; rows 6-10 were skipped by the fixed infrastructure stop.",
+      "conclusion": "Inconclusive infrastructure result. Preserve all five attempts and do not retry, reseed, replace or interpret them as gameplay. The hypothesis moved to a fresh preregistered v20 cohort requiring unsandboxed local-socket execution.",
+      "evidence_run_ids": [
+        "20260920T195749-c35a6e7e8bee",
+        "20260920T195749-19b55228cc0b",
+        "20260920T195749-7cf1dc87e980",
+        "20260920T195749-8cba5d75f4e7",
+        "20260920T195749-7e23b02145ce"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v19",
+      "candidate_binary_sha256": "adac4ff4dc5aea71b94a5a12d13d62f964fe56a71ca3fd5141f24d0094401012",
+      "plan_sha256": "4e4e24d05914ed9182aa7647489a3e60566f6c7e01041921b175a3b5ec2ea09f",
+      "registered_schedule_sha256": "f4ba8bc3a42dc3b6a072e4295a217ae823a42ca05bce7695f4a827b5277913de",
+      "schedule_sha256": "4e645cc0c9cf3946ada05fccc0efcb9ba63236df202053680987f6b2f6229f99",
+      "ledger_sha256": "f58c735255d12893edf2ef6c4eeae277b41075fb941e8df9917654d486f31577",
+      "result_sha256": "ffa59ff41d5cd93eba4fce937d8b0da85ca105c79601fee27b53aad90b4a15bf",
+      "result_path": "docs/evaluations/kestrel-hillclimb-v19/RESULT.md",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "author": "Luke Cameron",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      }
+    },
+    {
+      "id": "kestrel-hillclimb-v20",
+      "title": "Kestrel v40 nearest-Gateway-Probe screen",
+      "date": "2026-09-21",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Nearest eligible Probe selection for the first two Gateways removes slot-sensitive builder travel delay and yields two completed local defenders at early Zerg pressure without regressing v38 behavior.",
+      "notes": "Ten fixed attempts produced three wins, six losses and one UAlbertaBot-Terran timeout. The nearest-builder proof passed all 20 selection rows, all 18 valid-row replay copies passed integrity review, and Kestrel went 3-1 against ZZZKBot. Two qualifying ZZZK lanes still had only one completed local and global combat unit at first pressure.",
+      "conclusion": "Rejected under the registered observed-regression clause: Destination P2 and Heartbreak P2 both failed the two-combat-unit opening gate. The separate timeout also prevents a complete ten-terminal screen. v40 does not advance and Elo remains unchanged.",
+      "evidence_run_ids": [
+        "20260920T200634-c60da2d08109",
+        "20260920T200634-d58af69191c9",
+        "20260920T200634-f734fb07c566",
+        "20260920T200634-92030938174c",
+        "20260920T200634-6d5a07e3abff",
+        "20260920T200636-ee4312ffeba2",
+        "20260920T200638-6b510f61ad96",
+        "20260920T200640-996559ceb400",
+        "20260920T200641-b20bf4a0a4c9",
+        "20260920T200646-2d259497200f"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v20",
+      "candidate_binary_sha256": "adac4ff4dc5aea71b94a5a12d13d62f964fe56a71ca3fd5141f24d0094401012",
+      "candidate_source_sha256": "89dde1b4dd26f3ba890e7b0f08836c5b9caef36a9799d8b744e2b01ff2f7c112",
+      "candidate_source_combo_sha256": "37be433c0f3e081951b77a5448ed256151a0b97e043601cb21de6ef8d23c3fc4",
+      "candidate_patch_sha256": "9ade3388f07b3289f9f12cd0a468bd6b12d0a3c064d0e166a532111f8cb5c4bf",
+      "plan_sha256": "619f1430f8d0b0c1f6b014e1085d045a38d08914cea098894a867bd5008e7a6a",
+      "registered_schedule_sha256": "b5d3217530ee43a64278c6b08f75d4bc118fa9076d44351702e4e4604bc46874",
+      "schedule_sha256": "f2dba1f53bf93dafa69bcd957ccf5093424f74aacc5b155c139503de8415e4d9",
+      "ledger_sha256": "3ed14b60927b63b64752d1bbdc2253d326cdce07e4cae228dfd26d69a8af9c4a",
+      "scorecard_sha256": "44093d3de31f1aa783482cdbf0ae4e2e8d633eef40722d73a1bb06fc4e234397",
+      "result_sha256": "e5180707ed5f55386db81c3dce41bf61194d12ea6cdc2180dfef5454276c36c9",
+      "result_path": "docs/evaluations/kestrel-hillclimb-v20/RESULT.md",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "author": "Luke Cameron",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      }
     }
   ]
 }

@@ -19,7 +19,7 @@ The runner-preserved schedule copy hashes to
 The runner manifest hashes to
 `f58c735255d12893edf2ef6c4eeae277b41075fb941e8df9917654d486f31577`.
 
-All 25 frozen identity checks pass: the v40 candidate, four opponent binaries,
+All 24 frozen identity checks pass: the v40 candidate, four opponent binaries,
 launcher and sidecar, engine library, three runtime MPQs, four maps, provenance
 registry, two patches, build sidecar, runner scripts, and plan hash all match
 the registered schedule. The candidate binary is
