@@ -121,7 +121,7 @@ class BatchLifecycleTests(unittest.TestCase):
                 from pathlib import Path
                 manifest = json.loads(Path(os.environ['EXPERIMENT_MANIFEST']).read_text())
                 Path(os.environ['EXPERIMENT_MANIFEST']).with_name('hook-observed.json').write_text(json.dumps({{
-                    'status': manifest['status'], 'decision': manifest['decision'], 'cwd': os.getcwd()
+                    'status': manifest['status'], 'runner_notes': manifest['runner_notes'], 'cwd': os.getcwd()
                 }}))
             """))
             (root / "publish.sh").chmod(0o755)
@@ -137,7 +137,8 @@ class BatchLifecycleTests(unittest.TestCase):
             self.assertEqual(manifest["publish_hook"]["return_code"], 0)
             observed = json.loads((root / "artifacts/experiments/test-batch/hook-observed.json").read_text())
             self.assertEqual(observed["status"], "completed")
-            self.assertIn("collect a larger comparison", observed["decision"])
+            self.assertIn("registered acceptance criteria", observed["runner_notes"])
+            self.assertNotIn("decision", manifest)
             self.assertEqual(observed["cwd"], str(ROOT))
             self.assertEqual(json.loads((root / "artifacts/experiments/test-batch/schedule.json").read_text()), json.loads(schedule.read_text()))
 

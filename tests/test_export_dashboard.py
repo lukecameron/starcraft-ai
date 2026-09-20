@@ -109,10 +109,29 @@ class ExportDashboardTest(unittest.TestCase):
             first = export(root, root / "one")
             second = export(root, root / "two")
             self.assertEqual(first["experiments"][0]["conclusion"], "c")
-            self.assertEqual(first["experiments"][0]["decision"], "c")
+            self.assertEqual(first["experiments"][0]["runner_notes"], "c")
+            self.assertNotIn("decision", first["experiments"][0])
             self.assertNotIn("secret", json.dumps(first))
             self.assertEqual(len(second["local_elo_history"]), 2)
             self.assertEqual(second["local_elo_history"][-1]["rating"], 42)
+
+    def test_runner_advice_preserves_reviewed_verdict_and_conclusion(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "dashboard").mkdir(); (root / "dashboard/index.html").write_text("ok")
+            (root / "config").mkdir()
+            reviewed = {"id": "cohort", "decision": "REJECT", "conclusion": "One crash fails the compatibility gate."}
+            (root / "config/experiments.json").write_text(json.dumps({"experiments": [reviewed]}))
+            artifact = root / "artifacts/experiments/cohort/manifest.json"; artifact.parent.mkdir(parents=True)
+            artifact.write_text(json.dumps({"experiment_id": "cohort", "status": "completed", "decision": "Investigate failures."}))
+            item = export(root, root / "out")["experiments"][0]
+            self.assertEqual(item["decision"], "REJECT")
+            self.assertEqual(item["conclusion"], reviewed["conclusion"])
+            self.assertEqual(item["status"], "completed")
+            # The published snapshot alone must retain the same verdict on Pages.
+            (root / "dashboard/data.json").write_text(json.dumps({"experiments": [item]}))
+            artifact.unlink()
+            self.assertEqual(export(root, root / "out")["experiments"][0], item)
 
     def test_absolutize_replays_preserves_existing_immutable_urls(self):
         with tempfile.TemporaryDirectory() as tmp:

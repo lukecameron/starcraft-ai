@@ -274,6 +274,53 @@
         "20260920T041950-ef7fd1a4b7a0",
         "20260920T042014-eaa6bbea4b79"
       ]
+    },
+    {
+      "id": "mcrave-as-bounds-shadow-v1",
+      "title": "Compare A* bounds checks on identical inputs",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "Caching map dimensions within each A* search preserves reachability, distance, ordered path tiles and callback counts.",
+      "notes": "One registered game compared 13,439 calls, including 8,509 valid flying searches, 4,928 valid ground searches and two invalid-endpoint probes. There were zero mismatches. Independent source review passed. No naturally failed valid search occurred.",
+      "conclusion": "Build a production candidate for a separate throughput evaluation. The shadow check establishes equivalence for observed calls, not a speed or strength improvement.",
+      "decision": "ADOPT",
+      "evidence_run_ids": [
+        "20260920T042625-18adf20f4372"
+      ]
+    },
+    {
+      "id": "quick-stardust-cohort-v1",
+      "title": "Stardust cross-race compatibility check",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "The native Stardust port completes four cross-race games with plausible production and at least 384 durable frames per second in each game.",
+      "notes": "Three wins from three clean games, all above 1,700 fps. The first game crashed in Stardust mining optimization; it remains a failure. Replay commands show Protoss worker, building and combat production in every game. No state-hash mismatch was logged.",
+      "conclusion": "Repair the mining-optimizer crash before accepting Stardust as a reliable opponent. These four games do not establish local Elo or BASIL-equivalent strength.",
+      "evidence_run_ids": [],
+      "decision": "REJECT"
+    },
+    {
+      "id": "quick-mcrave-as-bounds-v1",
+      "title": "McRave A* bounds throughput check",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "The frozen A* dimension-snapshot candidate completes ten fixed games cleanly with at least 384 durable logical frames per wall second in every game and in aggregate.",
+      "notes": "Ten wins from ten clean games, with opposing results, no state-hash mismatch and 20 archived replays. Games 5\u201310 missed the 384 fps floor; aggregate throughput was 373.9 fps. The fixed cohort is uncalibrated and does not establish a strength improvement.",
+      "conclusion": "The registered performance gate failed. Preserve this candidate as an experiment and investigate repeated pathfinding callback work before another throughput check.",
+      "evidence_run_ids": [],
+      "decision": "REJECT"
+    },
+    {
+      "id": "stardust-emptytimer-diagnostic-v1",
+      "title": "Diagnose Stardust mining timer exhaustion",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "Excluding the only remaining timer value leaves an empty prediction set that the mining forecast cannot safely consume.",
+      "notes": "One preregistered probe stopped deliberately at frame 765 after observing the set change from {0} to empty. The original crash and this diagnostic attempt remain archived.",
+      "conclusion": "The empty prediction set is confirmed. Test a conservative fallback in a separate fork; this deliberate abort provides no strength result.",
+      "run_ids": [
+        "20260920T044040-2281fd96a9f4"
+      ]
     }
   ]
 }

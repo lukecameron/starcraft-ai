@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "experiment_id": "quick-mcrave-as-bounds-v1",
+  "hypothesis": "The frozen A* dimension-snapshot candidate completes ten fixed games cleanly with at least 384 durable logical frames per wall second in every game and in aggregate.",
+  "stop_condition": "Exactly ten registered games unless interrupted or two consecutive infrastructure failures trigger the existing stop. Preserve all attempts. No replacements or adaptive seed selection.",
+  "purpose": "Engineering acceptance of equivalent A* bounds/index optimization; descriptive results only, no causal speed or strength claim",
+  "wall_timeout_seconds": 120,
+  "publish_hook": "scripts/publish_dashboard.sh",
+  "launcher": "artifacts/builds/27ea649cb3def9a724df077adaae3e62f16c9de8fbfbc9850ee485af5fbd88cb/openbw-kill-path-diagnostic/BWAPILauncher",
+  "library_path": "artifacts/builds/27ea649cb3def9a724df077adaae3e62f16c9de8fbfbc9850ee485af5fbd88cb/openbw-kill-path-diagnostic",
+  "game_data_dir": "third_party/game-data/runtime",
+  "candidate": {
+    "name": "McRave A* bounds candidate",
+    "race": "Zerg",
+    "sha256": "ddc0415a3312bcfbc94f1e0efebe28e3ea1f5a4db739a7ae666567bc89b36c7f"
+  },
+  "opponents": {
+    "zzzk-z": {
+      "name": "ZZZKBot",
+      "race": "Zerg",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+    },
+    "ualberta-p": {
+      "name": "UAlbertaBot-P",
+      "race": "Protoss",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+    },
+    "ualberta-t": {
+      "name": "UAlbertaBot-T",
+      "race": "Terran",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+    }
+  },
+  "games": [
+    {
+      "opponent": "zzzk-z",
+      "map": "sscai/(2)Benzene.scx",
+      "candidate_player": 1,
+      "scenario_seed": 1001,
+      "candidate_bot_seed": 1001
+    },
+    {
+      "opponent": "zzzk-z",
+      "map": "sscai/(2)Benzene.scx",
+      "candidate_player": 2,
+      "scenario_seed": 1001,
+      "candidate_bot_seed": 1001
+    },
+    {
+      "opponent": "zzzk-z",
+      "map": "sscai/(2)Destination.scx",
+      "candidate_player": 1,
+      "scenario_seed": 1002,
+      "candidate_bot_seed": 1002
+    },
+    {
+      "opponent": "zzzk-z",
+      "map": "sscai/(2)Destination.scx",
+      "candidate_player": 2,
+      "scenario_seed": 1002,
+      "candidate_bot_seed": 1002
+    },
+    {
+      "opponent": "ualberta-p",
+      "map": "sscai/(2)Benzene.scx",
+      "candidate_player": 1,
+      "scenario_seed": 2001,
+      "candidate_bot_seed": 2001
+    },
+    {
+      "opponent": "ualberta-p",
+      "map": "sscai/(2)Destination.scx",
+      "candidate_player": 2,
+      "scenario_seed": 2002,
+      "candidate_bot_seed": 2002
+    },
+    {
+      "opponent": "ualberta-p",
+      "map": "sscai/(2)Benzene.scx",
+      "candidate_player": 2,
+      "scenario_seed": 2003,
+      "candidate_bot_seed": 2003
+    },
+    {
+      "opponent": "ualberta-t",
+      "map": "sscai/(2)Destination.scx",
+      "candidate_player": 1,
+      "scenario_seed": 3001,
+      "candidate_bot_seed": 3001
+    },
+    {
+      "opponent": "ualberta-t",
+      "map": "sscai/(2)Benzene.scx",
+      "candidate_player": 1,
+      "scenario_seed": 3002,
+      "candidate_bot_seed": 3002
+    },
+    {
+      "opponent": "ualberta-t",
+      "map": "sscai/(2)Destination.scx",
+      "candidate_player": 2,
+      "scenario_seed": 3003,
+      "candidate_bot_seed": 3003
+    }
+  ],
+  "title": "McRave A* bounds throughput check",
+  "registered_at": "2026-09-20T04:32:26.763398+00:00",
+  "entry_condition": "The same-input A* shadow passed 13,439 calls with zero mismatches; root and independent source review passed.",
+  "engineering_acceptance": {
+    "clean_completions": 10,
+    "candidate_crashes": 0,
+    "timeouts": 0,
+    "durable_aggregate_fps_minimum": 384,
+    "durable_each_match_fps_minimum": 384,
+    "definition": "logical frame count divided by durable_completion_seconds, including both bots, engine, initialization and archive capture; aggregate uses sum(frames)/sum(durable seconds)",
+    "engine_hash_mismatches": 0
+  }
+}

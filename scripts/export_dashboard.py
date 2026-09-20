@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 BOT_NAMES={"WorkerRush.dylib":"WorkerRush","Idle.dylib":"Idle","McRave.dylib":"McRave","ZZZKBot.dylib":"ZZZKBot","UAlbertaBot.dylib":"UAlbertaBot"}
+EXPERIMENT_DECISIONS={"ADOPT","REJECT","INCONCLUSIVE"}
 
 def load_json(path, fallback):
     try: return json.loads(path.read_text(encoding="utf-8"))
@@ -56,14 +57,19 @@ def public_experiment(path, identities=None):
     source=load_json(path,{})
     if not isinstance(source,dict) or not source.get("experiment_id"): return {}
     result={"id":source["experiment_id"]}
-    for key in ("title","status","hypothesis","summary","started_at","finished_at","decision"):
+    for key in ("title","status","hypothesis","summary","started_at","finished_at","runner_notes"):
         if source.get(key) is not None and source.get(key) != "": result[key]=source[key]
+    decision=source.get("decision")
+    if isinstance(decision,str) and decision in EXPERIMENT_DECISIONS:
+        result["decision"]=decision
+    elif decision not in (None,""):
+        # Older runners put generic follow-up advice in this field. It is not
+        # an evaluation verdict and must not replace the reviewed conclusion.
+        result.setdefault("runner_notes",decision)
     if source.get("started_at"):
         result["date"]=str(source["started_at"])[:10]
     if source.get("conclusion") not in (None,""):
         result["conclusion"]=source["conclusion"]
-    elif source.get("decision") not in (None,""):
-        result["conclusion"]=source["decision"]
     games=[]
     for game in source.get("games",[]):
         if not isinstance(game,dict): continue
@@ -119,8 +125,15 @@ def export(root, output):
         if isinstance(experiment,dict) and experiment.get("id"): by_id[experiment["id"]]={**by_id.get(experiment["id"],{}),**experiment}
     for experiment in configured_experiments:
         if isinstance(experiment,dict) and experiment.get("id"): by_id[experiment["id"]]={**by_id.get(experiment["id"],{}),**experiment}
-    for experiment in artifact_experiments: by_id[experiment["id"]]={**by_id.get(experiment["id"],{}),**experiment}
+    for experiment in artifact_experiments:
+        merged={**by_id.get(experiment["id"],{}),**experiment}
+        if not merged.get("conclusion") and merged.get("runner_notes"):
+            merged["conclusion"]=merged["runner_notes"]
+        by_id[experiment["id"]]=merged
     experiments=list(by_id.values())
+    for experiment in experiments:
+        if experiment.get("decision") not in ("ADOPT","REJECT","INCONCLUSIVE"):
+            experiment.pop("decision",None)
     opponents=load_json(root/"config/opponents.json",{"opponents":[],"provisional_buckets":[]}); ratings=[]
     for item in opponents.get("opponents",[]) if isinstance(opponents,dict) else []:
         if isinstance(item,dict):

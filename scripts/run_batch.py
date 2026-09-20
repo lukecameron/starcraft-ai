@@ -367,7 +367,7 @@ def main():
         ledger["status"] = "completed"
     ledger["finished_at"] = utc_now()
     ledger["elapsed_seconds"] = time.monotonic() - batch_started
-    ledger["decision"] = "Investigate recorded failures and collect a larger comparison before any strategy-promotion decision."
+    ledger["runner_notes"] = "Results await evaluation against the registered acceptance criteria. No playing-strength promotion is implied."
     ledger["summary"] = summarize([r for r in records if "classification" in r], schedule["opponents"])
     atomic_json(manifest_path, ledger)
     hook = schedule.get("publish_hook")

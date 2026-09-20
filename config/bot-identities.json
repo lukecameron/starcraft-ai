@@ -39,6 +39,12 @@
         },
         "3b75098fa1b7460faad21d6f2a678c7d9fad09e2faaaddd87716a948606481ce": {
           "origin": "fork"
+        },
+        "4aecd9688a1daf10d764cb86f330c8e26dcf44557a461b66c80f09de28983942": {
+          "origin": "fork"
+        },
+        "ddc0415a3312bcfbc94f1e0efebe28e3ea1f5a4db739a7ae666567bc89b36c7f": {
+          "origin": "fork"
         }
       }
     },
@@ -61,9 +67,21 @@
       "source_url": "https://github.com/davechurchill/ualbertabot"
     },
     "Stardust.dylib": {
-      "name": "Stardust", "ownership": "project", "origin": "port", "upstream_name": "Stardust",
-      "author": "Bruce Mackenzie Nielsen", "author_url": "https://github.com/bmnielsen", "source_url": "https://github.com/bmnielsen/Stardust",
-      "sha256_overrides": {"b6097c9a5d972afc4d687ed51f0d001af36f50a93dc625d66eb546bd02f6080c": {"origin": "port"}}
+      "name": "Stardust",
+      "ownership": "project",
+      "origin": "port",
+      "upstream_name": "Stardust",
+      "author": "Bruce Mackenzie Nielsen",
+      "author_url": "https://github.com/bmnielsen",
+      "source_url": "https://github.com/bmnielsen/Stardust",
+      "sha256_overrides": {
+        "b6097c9a5d972afc4d687ed51f0d001af36f50a93dc625d66eb546bd02f6080c": {
+          "origin": "port"
+        },
+        "c1afd9a5292621220e6484e115e5c016616a50deadafc88a92cc5f8df1469d9b": {
+          "origin": "fork"
+        }
+      }
     },
     "WorkerRush.dylib": {
       "name": "WorkerRush",
