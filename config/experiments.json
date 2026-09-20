@@ -1247,6 +1247,30 @@
         "origin": "Original",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
       }
+    },
+    {
+      "id": "kestrel-hillclimb-v8",
+      "title": "Kestrel v28 sixth-Pylon hill-climb",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Permitting a sixth supply Pylon will remove the repeated five-Pylon ceiling and allow additional army production in a lane that survives long enough.",
+      "notes": "Five reciprocal, replay-verified losses completed. UAlberta-Terran, McRave and Stardust accepted, started and completed a sixth Pylon in order, but Stardust recorded one build Unit_Busy rejection and no lane produced a win.",
+      "conclusion": "Reject v28 for zero wins and failure of the zero build-Unit_Busy engineering gate. Preserve the verified sixth-Pylon mechanism signal, but do not adopt it or update Elo.",
+      "evidence_run_ids": [
+        "20260920T141053-f3eefa170da8",
+        "20260920T141053-bd51e9256990",
+        "20260920T141053-cdc7e770a603",
+        "20260920T141053-0190fa923801",
+        "20260920T141053-75a159ca939e"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v8",
+      "candidate_binary_sha256": "86e59d631f27c151b6bd893bf77cde3ab62073b7ece1b4dfde9084850e3b3c63",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      }
     }
   ]
 }

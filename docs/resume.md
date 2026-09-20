@@ -20,10 +20,10 @@ Checkpoint: 20 September 2026, 11:45 UTC. Latest user scope: **finish the curren
 - Root owns `config/experiments.json`, `docs/kestrel-bot.md`, this resume and publication. Avoid overlapping edits without handoff.
 - Local HTTP server session 85590, PID 1285, serves `public` at 127.0.0.1:8787. Chrome CLI works while Mac is locked; do not bypass the lock. Current browser is immutable a634def1, desktop 1200. Prior mobile 390 and desktop layout checks passed.
 
-## Current hill-climb checkpoint (2026-09-20 14:05 UTC)
+## Current hill-climb checkpoint (2026-09-20 14:15 UTC)
 
-- The five-way Kestrel hill-climb loop has now preserved v19 recovery and v22 through v27. Each candidate screen has zero verified wins. v27 exercised the home-rally override in both Zerg lanes, but all five games were losses and the screen failed its 384 fps gate plus an over-strict lifetime-versus-concurrent rally-count check. No screen changes Elo or canonical v13.
-- v22 remains the exploratory base. v26 and v27 retain positive mechanism signals for diagnosis but are rejected for advancement. Latest result: `docs/evaluations/kestrel-hillclimb-v7/RESULT.md`; runs `20260920T140011-ae9b9eb3d29b`, `20260920T140011-71d4619443d8`, `20260920T140011-4ca2d2d29282`, `20260920T140011-2f0d5472f271`, `20260920T140011-10876fa16d7a`.
+- The five-way Kestrel hill-climb loop has now preserved v19 recovery and v22 through v28. Each candidate screen has zero verified wins. v28 verified a completed sixth Pylon in three lanes, but all five games were losses and Stardust failed the zero build-`Unit_Busy` gate. No screen changes Elo or canonical v13.
+- v22 remains the exploratory base. v26-v28 retain positive mechanism signals for diagnosis but are rejected for advancement. Latest result: `docs/evaluations/kestrel-hillclimb-v8/RESULT.md`; runs `20260920T141053-f3eefa170da8`, `20260920T141053-bd51e9256990`, `20260920T141053-cdc7e770a603`, `20260920T141053-0190fa923801`, `20260920T141053-75a159ca939e`.
 - The scorecard separates descriptive replay coverage from outcome performance grades and includes command-regression and unverified states. Dashboard experiment cards publish those grades with the preserved replay links.
 - Latest dashboard deployment: https://041913fc.starcraft-ai.pages.dev (395 runs, 88 experiments; v27 scorecard and provenance verified).
 
