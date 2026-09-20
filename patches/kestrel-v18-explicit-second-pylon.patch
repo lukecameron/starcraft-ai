@@ -1,0 +1,14 @@
+diff --git a/third_party/kestrel-opening-v18-control/Kestrel.cpp b/third_party/kestrel-opening-v18-candidate/Kestrel.cpp
+index 3d1f9d4..6f9b7d2 100644
+--- a/third_party/kestrel-opening-v18-control/Kestrel.cpp
++++ b/third_party/kestrel-opening-v18-candidate/Kestrel.cpp
+@@ -319,6 +319,10 @@ class Kestrel final : public BWAPI::AIModule {
+         if (supplyUsed >= 18 && gateways < 1 && self->minerals() >= 150) {
+             if (build(BWAPI::UnitTypes::Protoss_Gateway, home)) return;
++        }
++        if (knownZerg_ && firstGatewayCurrentFrame_ >= 0 && pylons < 2 &&
++            pylons == completedPylons && self->minerals() >= 100) {
++            if (build(BWAPI::UnitTypes::Protoss_Pylon, home)) return;
+         }
+         if (knownZerg_ && firstGatewayCurrentFrame_ >= 0 && secondGatewayCurrentFrame_ < 0 &&
+             self->minerals() >= 150) {

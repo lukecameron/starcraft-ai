@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "experiment_id": "kestrel-opening-v18",
+  "eval_plan_sha256": "71acf8e8bbc42a57994d965db0750e6833ec55b83bc36bd35e15a0c278ecfd55",
+  "purpose": "Kestrel v18 explicit second-Pylon screen against frozen ZZZK",
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "wall_timeout_seconds": 120,
+  "cohort_wall_cap_seconds": 600,
+  "stop_after_consecutive_invalid": 1,
+  "allowed_kill_events": [
+    {"source": "controller_not_occupied_after_action", "action_id": 87},
+    {"source": "transport_callback", "action_id": -1}
+  ],
+  "required_files": [
+    {"path": "docs/evaluations/kestrel-opening-v18/EVAL_PLAN.md", "sha256": "71acf8e8bbc42a57994d965db0750e6833ec55b83bc36bd35e15a0c278ecfd55"},
+    {"path": "scripts/run_match.py", "sha256": "d0a0eee0d932fc279b2ee53831ddf82accf7042a8b7be52e73f144deeb191cbe"}
+  ],
+  "attempts": [
+    {
+      "attempt": 1,
+      "pair": 1,
+      "arm": "control",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 6207,
+      "candidate_player": 1,
+      "candidate": {"name": "Kestrel-v18-control", "path": "artifacts/builds/b7319c6e7f50958b831ca993262487b4eddbd18595da88c459c21ad11be35ce4/kestrel-opening-v18-control/Kestrel.dylib", "race": "Protoss", "sha256": "b7319c6e7f50958b831ca993262487b4eddbd18595da88c459c21ad11be35ce4"},
+      "opponent": {"name": "ZZZKBot", "path": "build/zzzkbot/lib/ZZZKBot.dylib", "race": "Zerg", "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"}
+    },
+    {
+      "attempt": 2,
+      "pair": 1,
+      "arm": "candidate",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 6207,
+      "candidate_player": 1,
+      "candidate": {"name": "Kestrel-v18-candidate", "path": "artifacts/builds/7e1dab45d0c42eca1f352788c14f4c5de55d68e0dc704cfaf6d6534169a7e21f/kestrel-opening-v18-candidate/Kestrel.dylib", "race": "Protoss", "sha256": "7e1dab45d0c42eca1f352788c14f4c5de55d68e0dc704cfaf6d6534169a7e21f"},
+      "opponent": {"name": "ZZZKBot", "path": "build/zzzkbot/lib/ZZZKBot.dylib", "race": "Zerg", "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"}
+    },
+    {
+      "attempt": 3,
+      "pair": 2,
+      "arm": "candidate",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 6208,
+      "candidate_player": 2,
+      "candidate": {"name": "Kestrel-v18-candidate", "path": "artifacts/builds/7e1dab45d0c42eca1f352788c14f4c5de55d68e0dc704cfaf6d6534169a7e21f/kestrel-opening-v18-candidate/Kestrel.dylib", "race": "Protoss", "sha256": "7e1dab45d0c42eca1f352788c14f4c5de55d68e0dc704cfaf6d6534169a7e21f"},
+      "opponent": {"name": "ZZZKBot", "path": "build/zzzkbot/lib/ZZZKBot.dylib", "race": "Zerg", "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"}
+    },
+    {
+      "attempt": 4,
+      "pair": 2,
+      "arm": "control",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 6208,
+      "candidate_player": 2,
+      "candidate": {"name": "Kestrel-v18-control", "path": "artifacts/builds/b7319c6e7f50958b831ca993262487b4eddbd18595da88c459c21ad11be35ce4/kestrel-opening-v18-control/Kestrel.dylib", "race": "Protoss", "sha256": "b7319c6e7f50958b831ca993262487b4eddbd18595da88c459c21ad11be35ce4"},
+      "opponent": {"name": "ZZZKBot", "path": "build/zzzkbot/lib/ZZZKBot.dylib", "race": "Zerg", "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"}
+    }
+  ]
+}
