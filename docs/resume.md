@@ -26,7 +26,7 @@ Checkpoint: 20 September 2026, 11:45 UTC. Latest user scope: **finish the curren
 - v30 was an instrumentation-only first-engagement diagnostic based exactly on v29 policy. Four attempts produced verified losses and rich traces; UAlberta-Terran failed without callbacks or replays after an engine unknown-action error. The four completed lanes also fail the literal registered replay-frame direction, so the result is **INCONCLUSIVE** and cannot select a policy candidate. Descriptively, worker scouts confound the threat heuristic and both Zerg lanes show dispersed combat units when pressure reaches home. Result: `docs/evaluations/kestrel-first-engagement-diagnostic-v1/RESULT.md`; runs `20260920T145146-da87c3e53cd1`, `20260920T145146-9fb0be7279a8`, `20260920T145146-557385fb25f2`, `20260920T145146-f81dae62f736`, `20260920T145146-16677ccebd1b`.
 - v22 remains the exploratory policy base. v26-v29 retain positive mechanism signals for diagnosis but are rejected for advancement. v30 is diagnostic-only and inconclusive. Canonical Kestrel remains v13 and local Elo is unchanged.
 - The scorecard separates descriptive replay coverage from outcome performance grades and includes command-regression and unverified states. Dashboard experiment cards publish those grades with the preserved replay links.
-- Latest dashboard deployment: https://255a638b.starcraft-ai.pages.dev (405 runs, 90 experiments; v29 scorecard, provenance and replay download verified).
+- Latest dashboard deployment: https://ad0484ca.starcraft-ai.pages.dev (410 runs, 91 experiments; v30 decision, provenance, invalid-attempt state and replay evidence verified).
 
 ## Current engine
 
