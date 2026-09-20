@@ -1,0 +1,11 @@
+--- third_party/kestrel-opening-v22-candidate/Kestrel.cpp	2026-09-20 21:54:52
++++ third_party/kestrel-opening-v23-candidate/Kestrel.cpp	2026-09-20 21:59:30
+@@ -430,7 +430,7 @@
+             const bool scout = unit->getID() == scoutId_;
+             if (!combat && !scout) continue;
+             if (firstHomeThreatFrame_ >= 0 && combat && unit->getType() == BWAPI::UnitTypes::Protoss_Zealot &&
+-                localCompletedZealots < 2) {
++                localCompletedZealots < 3) {
+                 if (unit->getDistance(home) > 4 * 32 && !unit->isMoving()) issue(unit->move(home), AttackCommand);
+                 attackRequests_.erase(unit->getID());
+                 continue;

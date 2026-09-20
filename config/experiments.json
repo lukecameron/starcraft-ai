@@ -1079,6 +1079,54 @@
         "20260920T091629-94ed2c02ee7a",
         "20260920T091639-16fed6a67ab7"
       ]
+    },
+    {
+      "id": "kestrel-hillclimb-v2",
+      "title": "Kestrel v22 race-general hold and earlier tech hill-climb",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "INCONCLUSIVE",
+      "hypothesis": "Using the public home-threat signal across matchups, counting local Zealots for the hold, and unlocking gas/Core after two accepted Zealot trains will improve survival and conversion across a small opponent gradient.",
+      "notes": "Five concurrent games completed with five valid, hash-matched replays and zero Kestrel command rejections. Kestrel lost all five. The Protoss lane reached three local Zealots and eleven post-first-train structures, and Stardust recorded no local Zealot loss before game end; the ZZZK lane still ended before tech and McRave still ended in a loss. This is exploratory replay evidence, not Elo.",
+      "conclusion": "Do not adopt v22 or update Elo. Retain the race-general hold and two-train tech change as a diagnostic base, and test a three-local-Zealot hold threshold next under the same five-opponent screen.",
+      "evidence_run_ids": [
+        "20260920T115709-efe84f6dd88f",
+        "20260920T115709-b4a4bb45aba8",
+        "20260920T115709-c22ea4715f79",
+        "20260920T115709-02a187e18e91",
+        "20260920T115709-085f2322b16a"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v2",
+      "candidate_binary_sha256": "6e112c43d6dace13d1152c834658aa35647ceea29b761159187d44d3837fcf57",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      }
+    },
+    {
+      "id": "kestrel-hillclimb-v1-recovery",
+      "title": "Kestrel v19 five-way replay hill-climb baseline",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "INCONCLUSIVE",
+      "hypothesis": "Replay-derived economy, construction, production and combat signals will identify recurring Kestrel weaknesses suitable for a small next change set; shorter completed games are a descriptive signal.",
+      "notes": "The clean recovery completed five concurrent games with five valid, hash-matched replays and zero Kestrel command rejections. Kestrel lost all five. The ZZZK game ended before tech, the Protoss game was threatened before the first Zealot, and the longer games reached Dragoons but still lost.",
+      "conclusion": "No Elo update or promotion. Use the replay scorecard to preregister and test small changes; the initial v1 launcher preflight attempts remain preserved separately as infrastructure failures.",
+      "evidence_run_ids": [
+        "20260920T115127-1cd5abde2044",
+        "20260920T115127-7240ed91b21f",
+        "20260920T115127-88ee6ed2c6d5",
+        "20260920T115127-578b0cafb778",
+        "20260920T115127-1c414d100851"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v1-recovery",
+      "candidate_binary_sha256": "f02db8b97e01482f897a0f481c11a92f0cd5bc21f4629abea1f5a6d113b44b9a",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      }
     }
   ]
 }
