@@ -1489,6 +1489,36 @@
         "author": "Luke Cameron",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
       }
+    },
+    {
+      "id": "kestrel-hillclimb-v16",
+      "title": "Kestrel v37 post-opening scaling screen",
+      "date": "2026-09-21",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Public-state Singularity Charge banking and post-opening production caps improve late-game combat strength without regressing the v36/v35/v34 mechanisms.",
+      "notes": "Five concurrent games completed with five valid short terminal games, ten verified replays, one verified Kestrel win against ZZZK, four eligible and completed Singularity Charge upgrades, four accepted fifth-Gateway extensions (one became current), and one accepted/current/completed seventh-Pylon extension. The retained emergency episode cap-block opportunity was unobserved: zero cap blocks across the Zerg lanes. No Elo update.",
+      "conclusion": "Rejected because the registered emergency episode cap-block opportunity gate was unobserved despite passing integrity, replay, provenance, regression, opening, scaling, reserve, construction, staged-offense, and non-Zerg gates. The v16 win is matched-screen evidence only and does not establish a causal or general strength improvement.",
+      "evidence_run_ids": [
+        "20260920T182135-5a03c3c5cc8e",
+        "20260920T182135-3fc37445b91d",
+        "20260920T182135-300d82e64e6e",
+        "20260920T182135-ee62cab2d5f9",
+        "20260920T182135-e49b402e4239"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v16",
+      "candidate_binary_sha256": "ad60fe9280c8e3c8e22785e90656df76a27b86e06b435346c0bc47142af6e228",
+      "candidate_source_sha256": "ffacb1de456936fa47058baa7735d0318cdb3e3d7a923740ec7a63ece5dd7c86",
+      "candidate_source_combo_sha256": "b22fd4257d47b96cc127f778e9bd3e81a3a4c4a2c17ae5e3b0023f44cbc0b2b6",
+      "candidate_patch_sha256": "262cb9254874f2155c9c58fc669da8e8f418ebbe90c502da8e717f5403d8863a",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "author": "Luke Cameron",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      },
+      "matched_parent_experiment": "kestrel-hillclimb-v15",
+      "result_path": "docs/evaluations/kestrel-hillclimb-v16/RESULT.md"
     }
   ]
 }
