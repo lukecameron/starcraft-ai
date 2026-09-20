@@ -1818,6 +1818,44 @@
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
       },
       "matched_parent_experiment": "kestrel-hillclimb-v22"
+    },
+    {
+      "id": "kestrel-hillclimb-v24",
+      "title": "Kestrel v44 sixth-Probe restoration diagnostic",
+      "date": "2026-09-21",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Exactly one sixth Probe after the early Pylon, followed by the retained second-Gateway and second-Zealot reserves, advances production enough to yield two local defenders on both failed P2 ZZZK lanes without a seventh Probe, treatment leakage, or retained-policy regression.",
+      "notes": "All five fixed rows completed with ten independently verified replay copies. V44 restored exactly one sixth Probe and blocked a seventh before the second Gateway on every Zerg row, but delayed every first-Gateway replay command by 60-168 frames relative to v23. Both primary rows still had one defender, and all four Zerg rows accepted a later Probe inside the registered second-Gateway-to-second-Zealot interval.",
+      "conclusion": "Rejected because the primary metric remained M=1 below the required two defenders and the retained no-Probe interval gate failed on every Zerg row. The sixth Probe does not advance; no v24 game enters Elo.",
+      "evidence_run_ids": [
+        "20260920T234446-aa54b29e566f",
+        "20260920T234446-9cb8a424ab0d",
+        "20260920T234446-0e7e59395da5",
+        "20260920T234446-dbc658de3260",
+        "20260920T234446-35248d13924d"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v24",
+      "candidate_binary_sha256": "324074602725432e2b2ac20a1d9a5e2eda124663b97c221a4c9c1897cba296c5",
+      "candidate_source_sha256": "ace7789619d06370ba57ac7dc88582358bc7dd3a16410a4f5bc52a06d71b43a9",
+      "candidate_source_combo_sha256": "c83ab18e3179360023ded37f5ff804e6fa72a65561f18f8865f022b8e97f8c97",
+      "candidate_patch_sha256": "b3b88268f3c550b0e15941d0d2f47be26117f4af455f3d60aa5ad0b7edc679d4",
+      "candidate_build_sidecar_sha256": "d7351695df967715882a6767e14c09cc55e784cb53a6a4db1b184ca95171e84e",
+      "plan_sha256": "9b1fa692795501b069ff790eacf2b0b008a4b7b01c1ae69b09a2a2ec236d1b7e",
+      "registered_schedule_sha256": "958ca475544962dfed2f741c14b3dd50c23e1962f16a782a8310701f067b67a2",
+      "schedule_sha256": "b2d2edff4ef3a58f207bd79c9f978a1e88bb4b984392791e3e8f413be0be7aac",
+      "ledger_sha256": "521b2f3c6645cf7f2e97430d2f72d405175934b24334fc99997d8dcca4c6537d",
+      "scorecard_sha256": "d86080d4020582196dfe069830dc1f9a8b65d7a5ed0258e8b7405cd50622bd90",
+      "integrity_audit_sha256": "cf4d6fc286c980522f169e14b25dc9966ed956e0fbf56325d2034be294c20970",
+      "result_sha256": "b9500c6829d1036339dccc2a730c499f9a4705adf04a0e9f72ffc3b79c89e32d",
+      "result_path": "docs/evaluations/kestrel-hillclimb-v24/RESULT.md",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "author": "Luke Cameron",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      },
+      "matched_parent_experiment": "kestrel-hillclimb-v23"
     }
   ]
 }
