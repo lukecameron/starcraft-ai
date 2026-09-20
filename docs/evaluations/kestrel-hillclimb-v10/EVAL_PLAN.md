@@ -42,4 +42,6 @@ Advance v31 to a matched confirmation only if every integrity and regression gat
 - Combined source SHA-256: `df80ddacc14c414d2e65272493cf445a8b22b6277fe6e2d3e791773733be466b`.
 - Reconstruction patch: `patches/kestrel-v31-early-zerg-staging.patch`, SHA-256 `caf0739d9a63f6c4f9f78f9ef8d7fccf878aabc4d0b8d32885619f3c071fdaa6`.
 
-The binary identity, native and official-header compilation results, frozen path, plan hash and schedule hash will be appended before match launch.
+## Build identity amendment
+
+Before match launch, the candidate compiled natively against OpenBW and against the official BWAPI 4.4 headers with Apple Clang 21.0.0. The frozen binary SHA-256 is `5ff164dc9dfd5c555837f110002f3907838891c6fdc95a8960cc48f12e47e107`, stored at `artifacts/builds/5ff164dc9dfd5c555837f110002f3907838891c6fdc95a8960cc48f12e47e107/kestrel-opening-v31-candidate/Kestrel.dylib` with its build sidecar. The final plan hash and schedule hash are recorded in the frozen schedule before launch.

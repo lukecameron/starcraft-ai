@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "experiment_id": "kestrel-hillclimb-v10",
+  "registered_at": "2026-09-20T15:16:02Z",
+  "eval_plan_sha256": "d30e8787350636682b687e12235afbb8aadc5becbfc15501fd3e119824130443",
+  "purpose": "Exploratory five-way Kestrel v31 early-Zerg squad-staging hill-climb",
+  "hypothesis": "Keeping the first four combat units home against Zerg will prevent scout-provided remote targets from dispersing the defense while preserving a coordinated release.",
+  "stop_condition": "Run exactly five attempts concurrently; retain every result and stop after two consecutive infrastructure failures, a 900-second cohort cap, or completion. Do not retry or replace attempts.",
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "wall_timeout_seconds": 300,
+  "cohort_wall_cap_seconds": 900,
+  "stop_after_consecutive_invalid": 2,
+  "candidate": {
+    "name": "Kestrel-v31-early-Zerg-squad-staging",
+    "path": "artifacts/builds/5ff164dc9dfd5c555837f110002f3907838891c6fdc95a8960cc48f12e47e107/kestrel-opening-v31-candidate/Kestrel.dylib",
+    "race": "Protoss",
+    "sha256": "5ff164dc9dfd5c555837f110002f3907838891c6fdc95a8960cc48f12e47e107"
+  },
+  "opponents": {
+    "zzzk": {
+      "name": "ZZZKBot",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "race": "Zerg",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+    },
+    "uab-t": {
+      "name": "UAlbertaBot-Terran",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "race": "Terran",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+    },
+    "uab-p": {
+      "name": "UAlbertaBot-Protoss",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "race": "Protoss",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+    },
+    "mcrave": {
+      "name": "McRave-9Pool-treatment",
+      "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+      "race": "Zerg",
+      "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+    },
+    "stardust": {
+      "name": "Stardust-repaired",
+      "path": "artifacts/builds/1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa/stardust-emptytimer-repair/Stardust.dylib",
+      "race": "Protoss",
+      "sha256": "1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa"
+    }
+  },
+  "games": [
+    {"opponent": "zzzk", "map": "sscai/(2)Benzene.scx", "scenario_seed": 9901, "candidate_player": 1},
+    {"opponent": "uab-t", "map": "sscai/(2)Destination.scx", "scenario_seed": 9902, "candidate_player": 2},
+    {"opponent": "uab-p", "map": "sscai/(2)Heartbreak Ridge.scx", "scenario_seed": 9903, "candidate_player": 1},
+    {"opponent": "mcrave", "map": "sscai/(4)Circuit Breaker.scx", "scenario_seed": 9904, "candidate_player": 2},
+    {"opponent": "stardust", "map": "sscai/(2)Benzene.scx", "scenario_seed": 9905, "candidate_player": 1}
+  ],
+  "required_files": [
+    {"path": "docs/evaluations/kestrel-hillclimb-v10/EVAL_PLAN.md", "sha256": "d30e8787350636682b687e12235afbb8aadc5becbfc15501fd3e119824130443"},
+    {"path": "patches/kestrel-v31-early-zerg-staging.patch", "sha256": "caf0739d9a63f6c4f9f78f9ef8d7fccf878aabc4d0b8d32885619f3c071fdaa6"}
+  ],
+  "policy_base_experiment_id": "kestrel-hillclimb-v9",
+  "diagnostic_motivation_experiment_id": "kestrel-first-engagement-diagnostic-v1"
+}
