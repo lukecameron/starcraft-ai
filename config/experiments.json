@@ -1011,6 +1011,22 @@
         "20260920T085438-f221c4eb11cc",
         "20260920T085439-aaa7195953b6"
       ]
+    },
+    {
+      "id": "kestrel-opening-v20",
+      "title": "Kestrel reserves minerals for four Zealots",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "After v19's overlap improvement, reserving 100 minerals after ten Probes until four Zealot trains are accepted will preserve the hold and repair the Heartbreak production miss.",
+      "notes": "The candidate reached four trains on Benzene but only three on Heartbreak and recorded no post-first-train structure on either map. Both candidates and controls reached two local defenders on these seeds. All four games were clean and all eight replays parsed.",
+      "conclusion": "Rejected. The reserve did not repair the fixed production gates or establish a strength improvement. Canonical Kestrel v13 remains unchanged; v19 remains an unadopted mechanism signal.",
+      "evidence_run_ids": [
+        "20260920T090006-d0139a7c27da",
+        "20260920T090008-7d8e1f9660cc",
+        "20260920T090010-558eb105f3b8",
+        "20260920T090011-4f24663671b4"
+      ]
     }
   ]
 }

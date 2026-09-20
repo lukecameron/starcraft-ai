@@ -1,0 +1,10 @@
+diff --git a/third_party/kestrel-opening-v20-control/Kestrel.cpp b/third_party/kestrel-opening-v20-candidate/Kestrel.cpp
+index a8c4e90..bc5a922 100644
+--- a/third_party/kestrel-opening-v20-control/Kestrel.cpp
++++ b/third_party/kestrel-opening-v20-candidate/Kestrel.cpp
+@@ -288,6 +288,7 @@ class Kestrel final : public BWAPI::AIModule {
+             if (firstGatewayCurrentFrame_ < 0) openingReserve = 150;
+             else if (secondGatewayCurrentFrame_ < 0) openingReserve = 150;
+             else if (!firstZealotQueued_) openingReserve = 100;
++            else if (acceptedZealotTrains_ < 4 && probes >= 10) openingReserve = 100;
+        }
