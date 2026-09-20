@@ -1,0 +1,62 @@
+diff --git a/third_party/kestrel-opening-v38-candidate/Kestrel.cpp b/third_party/kestrel-opening-v39-candidate/Kestrel.cpp
+index 1b9b3c0..495b488 100644
+--- a/third_party/kestrel-opening-v38-candidate/Kestrel.cpp
++++ b/third_party/kestrel-opening-v39-candidate/Kestrel.cpp
+@@ -1040,6 +1040,33 @@ class Kestrel final : public BWAPI::AIModule {
+         return nullptr;
+     }
+ 
++    BWAPI::Unit availableGatewayProbe(const BWAPI::TilePosition& tile) {
++        const BWAPI::Position target(tile.x * 32 + 16, tile.y * 32 + 16);
++        BWAPI::Unit best = nullptr;
++        int bestDistance = std::numeric_limits<int>::max();
++        int bestId = std::numeric_limits<int>::max();
++        for (auto unit : BWAPI::Broodwar->self()->getUnits()) {
++            if (!unit->exists() || !unit->isCompleted() || unit->getType() != BWAPI::UnitTypes::Protoss_Probe) continue;
++            if (unit->getID() == scoutId_) continue;
++            if (isEmergencyDefender(unit->getID())) {
++                ++emergencyBuildSelectionExclusions_;
++                continue;
++            }
++            if (unit->isGatheringGas()) {
++                recordGasWorkerGuard(unit, "gateway_probe");
++                continue;
++            }
++            if (unit->isConstructing()) continue;
++            const int distance = unit->getDistance(target);
++            if (distance < bestDistance || (distance == bestDistance && unit->getID() < bestId)) {
++                best = unit;
++                bestDistance = distance;
++                bestId = unit->getID();
++            }
++        }
++        return best;
++    }
++
+     int count(BWAPI::UnitType type, bool completedOnly = false) const {
+         return completedOnly ? BWAPI::Broodwar->self()->completedUnitCount(type)
+                              : BWAPI::Broodwar->self()->allUnitCount(type);
+@@ -1119,15 +1146,18 @@ class Kestrel final : public BWAPI::AIModule {
+     bool build(BWAPI::UnitType type, BWAPI::TilePosition near) {
+         const int frame = BWAPI::Broodwar->getFrameCount();
+         if (constructionPending()) return false;
+-        BWAPI::Unit worker = unitById(builderId_);
+-        if (worker && worker->isGatheringGas()) {
++        const BWAPI::TilePosition tile = BWAPI::Broodwar->getBuildLocation(type, near, 32, false);
++        if (!tile.isValid()) return false;
++        const bool earlyGateway = type == BWAPI::UnitTypes::Protoss_Gateway &&
++                                  count(type) < 2;
++        BWAPI::Unit worker = earlyGateway ? availableGatewayProbe(tile) : unitById(builderId_);
++        if (!earlyGateway && worker && worker->isGatheringGas()) {
+             recordGasWorkerGuard(worker, "reuse_builder");
+             worker = nullptr;
+         }
+-        if (!worker || worker->isConstructing() || worker->getID() == scoutId_) worker = availableProbe();
++        if (!earlyGateway && (!worker || worker->isConstructing() || worker->getID() == scoutId_))
++            worker = availableProbe();
+         if (!worker) return false;
+-        const BWAPI::TilePosition tile = BWAPI::Broodwar->getBuildLocation(type, near, 32, false);
+-        if (!tile.isValid()) return false;
+         if (worker->isGatheringGas()) ++gasWorkerBuildAttempts_;
+         if (!worker->canBuild(type, tile)) {
+             ++buildCommandabilityGuardBlocks_;
