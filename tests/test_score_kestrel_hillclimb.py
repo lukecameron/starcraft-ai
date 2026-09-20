@@ -228,7 +228,38 @@ class KestrelScorecardTests(TestCase):
         summary = scorer._scaling_summary(metadata, "v37")
         self.assertEqual(summary["quantitative_grade"]["grade"], "review")
         self.assertIn("scaling_required_fields_missing", summary["review_flags"])
-        self.assertIn("range_upgrade_not_accepted_once_and_completed", summary["review_flags"])
+        self.assertIn("range_upgrade_count_out_of_range", summary["review_flags"])
+
+    def test_v37_scaling_accept_before_terminal_is_partial_not_integrity_review(self):
+        metadata = self.v37_metadata()
+        metadata["range_upgrade_completion_frame"] = -1
+        metadata["range_upgrade_completions"] = 0
+        summary = scorer._scaling_summary(metadata, "v37")
+        self.assertEqual(summary["quantitative_grade"]["grade"], "partial")
+        self.assertEqual(summary["review_flags"], [])
+        self.assertIn("range_upgrade_accepted_not_completed_before_terminal", summary["opportunity_notes"])
+
+    def test_v37_scaling_banking_before_terminal_is_partial_not_integrity_review(self):
+        metadata = self.v37_metadata()
+        metadata["range_upgrade_attempt_frame"] = -1
+        metadata["range_upgrade_accepted_frame"] = -1
+        metadata["range_upgrade_completion_frame"] = -1
+        metadata["range_upgrade_attempts"] = 0
+        metadata["range_upgrade_accepted"] = 0
+        metadata["range_upgrade_completions"] = 0
+        summary = scorer._scaling_summary(metadata, "v37")
+        self.assertEqual(summary["quantitative_grade"]["grade"], "partial")
+        self.assertEqual(summary["review_flags"], [])
+        self.assertIn("range_upgrade_banking_before_terminal", summary["opportunity_notes"])
+
+    def test_v37_scaling_partial_structure_milestone_is_not_integrity_review(self):
+        metadata = self.v37_metadata()
+        metadata["seventh_pylon_current_frame"] = -1
+        metadata["seventh_pylon_completed_frame"] = -1
+        summary = scorer._scaling_summary(metadata, "v37")
+        self.assertEqual(summary["quantitative_grade"]["grade"], "pass")
+        self.assertEqual(summary["review_flags"], [])
+        self.assertIn("seventh_pylon_accepted_not_current_before_terminal", summary["opportunity_notes"])
 
     def test_v36_candidate_name_retains_v35_and_v34_schema_checks(self):
         metadata = self.v36_metadata()
@@ -245,6 +276,17 @@ class KestrelScorecardTests(TestCase):
         self.assertEqual(bridge["episodes"]["generation"], "v36")
         stage = scorer._zerg_offense_stage_summary(metadata, "Zerg", "v36")
         self.assertEqual(stage["generation"], "v36")
+
+    def test_v37_candidate_retains_v36_v35_and_v34_schema_checks(self):
+        metadata = self.v37_metadata()
+        self.assertEqual(scorer._diagnostic_generation(metadata, "Kestrel-v37-post-opening-scaling"), "v37")
+        self.assertEqual(scorer._construction_pending_summary(metadata, "Zerg", "v37")["generation"], "v37")
+        self.assertEqual(scorer._probe_reserve_summary(metadata, "Zerg", "v37")["generation"], "v37")
+        self.assertEqual(scorer._emergency_episode_summary(metadata, "Zerg", "v37")["generation"], "v37")
+        bridge = scorer._emergency_bridge_summary(metadata, "Zerg", "v37")
+        self.assertEqual(bridge["release_threshold"], 3)
+        self.assertEqual(bridge["episodes"]["generation"], "v37")
+        self.assertEqual(scorer._zerg_offense_stage_summary(metadata, "Zerg", "v37")["generation"], "v37")
 
     def test_v36_probe_reserve_summary_checks_alignment_window_and_resumption(self):
         summary = scorer._probe_reserve_summary(self.v36_metadata(), "Zerg", "v36")

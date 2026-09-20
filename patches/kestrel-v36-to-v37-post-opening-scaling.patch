@@ -1,0 +1,252 @@
+diff --git a/third_party/kestrel-opening-v36-candidate/Kestrel.cpp b/third_party/kestrel-opening-v37-candidate/Kestrel.cpp
+index b682be8..097f0eb 100644
+--- a/third_party/kestrel-opening-v36-candidate/Kestrel.cpp
++++ b/third_party/kestrel-opening-v37-candidate/Kestrel.cpp
+@@ -25,7 +25,7 @@ class Kestrel final : public BWAPI::AIModule {
+     int builderId_ = -1;
+     int commands_ = 0;
+     int rejected_ = 0;
+-    enum CommandCategory { BuildCommand, TrainCommand, GatherCommand, AttackCommand, CommandCategoryCount };
++    enum CommandCategory { BuildCommand, TrainCommand, GatherCommand, AttackCommand, UpgradeCommand, CommandCategoryCount };
+     std::array<int, CommandCategoryCount> attemptedByCategory_{{0, 0, 0, 0}};
+     std::array<int, CommandCategoryCount> rejectedByCategory_{{0, 0, 0, 0}};
+     std::array<int, BWAPI::Errors::Enum::MAX> errors_{};
+@@ -82,6 +82,28 @@ class Kestrel final : public BWAPI::AIModule {
+     int firstProbeReserveWindowFrame_ = -1;
+     int probeReserveWindowEndFrame_ = -1;
+     int probeReserveBlockCount_ = 0;
++    static constexpr int kPylonCap = 10;
++    static constexpr int kPostCoreGatewayCap = 6;
++    static constexpr int kSingularityChargeMineralCost = 150;
++    static constexpr int kSingularityChargeGasCost = 150;
++    static constexpr int kSingularityChargeCombatThreshold = 6;
++    int rangeUpgradeEligibilityFrame_ = -1;
++    int rangeUpgradeBankStartFrame_ = -1;
++    int rangeUpgradeBankBlockCount_ = 0;
++    int rangeUpgradeAttemptFrame_ = -1;
++    int rangeUpgradeAcceptedFrame_ = -1;
++    int rangeUpgradeCompletionFrame_ = -1;
++    int rangeUpgradeAttempts_ = 0;
++    int rangeUpgradeAccepted_ = 0;
++    int rangeUpgradeCompletions_ = 0;
++    int rangeUpgradeMaxBankMinerals_ = 0;
++    int rangeUpgradeMaxBankGas_ = 0;
++    int seventhPylonAcceptedFrame_ = -1;
++    int seventhPylonCurrentFrame_ = -1;
++    int seventhPylonCompletedFrame_ = -1;
++    int fifthGatewayAcceptedFrame_ = -1;
++    int fifthGatewayCurrentFrame_ = -1;
++    int fifthGatewayCompletedFrame_ = -1;
+     std::unordered_map<int, BWAPI::Position> lastZealotPositions_;
+     std::unordered_map<int, int> zergOffenseStageSuppressedTargets_;
+     std::unordered_map<int, int> zergOffenseStageHomeMoveLastFrame_;
+@@ -258,7 +280,8 @@ class Kestrel final : public BWAPI::AIModule {
+             << ",\"command_categories\":{\"build\":[" << attemptedByCategory_[BuildCommand] << ',' << rejectedByCategory_[BuildCommand]
+             << "],\"train\":[" << attemptedByCategory_[TrainCommand] << ',' << rejectedByCategory_[TrainCommand]
+             << "],\"gather\":[" << attemptedByCategory_[GatherCommand] << ',' << rejectedByCategory_[GatherCommand]
+-            << "],\"attack\":[" << attemptedByCategory_[AttackCommand] << ',' << rejectedByCategory_[AttackCommand] << "]}"
++            << "],\"attack\":[" << attemptedByCategory_[AttackCommand] << ',' << rejectedByCategory_[AttackCommand]
++            << "],\"upgrade\":[" << attemptedByCategory_[UpgradeCommand] << ',' << rejectedByCategory_[UpgradeCommand] << "]}"
+             << ",\"command_error_counts\":{"
+             << "\"unit_busy\":" << errors_[BWAPI::Errors::Enum::Unit_Busy]
+             << ",\"incompatible_state\":" << errors_[BWAPI::Errors::Enum::Incompatible_State]
+@@ -279,6 +302,8 @@ class Kestrel final : public BWAPI::AIModule {
+             << ",\"max_gateways\":" << maxGateways_
+             << ",\"max_zealots\":" << maxZealots_
+             << ",\"max_dragoons\":" << maxDragoons_
++            << ",\"max_pylon_cap\":" << kPylonCap
++            << ",\"max_post_core_gateway_cap\":" << kPostCoreGatewayCap
+             << ",\"gas_worker_guard_events\":" << gasWorkerGuardEvents_
+             << ",\"gas_worker_build_attempts\":" << gasWorkerBuildAttempts_
+             << ",\"build_unit_busy_rejections\":" << buildUnitBusyRejections_
+@@ -292,6 +317,9 @@ class Kestrel final : public BWAPI::AIModule {
+             << ",\"sixth_pylon_accepted_frame\":" << sixthPylonAcceptedFrame_
+             << ",\"sixth_pylon_current_frame\":" << sixthPylonCurrentFrame_
+             << ",\"sixth_pylon_completed_frame\":" << sixthPylonCompletedFrame_
++            << ",\"seventh_pylon_accepted_frame\":" << seventhPylonAcceptedFrame_
++            << ",\"seventh_pylon_current_frame\":" << seventhPylonCurrentFrame_
++            << ",\"seventh_pylon_completed_frame\":" << seventhPylonCompletedFrame_
+             << ",\"first_gateway_accepted_frame\":" << firstGatewayAcceptedFrame_
+             << ",\"first_gateway_current_frame\":" << firstGatewayCurrentFrame_
+             << ",\"first_gateway_completed_frame\":" << firstGatewayCompletedFrame_
+@@ -300,6 +328,20 @@ class Kestrel final : public BWAPI::AIModule {
+             << ",\"accepted_zealot_trains\":" << acceptedZealotTrains_
+             << ",\"second_gateway_current_frame\":" << secondGatewayCurrentFrame_
+             << ",\"second_gateway_completed_frame\":" << secondGatewayCompletedFrame_
++            << ",\"fifth_gateway_accepted_frame\":" << fifthGatewayAcceptedFrame_
++            << ",\"fifth_gateway_current_frame\":" << fifthGatewayCurrentFrame_
++            << ",\"fifth_gateway_completed_frame\":" << fifthGatewayCompletedFrame_
++            << ",\"range_upgrade_eligibility_frame\":" << rangeUpgradeEligibilityFrame_
++            << ",\"range_upgrade_bank_start_frame\":" << rangeUpgradeBankStartFrame_
++            << ",\"range_upgrade_bank_block_count\":" << rangeUpgradeBankBlockCount_
++            << ",\"range_upgrade_attempt_frame\":" << rangeUpgradeAttemptFrame_
++            << ",\"range_upgrade_accepted_frame\":" << rangeUpgradeAcceptedFrame_
++            << ",\"range_upgrade_completion_frame\":" << rangeUpgradeCompletionFrame_
++            << ",\"range_upgrade_attempts\":" << rangeUpgradeAttempts_
++            << ",\"range_upgrade_accepted\":" << rangeUpgradeAccepted_
++            << ",\"range_upgrade_completions\":" << rangeUpgradeCompletions_
++            << ",\"range_upgrade_max_bank_minerals\":" << rangeUpgradeMaxBankMinerals_
++            << ",\"range_upgrade_max_bank_gas\":" << rangeUpgradeMaxBankGas_
+             << ",\"accepted_build_frames\":[";
+         for (size_t index = 0; index < acceptedBuildFrames_.size(); ++index) {
+             if (index) out << ',';
+@@ -931,6 +973,59 @@ class Kestrel final : public BWAPI::AIModule {
+                              : BWAPI::Broodwar->self()->allUnitCount(type);
+     }
+ 
++    int completedCombatCount() const {
++        return count(BWAPI::UnitTypes::Protoss_Zealot, true) +
++               count(BWAPI::UnitTypes::Protoss_Dragoon, true);
++    }
++
++    bool rangeUpgradeBankActive() const {
++        return rangeUpgradeEligibilityFrame_ >= 0 && rangeUpgradeAccepted_ == 0 &&
++               BWAPI::Broodwar->self()->getUpgradeLevel(BWAPI::UpgradeTypes::Singularity_Charge) == 0;
++    }
++
++    int spendableMinerals() const {
++        const int reserve = rangeUpgradeBankActive() ? kSingularityChargeMineralCost : 0;
++        return std::max(0, BWAPI::Broodwar->self()->minerals() - reserve);
++    }
++
++    void researchRangeUpgrade() {
++        auto self = BWAPI::Broodwar->self();
++        const int frame = BWAPI::Broodwar->getFrameCount();
++        if (rangeUpgradeEligibilityFrame_ < 0 && count(BWAPI::UnitTypes::Protoss_Gateway) >= 2 &&
++            count(BWAPI::UnitTypes::Protoss_Cybernetics_Core, true) > 0 &&
++            completedCombatCount() >= kSingularityChargeCombatThreshold &&
++            self->getUpgradeLevel(BWAPI::UpgradeTypes::Singularity_Charge) == 0) {
++            rangeUpgradeEligibilityFrame_ = frame;
++        }
++        if (self->getUpgradeLevel(BWAPI::UpgradeTypes::Singularity_Charge) > 0 &&
++            rangeUpgradeCompletionFrame_ < 0) {
++            rangeUpgradeCompletionFrame_ = frame;
++            ++rangeUpgradeCompletions_;
++        }
++        if (!rangeUpgradeBankActive()) return;
++        if (rangeUpgradeBankStartFrame_ < 0) rangeUpgradeBankStartFrame_ = frame;
++        rangeUpgradeMaxBankMinerals_ = std::max(rangeUpgradeMaxBankMinerals_, self->minerals());
++        rangeUpgradeMaxBankGas_ = std::max(rangeUpgradeMaxBankGas_, self->gas());
++        if (self->minerals() < kSingularityChargeMineralCost || self->gas() < kSingularityChargeGasCost) {
++            ++rangeUpgradeBankBlockCount_;
++            return;
++        }
++        BWAPI::Unit core = nullptr;
++        for (auto unit : sorted(self->getUnits())) {
++            if (unit->exists() && unit->isCompleted() && unit->getType() == BWAPI::UnitTypes::Protoss_Cybernetics_Core) {
++                core = unit;
++                break;
++            }
++        }
++        if (!core || !core->canUpgrade(BWAPI::UpgradeTypes::Singularity_Charge)) return;
++        if (rangeUpgradeAttemptFrame_ < 0) rangeUpgradeAttemptFrame_ = frame;
++        ++rangeUpgradeAttempts_;
++        if (issue(core->upgrade(BWAPI::UpgradeTypes::Singularity_Charge), UpgradeCommand)) {
++            rangeUpgradeAcceptedFrame_ = frame;
++            ++rangeUpgradeAccepted_;
++        }
++    }
++
+     bool constructionPending() {
+         if (pendingBuildType_ == BWAPI::UnitTypes::None) return false;
+         if (count(pendingBuildType_) > pendingBuildBaseline_) {
+@@ -980,7 +1075,9 @@ class Kestrel final : public BWAPI::AIModule {
+             if (firstZealotTrainFrame_ >= 0) ++acceptedStructuresAfterFirstZealot_;
+             if (type == BWAPI::UnitTypes::Protoss_Pylon && firstPylonAcceptedFrame_ < 0) firstPylonAcceptedFrame_ = frame;
+             if (type == BWAPI::UnitTypes::Protoss_Pylon && count(type) >= 5 && sixthPylonAcceptedFrame_ < 0) sixthPylonAcceptedFrame_ = frame;
++            if (type == BWAPI::UnitTypes::Protoss_Pylon && preCommandStructureCount >= 6 && seventhPylonAcceptedFrame_ < 0) seventhPylonAcceptedFrame_ = frame;
+             if (type == BWAPI::UnitTypes::Protoss_Gateway && firstGatewayAcceptedFrame_ < 0) firstGatewayAcceptedFrame_ = frame;
++            if (type == BWAPI::UnitTypes::Protoss_Gateway && preCommandStructureCount >= 4 && fifthGatewayAcceptedFrame_ < 0) fifthGatewayAcceptedFrame_ = frame;
+             acceptedBuildFrames_.push_back(frame);
+             acceptedBuildTypeIds_.push_back(type.getID());
+             acceptedBuildPreCommandCounts_.push_back(preCommandStructureCount);
+@@ -1075,16 +1172,16 @@ class Kestrel final : public BWAPI::AIModule {
+                     probeReserveBlockFrames_.push_back(frame);
+                     probeReserveBlockMinerals_.push_back(minerals);
+                 }
+-                if (minerals >= 50 + openingReserve && canTrainProbe) {
++                if (minerals >= 50 + openingReserve + (rangeUpgradeBankActive() ? kSingularityChargeMineralCost : 0) && canTrainProbe) {
+                     if (issue(unit->train(BWAPI::UnitTypes::Protoss_Probe), TrainCommand))
+                         if (knownZerg_) acceptedProbeTrainFrames_.push_back(frame);
+                 }
+             } else if (type == BWAPI::UnitTypes::Protoss_Gateway) {
+                 if (count(BWAPI::UnitTypes::Protoss_Cybernetics_Core, true) > 0 &&
+-                    BWAPI::Broodwar->self()->minerals() >= 125 && BWAPI::Broodwar->self()->gas() >= 50 &&
++                    spendableMinerals() >= 125 && BWAPI::Broodwar->self()->gas() >= 50 + (rangeUpgradeBankActive() ? kSingularityChargeGasCost : 0) &&
+                     unit->canTrain(BWAPI::UnitTypes::Protoss_Dragoon)) {
+                     issue(unit->train(BWAPI::UnitTypes::Protoss_Dragoon), TrainCommand);
+-                } else if (BWAPI::Broodwar->self()->minerals() >= 100 && unit->canTrain(BWAPI::UnitTypes::Protoss_Zealot)) {
++                } else if (spendableMinerals() >= 100 && unit->canTrain(BWAPI::UnitTypes::Protoss_Zealot)) {
+                     if (issue(unit->train(BWAPI::UnitTypes::Protoss_Zealot), TrainCommand)) {
+                         ++acceptedZealotTrains_;
+                         firstZealotQueued_ = true;
+@@ -1104,36 +1201,36 @@ class Kestrel final : public BWAPI::AIModule {
+         const int pylons = count(BWAPI::UnitTypes::Protoss_Pylon);
+         const int completedPylons = count(BWAPI::UnitTypes::Protoss_Pylon, true);
+         const int completedProbes = count(BWAPI::UnitTypes::Protoss_Probe, true);
+-        if (knownZerg_ && completedProbes >= 6 && firstPylonCurrentFrame_ < 0 && self->minerals() >= 100) {
++        if (knownZerg_ && completedProbes >= 6 && firstPylonCurrentFrame_ < 0 && spendableMinerals() >= 100) {
+             if (build(BWAPI::UnitTypes::Protoss_Pylon, home)) return;
+         }
+         if (knownZerg_ && firstPylonAcceptedFrame_ >= 0 && completedPylons > 0 &&
+-            firstGatewayCurrentFrame_ < 0 && self->minerals() >= 150) {
++            firstGatewayCurrentFrame_ < 0 && spendableMinerals() >= 150) {
+             if (build(BWAPI::UnitTypes::Protoss_Gateway, home)) return;
+         }
+-        if (supplyTotal - supplyUsed <= 4 && pylons < 6 && pylons == completedPylons && self->minerals() >= 100) {
++        if (supplyTotal - supplyUsed <= 4 && pylons < kPylonCap && pylons == completedPylons && spendableMinerals() >= 100) {
+             if (build(BWAPI::UnitTypes::Protoss_Pylon, home)) return;
+         }
+         const int gateways = count(BWAPI::UnitTypes::Protoss_Gateway);
+-        if (supplyUsed >= 18 && gateways < 1 && self->minerals() >= 150) {
++        if (supplyUsed >= 18 && gateways < 1 && spendableMinerals() >= 150) {
+             if (build(BWAPI::UnitTypes::Protoss_Gateway, home)) return;
+         }
+         if (knownZerg_ && firstGatewayCurrentFrame_ >= 0 && secondGatewayCurrentFrame_ < 0 &&
+-            self->minerals() >= 150) {
++            spendableMinerals() >= 150) {
+             if (build(BWAPI::UnitTypes::Protoss_Gateway, home)) return;
+         }
+-        if (!knownZerg_ && supplyUsed >= 26 && gateways < 2 && self->minerals() >= 150) {
++        if (!knownZerg_ && supplyUsed >= 26 && gateways < 2 && spendableMinerals() >= 150) {
+             if (build(BWAPI::UnitTypes::Protoss_Gateway, home)) return;
+         }
+         if ((!knownZerg_ || acceptedZealotTrains_ >= 2) && gateways > 0 &&
+-            count(BWAPI::UnitTypes::Protoss_Assimilator) < 1 && self->minerals() >= 100) {
++            count(BWAPI::UnitTypes::Protoss_Assimilator) < 1 && spendableMinerals() >= 100) {
+             if (buildAssimilator()) return;
+         }
+         if ((!knownZerg_ || acceptedZealotTrains_ >= 2) && count(BWAPI::UnitTypes::Protoss_Assimilator, true) > 0 &&
+-            count(BWAPI::UnitTypes::Protoss_Cybernetics_Core) < 1 && self->minerals() >= 200) {
++            count(BWAPI::UnitTypes::Protoss_Cybernetics_Core) < 1 && spendableMinerals() >= 200) {
+             if (build(BWAPI::UnitTypes::Protoss_Cybernetics_Core, home)) return;
+         }
+-        if (count(BWAPI::UnitTypes::Protoss_Cybernetics_Core, true) > 0 && gateways < 4 && self->minerals() >= 250) {
++        if (count(BWAPI::UnitTypes::Protoss_Cybernetics_Core, true) > 0 && gateways < kPostCoreGatewayCap && spendableMinerals() >= 250) {
+             build(BWAPI::UnitTypes::Protoss_Gateway, home);
+         }
+     }
+@@ -1379,11 +1476,15 @@ class Kestrel final : public BWAPI::AIModule {
+         if (count(BWAPI::UnitTypes::Protoss_Pylon, true) > 0 && firstPylonCompletedFrame_ < 0) firstPylonCompletedFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Pylon) >= 6 && sixthPylonCurrentFrame_ < 0) sixthPylonCurrentFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Pylon, true) >= 6 && sixthPylonCompletedFrame_ < 0) sixthPylonCompletedFrame_ = frame;
++        if (count(BWAPI::UnitTypes::Protoss_Pylon) >= 7 && seventhPylonCurrentFrame_ < 0) seventhPylonCurrentFrame_ = frame;
++        if (count(BWAPI::UnitTypes::Protoss_Pylon, true) >= 7 && seventhPylonCompletedFrame_ < 0) seventhPylonCompletedFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Gateway) > 0 && firstGatewayCurrentFrame_ < 0) firstGatewayCurrentFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Gateway, true) > 0 && firstGatewayCompletedFrame_ < 0) firstGatewayCompletedFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Zealot, true) > 0 && firstZealotCompletedFrame_ < 0) firstZealotCompletedFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Gateway) >= 2 && secondGatewayCurrentFrame_ < 0) secondGatewayCurrentFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Gateway, true) >= 2 && secondGatewayCompletedFrame_ < 0) secondGatewayCompletedFrame_ = frame;
++        if (count(BWAPI::UnitTypes::Protoss_Gateway) >= 5 && fifthGatewayCurrentFrame_ < 0) fifthGatewayCurrentFrame_ = frame;
++        if (count(BWAPI::UnitTypes::Protoss_Gateway, true) >= 5 && fifthGatewayCompletedFrame_ < 0) fifthGatewayCompletedFrame_ = frame;
+         const BWAPI::TilePosition start = game.self()->getStartLocation();
+         const BWAPI::Position home(start.x * 32 + 64, start.y * 32 + 48);
+         if (firstHomeThreatFrame_ < 0) {
+@@ -1431,6 +1532,7 @@ class Kestrel final : public BWAPI::AIModule {
+         if (frame % cadence != 0) return;
+         updateEmergencyDefenseAssignments(home, frame);
+         assignEconomy();
++        researchRangeUpgrade();
+         trainUnits();
+         constructOpening();
+         scoutAndFight();

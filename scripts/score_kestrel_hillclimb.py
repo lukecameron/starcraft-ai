@@ -309,7 +309,7 @@ def _construction_pending_summary(metadata: dict[str, object], opponent_race: st
         grade = "review"
     score_checks = [value for value in checks.values() if isinstance(value, bool)]
     return {
-        "generation": generation if generation in {"v35", "v36"} else "v35",
+        "generation": generation if generation in {"v35", "v36", "v37"} else "v35",
         "telemetry_status": "complete" if not missing and not invalid_fields else "partial",
         "fields_present": present,
         "missing_fields": missing,
@@ -349,9 +349,9 @@ def _probe_reserve_summary(metadata: dict[str, object], opponent_race: str | Non
     )
     feature_present = any(name in metadata for name in names)
     if not feature_present:
-        if generation == "v36":
+        if generation in {"v36", "v37"}:
             return {
-                "generation": "v36",
+                "generation": generation,
                 "telemetry_status": "partial",
                 "fields_present": [],
                 "missing_fields": list(names),
@@ -482,7 +482,7 @@ def _probe_reserve_summary(metadata: dict[str, object], opponent_race: str | Non
     else:
         grade = "review"
     return {
-        "generation": generation if generation == "v36" else "legacy" if not feature_present else "v36",
+        "generation": generation if generation in {"v36", "v37"} else "legacy" if not feature_present else "v36",
         "telemetry_status": "complete" if not missing and not invalid_fields and not invalid_scalars else "partial",
         "fields_present": present,
         "missing_fields": missing,
@@ -725,7 +725,7 @@ def _emergency_episode_summary(metadata: dict[str, object], opponent_race: str |
     else:
         grade = "pass" if not review_flags else "review"
     return {
-        "generation": generation if generation in {"v35", "v36"} else "v35",
+        "generation": generation if generation in {"v35", "v36", "v37"} else "v35",
         "telemetry_status": "complete" if not missing and not invalid_fields else "partial",
         "fields_present": present,
         "missing_fields": missing,
@@ -770,7 +770,7 @@ def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | 
                               generation: str | None = None) -> dict[str, object]:
     """Normalize v33/v34 emergency-worker telemetry and legacy absence."""
     generation = generation or _diagnostic_generation(metadata)
-    army_generation = "three" if generation in {"v34", "v35", "v36"} else "two"
+    army_generation = "three" if generation in {"v34", "v35", "v36", "v37"} else "two"
     army_event_key = f"emergency_army_{army_generation}_release_events"
     army_defender_key = f"emergency_army_{army_generation}_released_defenders"
     first_army_frame_key = f"emergency_first_army_{army_generation}_release_frame"
@@ -920,7 +920,7 @@ def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | 
     if values["emergency_threat_clear_release_events"] + values[army_event_key] > 0 and not release_trace:
         review_flags.append("release_reason_without_release_trace")
 
-    episode_summary = _emergency_episode_summary(metadata, opponent_race, generation) if generation in {"v35", "v36"} else None
+    episode_summary = _emergency_episode_summary(metadata, opponent_race, generation) if generation in {"v35", "v36", "v37"} else None
     if episode_summary is not None:
         review_flags.extend(f"episode:{flag}" for flag in episode_summary.get("review_flags", []))
 
@@ -1303,7 +1303,7 @@ def _zerg_offense_stage_summary(metadata: dict[str, object], opponent_race: str 
         grade = "review" if review_flags else "pass"
         telemetry_status = "complete" if not missing else "partial"
     return {
-        "generation": generation if feature_present and generation in {"v34", "v35", "v36"} else "v34" if feature_present else "legacy",
+        "generation": generation if feature_present and generation in {"v34", "v35", "v36", "v37"} else "v34" if feature_present else "legacy",
         "opponent_race": race,
         "expected_active": expected_active,
         "expected_inactive": expected_inactive,
@@ -1454,32 +1454,68 @@ def _scaling_summary(metadata: dict[str, object], generation: str | None = None)
         flags.append("scaling_pylon_cap_exceeded")
     if observed_gateways > values["max_post_core_gateway_cap"]:
         flags.append("scaling_gateway_cap_exceeded")
-    for prefix in ("seventh_pylon", "fifth_gateway"):
-        milestones = [values[f"{prefix}_{suffix}_frame"] for suffix in ("accepted", "current", "completed")]
-        observed = [frame >= 0 for frame in milestones]
-        if any(observed) and not all(observed):
-            flags.append(f"{prefix}_milestone_incomplete")
-        if all(observed) and milestones != sorted(milestones):
-            flags.append(f"{prefix}_milestone_order")
-    eligibility = values["range_upgrade_eligibility_frame"]
     opportunity_notes: list[str] = []
+    for prefix in ("seventh_pylon", "fifth_gateway"):
+        accepted, current, completed = (
+            values[f"{prefix}_{suffix}_frame"] for suffix in ("accepted", "current", "completed")
+        )
+        observed = [frame for frame in (accepted, current, completed) if frame >= 0]
+        if current >= 0 and accepted < 0:
+            flags.append(f"{prefix}_current_without_accept")
+        if completed >= 0 and current < 0:
+            flags.append(f"{prefix}_complete_without_current")
+        if observed != sorted(observed):
+            flags.append(f"{prefix}_milestone_order")
+        if accepted < 0:
+            opportunity_notes.append(f"{prefix}_opportunity_unobserved")
+        elif current < 0:
+            opportunity_notes.append(f"{prefix}_accepted_not_current_before_terminal")
+        elif completed < 0:
+            opportunity_notes.append(f"{prefix}_current_not_completed_before_terminal")
+    eligibility = values["range_upgrade_eligibility_frame"]
+    attempts = values["range_upgrade_attempts"]
+    accepted_count = values["range_upgrade_accepted"]
+    completion_count = values["range_upgrade_completions"]
+    bank_start = values["range_upgrade_bank_start_frame"]
+    attempt_frame = values["range_upgrade_attempt_frame"]
+    accepted_frame = values["range_upgrade_accepted_frame"]
+    completion_frame = values["range_upgrade_completion_frame"]
     if eligibility < 0:
         opportunity_notes.append("range_upgrade_opportunity_unobserved")
+        if any(frame >= 0 for frame in (bank_start, attempt_frame, accepted_frame, completion_frame)) or any(
+            value != 0 for value in (attempts, accepted_count, completion_count)
+        ):
+            flags.append("range_upgrade_activity_without_eligibility")
     else:
-        ordered = [values[name] for name in (
-            "range_upgrade_eligibility_frame", "range_upgrade_bank_start_frame",
-            "range_upgrade_attempt_frame", "range_upgrade_accepted_frame",
-            "range_upgrade_completion_frame")]
-        if any(frame < 0 for frame in ordered):
-            flags.append("range_upgrade_trace_incomplete")
-        elif ordered != sorted(ordered):
-            flags.append("range_upgrade_trace_order")
-        if values["range_upgrade_attempts"] < 1:
-            flags.append("range_upgrade_attempt_missing")
-        if values["range_upgrade_accepted"] != 1 or values["range_upgrade_completions"] != 1:
-            flags.append("range_upgrade_not_accepted_once_and_completed")
-        if values["range_upgrade_accepted"] > values["range_upgrade_attempts"]:
+        if bank_start < eligibility:
+            flags.append("range_upgrade_bank_start_missing_or_early")
+        if accepted_count not in (0, 1) or completion_count not in (0, 1):
+            flags.append("range_upgrade_count_out_of_range")
+        if accepted_count > attempts:
             flags.append("range_upgrade_accept_count_exceeds_attempts")
+        if attempts == 0:
+            if any(frame >= 0 for frame in (attempt_frame, accepted_frame, completion_frame)) or accepted_count or completion_count:
+                flags.append("range_upgrade_zero_attempt_trace_mismatch")
+            else:
+                opportunity_notes.append("range_upgrade_banking_before_terminal")
+        else:
+            if attempt_frame < bank_start:
+                flags.append("range_upgrade_attempt_frame_missing_or_early")
+            if accepted_count == 0:
+                if accepted_frame >= 0 or completion_frame >= 0 or completion_count:
+                    flags.append("range_upgrade_unaccepted_trace_mismatch")
+                else:
+                    opportunity_notes.append("range_upgrade_attempt_not_accepted")
+            else:
+                if accepted_frame < attempt_frame:
+                    flags.append("range_upgrade_accepted_frame_missing_or_early")
+                if completion_count == 0:
+                    if completion_frame >= 0:
+                        flags.append("range_upgrade_completion_frame_without_count")
+                    else:
+                        opportunity_notes.append("range_upgrade_accepted_not_completed_before_terminal")
+                elif completion_frame < accepted_frame:
+                    flags.append("range_upgrade_completion_frame_missing_or_early")
     for name in ("range_upgrade_bank_block_count", "range_upgrade_attempts",
                  "range_upgrade_accepted", "range_upgrade_completions",
                  "range_upgrade_max_bank_minerals", "range_upgrade_max_bank_gas"):
@@ -1489,13 +1525,18 @@ def _scaling_summary(metadata: dict[str, object], generation: str | None = None)
     checks = {
         "required_fields": not missing and not invalid,
         "cap_constants": "scaling_cap_constant_mismatch" not in flags,
-        "milestone_order": not any(flag.endswith("milestone_order") or flag.endswith("milestone_incomplete") for flag in flags),
+        "milestone_order": not any(
+            flag.endswith("milestone_order") or flag.endswith("without_accept") or flag.endswith("without_current")
+            for flag in flags
+        ),
         "upgrade_trace": not any(flag.startswith("range_upgrade_") and flag != "range_upgrade_opportunity_unobserved" for flag in flags),
     }
     if flags:
         grade = "review"
     elif eligibility < 0:
         grade = "untested"
+    elif completion_count != 1:
+        grade = "partial"
     else:
         grade = "pass"
     return {
@@ -1508,7 +1549,7 @@ def _scaling_summary(metadata: dict[str, object], generation: str | None = None)
         "upgrade": {name: values[name] for name in required if name.startswith("range_upgrade_")},
         "milestones": {prefix: {suffix: values[f"{prefix}_{suffix}_frame"] for suffix in ("accepted", "current", "completed")}
                        for prefix in ("seventh_pylon", "fifth_gateway")},
-        "quantitative_grade": {"grade": grade, "score": 100 if grade in {"pass", "untested"} else 0,
+        "quantitative_grade": {"grade": grade, "score": 100 if grade in {"pass", "untested"} else (60 if grade == "partial" else 0),
                                 "max_score": 100},
     }
 
@@ -1531,8 +1572,8 @@ def _diagnostic_summary(metadata: dict[str, object], root: Path, opponent_race: 
             metadata_file_error = f"{type(error).__name__}: {error}"
     comparable_keys = ("schema_version", "frame_count", "ended", "winner", "rejected_commands", "command_count")
     metadata_mismatches = [key for key in comparable_keys if metadata_file is not None and key in metadata_file and metadata_file.get(key) != metadata.get(key)]
-    attempted = sum(_counter(categories, name, 0) for name in ("build", "train", "gather", "attack"))
-    rejected_by_category = sum(_counter(categories, name, 1) for name in ("build", "train", "gather", "attack"))
+    attempted = sum(_counter(categories, name, 0) for name in ("build", "train", "gather", "attack", "upgrade"))
+    rejected_by_category = sum(_counter(categories, name, 1) for name in ("build", "train", "gather", "attack", "upgrade"))
     rejected = metadata.get("rejected_commands")
     rejected = rejected if isinstance(rejected, int) else rejected_by_category
     command_count = metadata.get("command_count")
@@ -2071,7 +2112,7 @@ def main() -> int:
     }
     episode_games = [
         (bridge.get("episodes") or {}) for bridge in bridge_games
-        if isinstance(bridge.get("episodes"), dict) and (bridge.get("episodes") or {}).get("generation") in {"v35", "v36"}
+        if isinstance(bridge.get("episodes"), dict) and (bridge.get("episodes") or {}).get("generation") in {"v35", "v36", "v37"}
     ]
     aggregate["emergency_bridge"]["episodes"] = _aggregate_emergency_episode_summaries(episode_games)
     stage_games = [g.get("zerg_offense_stage") for g in games if isinstance(g.get("zerg_offense_stage"), dict)]
@@ -2080,7 +2121,7 @@ def main() -> int:
     aggregate["zerg_offense_stage"] = {
         "games": len(stage_games),
         "generations": {generation: sum(stage.get("generation") == generation for stage in stage_games)
-                         for generation in ("v34", "v35", "v36", "legacy")},
+                         for generation in ("v34", "v35", "v36", "v37", "legacy")},
         "grades": {grade: sum((stage.get("quantitative_grade") or {}).get("grade") == grade for stage in stage_games)
                    for grade in ("pass", "untested", "review", "legacy_absent")},
         "threshold_observed": sum((stage.get("peak_surplus") or 0) >= 6 for stage in stage_games),
@@ -2108,7 +2149,7 @@ def main() -> int:
     aggregate["construction_pending"] = {
         "games": len(construction_games),
         "generations": {generation: sum(item.get("generation") == generation for item in construction_games)
-                         for generation in ("v35", "v36", "legacy")},
+                         for generation in ("v35", "v36", "v37", "legacy")},
         "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade for item in construction_games)
                    for grade in ("pass", "untested", "review", "legacy_absent")},
         "accepted_builds": sum(len((item.get("accepted_builds") or {}).get("rows", [])) for item in construction_games),
@@ -2124,7 +2165,7 @@ def main() -> int:
     aggregate["probe_reserve"] = {
         "games": len(reserve_games),
         "generations": {generation: sum(item.get("generation") == generation for item in reserve_games)
-                         for generation in ("v36", "legacy")},
+                         for generation in ("v36", "v37", "legacy")},
         "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade for item in reserve_games)
                    for grade in ("pass", "untested", "review", "legacy_absent")},
         "reserve_blocks": sum((item.get("reserve_blocks") or {}).get("count", 0) for item in reserve_games),
@@ -2143,7 +2184,7 @@ def main() -> int:
         "generations": {generation: sum(item.get("generation") == generation for item in scaling_games)
                          for generation in ("v37", "legacy_absent")},
         "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade for item in scaling_games)
-                   for grade in ("pass", "untested", "review", "legacy_absent")},
+                   for grade in ("pass", "partial", "untested", "review", "legacy_absent")},
         "eligible": sum((item.get("upgrade") or {}).get("range_upgrade_eligibility_frame", -1) >= 0 for item in scaling_games),
         "accepted": sum((item.get("upgrade") or {}).get("range_upgrade_accepted", 0) for item in scaling_games),
         "completed": sum((item.get("upgrade") or {}).get("range_upgrade_completions", 0) for item in scaling_games),
