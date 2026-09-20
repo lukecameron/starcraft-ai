@@ -250,6 +250,99 @@ class KestrelScorecardTests(TestCase):
         metadata["zerg_pre_pylon_probe_reserve_frames"] = 12
         return metadata
 
+    @staticmethod
+    def v42_metadata() -> dict[str, object]:
+        metadata = KestrelScorecardTests.v40_metadata()
+        metadata.update({
+            "zerg_five_probe_policy_active_frames": 35,
+            "zerg_five_probe_pylon_accepted": True,
+            "zerg_five_probe_pylon_accepted_frame": metadata["first_pylon_accepted_frame"],
+        })
+        return metadata
+
+    def test_v42_generation_inherits_prior_checks_without_requiring_v41_scalar(self):
+        metadata = self.v42_metadata()
+        candidate_name = "Kestrel-v42-five-probe-pylon"
+
+        self.assertEqual(scorer._candidate_generation(candidate_name), "v42")
+        self.assertEqual(scorer._diagnostic_generation(metadata, candidate_name), "v42")
+        self.assertEqual(scorer._diagnostic_generation(metadata), "v42")
+        self.assertEqual(scorer._construction_pending_summary(metadata, "Zerg", "v42")["generation"], "v42")
+        self.assertEqual(scorer._emergency_episode_summary(metadata, "Zerg", "v42")["generation"], "v42")
+        self.assertEqual(scorer._emergency_bridge_summary(metadata, "Zerg", "v42")["generation"], "v42")
+        self.assertEqual(scorer._zerg_offense_stage_summary(metadata, "Zerg", "v42")["generation"], "v42")
+        self.assertEqual(scorer._scaling_summary(metadata, "v42")["generation"], "v42")
+        self.assertEqual(scorer._shared_target_summary(metadata, "Zerg", "v42")["generation"], "v42")
+        self.assertEqual(scorer._gateway_probe_summary(metadata, "v42")["generation"], "v42")
+
+        summary = scorer._probe_reserve_summary(metadata, "Zerg", "v42")
+        self.assertEqual(summary["generation"], "v42")
+        self.assertEqual(summary["v42_treatment"]["quantitative_grade"]["grade"], "pass")
+        self.assertEqual(summary["v42_treatment"]["active_frames"], 35)
+        self.assertTrue(summary["v42_treatment"]["pylon_accepted"])
+        self.assertEqual(summary["v42_treatment"]["pylon_accepted_frame"], metadata["first_pylon_accepted_frame"])
+        self.assertIsNone(summary["zerg_pre_pylon_probe_reserve_frames"])
+        self.assertNotIn("zerg_pre_pylon_probe_reserve_frames_missing", summary["review_flags"])
+
+    def test_v42_treatment_requires_positive_zerg_activation_and_accepted_pylon(self):
+        metadata = self.v42_metadata()
+        metadata["zerg_five_probe_policy_active_frames"] = 0
+        metadata["zerg_five_probe_pylon_accepted"] = False
+        metadata["zerg_five_probe_pylon_accepted_frame"] = -1
+
+        summary = scorer._probe_reserve_summary(metadata, "Zerg", "v42")
+
+        self.assertEqual(summary["quantitative_grade"]["grade"], "review")
+        self.assertIn("v42:zerg_five_probe_policy_active_frames_not_positive", summary["review_flags"])
+        self.assertIn("v42:zerg_five_probe_pylon_accepted_not_true", summary["review_flags"])
+        self.assertIn("v42:zerg_five_probe_pylon_accepted_frame_negative", summary["review_flags"])
+
+    def test_v42_treatment_requires_complete_scalar_types_and_alignment(self):
+        missing = self.v42_metadata()
+        del missing["zerg_five_probe_pylon_accepted_frame"]
+        missing_summary = scorer._probe_reserve_summary(missing, "Zerg", "v42")
+        self.assertEqual(missing_summary["quantitative_grade"]["grade"], "review")
+        self.assertIn("v42:zerg_five_probe_pylon_accepted_frame_missing", missing_summary["review_flags"])
+
+        malformed = self.v42_metadata()
+        malformed["zerg_five_probe_policy_active_frames"] = True
+        malformed["zerg_five_probe_pylon_accepted"] = 1
+        malformed_summary = scorer._probe_reserve_summary(malformed, "Zerg", "v42")
+        self.assertEqual(malformed_summary["quantitative_grade"]["grade"], "review")
+        self.assertIn("v42:zerg_five_probe_policy_active_frames_type_mismatch", malformed_summary["review_flags"])
+        self.assertIn("v42:zerg_five_probe_pylon_accepted_type_mismatch", malformed_summary["review_flags"])
+        self.assertIn("zerg_five_probe_policy_active_frames", malformed_summary["invalid_fields"])
+
+        mismatch = self.v42_metadata()
+        mismatch["zerg_five_probe_pylon_accepted_frame"] += 1
+        mismatch_summary = scorer._probe_reserve_summary(mismatch, "Zerg", "v42")
+        self.assertEqual(mismatch_summary["quantitative_grade"]["grade"], "review")
+        self.assertIn("v42:zerg_five_probe_pylon_accepted_frame_mismatch", mismatch_summary["review_flags"])
+
+    def test_v42_non_zerg_requires_inactive_treatment_sentinels(self):
+        metadata = self.v42_metadata()
+        metadata.update({
+            "zerg_five_probe_policy_active_frames": 0,
+            "zerg_five_probe_pylon_accepted": False,
+            "zerg_five_probe_pylon_accepted_frame": -1,
+            "accepted_probe_train_frames": [],
+            "probe_reserve_block_frames": [],
+            "probe_reserve_block_minerals": [],
+            "opening_probe_reserve": 0,
+            "max_opening_probe_reserve": 0,
+            "first_probe_reserve_window_frame": -1,
+            "probe_reserve_window_end_frame": -1,
+            "probe_reserve_block_count": 0,
+        })
+        summary = scorer._probe_reserve_summary(metadata, "Terran", "v42")
+        self.assertEqual(summary["quantitative_grade"]["grade"], "pass")
+        self.assertTrue(summary["v42_treatment"]["checks"]["non_zerg_inactive"])
+
+        metadata["zerg_five_probe_pylon_accepted_frame"] = 0
+        summary = scorer._probe_reserve_summary(metadata, "Terran", "v42")
+        self.assertEqual(summary["quantitative_grade"]["grade"], "review")
+        self.assertIn("v42:non_zerg_five_probe_pylon_accepted_frame_not_minus_one", summary["review_flags"])
+
     def test_v41_generation_retains_all_prior_diagnostic_checks_and_exposes_new_scalar(self):
         metadata = self.v41_metadata()
         candidate_name = "Kestrel-v41-zerg-two-gateway-bank"

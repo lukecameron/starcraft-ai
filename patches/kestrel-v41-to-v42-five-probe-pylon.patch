@@ -1,0 +1,70 @@
+--- third_party/kestrel-opening-v41-candidate/Kestrel.cpp
++++ third_party/kestrel-opening-v42-candidate/Kestrel.cpp
+@@ -80,11 +80,13 @@
+     int openingProbeReserve_ = 0;
+     int maxOpeningProbeReserve_ = 0;
+     int zergPrePylonProbeReserveFrames_ = 0;
++    int zergFiveProbePolicyActiveFrames_ = 0;
++    int zergFiveProbePylonAcceptedFrame_ = -1;
+     int firstProbeReserveWindowFrame_ = -1;
+     int probeReserveWindowEndFrame_ = -1;
+     int probeReserveBlockCount_ = 0;
+     static constexpr int kPylonCap = 10;
+-    // Zerg-only opening bank: after six completed Probes, defer the next
++    // Zerg-only opening bank: after five completed Probes, defer the next
+     // Probe until the second Gateway is current so its 50 minerals remain
+     // available for the second 150-mineral Gateway.
+     static constexpr int kZergTwoGatewayProbeReserve = 250;
+@@ -551,6 +553,9 @@
+             << ",\"max_opening_probe_reserve\":" << maxOpeningProbeReserve_
+             << ",\"zerg_two_gateway_probe_reserve\":" << kZergTwoGatewayProbeReserve
+             << ",\"zerg_pre_pylon_probe_reserve_frames\":" << zergPrePylonProbeReserveFrames_
++            << ",\"zerg_five_probe_policy_active_frames\":" << zergFiveProbePolicyActiveFrames_
++            << ",\"zerg_five_probe_pylon_accepted_frame\":" << zergFiveProbePylonAcceptedFrame_
++            << ",\"zerg_five_probe_pylon_accepted\":" << (zergFiveProbePylonAcceptedFrame_ >= 0 ? "true" : "false")
+             << ",\"first_probe_reserve_window_frame\":" << firstProbeReserveWindowFrame_
+             << ",\"probe_reserve_window_end_frame\":" << probeReserveWindowEndFrame_
+             << ",\"probe_reserve_block_count\":" << probeReserveBlockCount_
+@@ -1333,7 +1338,11 @@
+             }
+             lastAcceptedBuildFrame_ = frame;
+             if (firstZealotTrainFrame_ >= 0) ++acceptedStructuresAfterFirstZealot_;
+-            if (type == BWAPI::UnitTypes::Protoss_Pylon && firstPylonAcceptedFrame_ < 0) firstPylonAcceptedFrame_ = frame;
++            if (type == BWAPI::UnitTypes::Protoss_Pylon && firstPylonAcceptedFrame_ < 0) {
++                firstPylonAcceptedFrame_ = frame;
++                if (knownZerg_ && count(BWAPI::UnitTypes::Protoss_Probe, true) >= 5 && firstPylonCurrentFrame_ < 0)
++                    zergFiveProbePylonAcceptedFrame_ = frame;
++            }
+             if (type == BWAPI::UnitTypes::Protoss_Pylon && count(type) >= 5 && sixthPylonAcceptedFrame_ < 0) sixthPylonAcceptedFrame_ = frame;
+             if (type == BWAPI::UnitTypes::Protoss_Pylon && preCommandStructureCount >= 6 && seventhPylonAcceptedFrame_ < 0) seventhPylonAcceptedFrame_ = frame;
+             if (type == BWAPI::UnitTypes::Protoss_Gateway && firstGatewayAcceptedFrame_ < 0) firstGatewayAcceptedFrame_ = frame;
+@@ -1397,9 +1406,11 @@
+         const int probes = count(BWAPI::UnitTypes::Protoss_Probe);
+         const int completedProbes = count(BWAPI::UnitTypes::Protoss_Probe, true);
+         int openingReserve = 0;
++        const bool zergFiveProbePolicyActive =
++            knownZerg_ && completedProbes >= 5 && firstPylonCurrentFrame_ < 0;
+         const bool zergPrePylonProbeReserve =
+             knownZerg_ && completedProbes >= 6 && firstPylonCurrentFrame_ < 0;
+-        if (zergPrePylonProbeReserve) {
++        if (zergFiveProbePolicyActive) {
+             openingReserve = kZergTwoGatewayProbeReserve;
+         } else if (knownZerg_ && firstPylonAcceptedFrame_ >= 0) {
+             // Bank minerals for the second Gateway before adding another
+@@ -1415,6 +1426,7 @@
+         }
+         const int frame = BWAPI::Broodwar->getFrameCount();
+         openingProbeReserve_ = knownZerg_ ? openingReserve : 0;
++        if (zergFiveProbePolicyActive) ++zergFiveProbePolicyActiveFrames_;
+         if (zergPrePylonProbeReserve) ++zergPrePylonProbeReserveFrames_;
+         maxOpeningProbeReserve_ = std::max(maxOpeningProbeReserve_, openingProbeReserve_);
+         if (knownZerg_ && firstPylonAcceptedFrame_ >= 0 && secondGatewayCurrentFrame_ < 0) {
+@@ -1464,7 +1476,7 @@
+         const int pylons = count(BWAPI::UnitTypes::Protoss_Pylon);
+         const int completedPylons = count(BWAPI::UnitTypes::Protoss_Pylon, true);
+         const int completedProbes = count(BWAPI::UnitTypes::Protoss_Probe, true);
+-        if (knownZerg_ && completedProbes >= 6 && firstPylonCurrentFrame_ < 0 && spendableMinerals() >= 100) {
++        if (knownZerg_ && completedProbes >= 5 && firstPylonCurrentFrame_ < 0 && spendableMinerals() >= 100) {
+             if (build(BWAPI::UnitTypes::Protoss_Pylon, home)) return;
+         }
+         if (knownZerg_ && firstPylonAcceptedFrame_ >= 0 && completedPylons > 0 &&
