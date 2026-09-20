@@ -846,6 +846,26 @@
         "20260920T073627-856dcb721664",
         "20260920T073629-a6ad5ae88993"
       ]
+    },
+    {
+      "id": "mcrave-grids-bounds-performance-v1",
+      "title": "McRave cached-bounds performance screen",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Replacing repeated walk-position API checks with equivalent cached map bounds will reduce process CPU per frame by at least 5% without paired regressions.",
+      "notes": "Eight matched attempts completed cleanly; all 16 replay copies passed full parsing and hash checks. Aggregate candidate CPU per frame was 107.43% of control, and two pairs exceeded the 110% regression guard. Memory and outcome guards passed.",
+      "conclusion": "Rejected: the candidate did not improve measured performance and will not advance. Two candidate games also fell below 384 durable frames per second. All outcomes and artifacts are retained; the baseline is unchanged.",
+      "evidence_run_ids": [
+        "20260920T074119-4f6a59abcc45",
+        "20260920T074156-f5e16628c5e4",
+        "20260920T074232-04708f3cf518",
+        "20260920T074354-a96b052d94c5",
+        "20260920T074435-c1d14eebe257",
+        "20260920T074525-84c56e67de26",
+        "20260920T074640-1953c3340374",
+        "20260920T074720-7470c0479d0d"
+      ]
     }
   ]
 }
