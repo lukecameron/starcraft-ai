@@ -1127,6 +1127,30 @@
         "origin": "Original",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
       }
+    },
+    {
+      "id": "kestrel-hillclimb-v3",
+      "title": "Kestrel v23 three-local-Zealot hold refinement",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Holding combat Zealots until three completed units are within the public home radius will reduce sequential early losses while retaining v22 earlier tech behavior.",
+      "notes": "Five concurrent games completed with five valid parsed replays and zero Kestrel command rejections. Kestrel lost all five. The three-local hold did not rescue ZZZK and shortened or weakened three longer lanes relative to v22.",
+      "conclusion": "Reject the three-local threshold. Restore the two-local v22 base and test shared visible-target focus as the next isolated combat improvement; no Elo update.",
+      "evidence_run_ids": [
+        "20260920T120110-eb9a2e61bb30",
+        "20260920T120110-31c87e25395e",
+        "20260920T120110-49a0a8cd26f5",
+        "20260920T120110-b5ae18800e3d",
+        "20260920T120110-c35c62a12617"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v3",
+      "candidate_binary_sha256": "2e013e45b8fb79a66930e57c66fbfcedd58835df1e3f4d40d15a8136f648cd7e",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      }
     }
   ]
 }

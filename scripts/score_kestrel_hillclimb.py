@@ -37,6 +37,55 @@ def atomic_json(path: Path, value: object) -> None:
     os.replace(temporary, path)
 
 
+def outcome_performance(candidate_result: dict[str, object]) -> dict[str, object]:
+    """Classify result metadata without treating replay commands as outcomes."""
+    winner = candidate_result.get("winner")
+    frames = candidate_result.get("frame_count")
+    probes = candidate_result.get("max_probes")
+    gateways = candidate_result.get("max_gateways")
+    zealots = candidate_result.get("max_zealots") or 0
+    dragoons = candidate_result.get("max_dragoons") or 0
+    rejected = candidate_result.get("rejected_commands")
+    categories = candidate_result.get("command_categories") or {}
+    train_count = (categories.get("train") or [0])[0] if isinstance(categories, dict) else 0
+    build_count = (categories.get("build") or [0])[0] if isinstance(categories, dict) else 0
+    attack_count = (categories.get("attack") or [0])[0] if isinstance(categories, dict) else 0
+    production_fields = {
+        "probes_at_least_10": isinstance(probes, int) and probes >= 10,
+        "gateway_completed_or_observed": isinstance(gateways, int) and gateways >= 1,
+        "combat_units_at_least_3": isinstance(zealots, int) and isinstance(dragoons, int) and zealots + dragoons >= 3,
+        "accepted_train_commands": isinstance(train_count, int) and train_count > 0,
+        "accepted_build_commands": isinstance(build_count, int) and build_count > 0,
+    }
+    early_threat_survival = {
+        "survived_opening_window": isinstance(frames, int) and frames >= 9000,
+        "reached_worker_threshold": production_fields["probes_at_least_10"],
+        "reached_combat_threshold": production_fields["combat_units_at_least_3"],
+    }
+    production_score = sum(production_fields.values())
+    survival_score = sum(early_threat_survival.values())
+    if winner is True:
+        grade = "win"
+    elif winner is not False:
+        grade = "unverified"
+    elif production_score >= 3 and survival_score >= 2:
+        grade = "competitive_loss"
+    elif production_score >= 2 or survival_score >= 1:
+        grade = "partial_loss"
+    else:
+        grade = "early_loss"
+    return {
+        "grade": grade,
+        "production_score": production_score,
+        "survival_score": survival_score,
+        "production_fields": production_fields,
+        "early_threat_survival": early_threat_survival,
+        "command_counts": {"train": train_count, "build": build_count, "attack": attack_count},
+        "rejected_commands": rejected,
+        "note": "Descriptive heuristic only: thresholds are max counters and terminal metadata, not a causal measure of strength or hidden-state survival.",
+    }
+
+
 def parse_replay(path: Path, screp: Path) -> dict[str, object]:
     result: dict[str, object] = {
         "path": str(path),
@@ -189,6 +238,7 @@ def main() -> int:
             "terminal_frames": candidate_result.get("frame_count"),
             "durable_fps": manifest.get("durable_logical_frames_per_wall_second"),
             "short_game": isinstance(manifest.get("elapsed_seconds"), (int, float)) and manifest["elapsed_seconds"] <= 300,
+            "outcome_performance": outcome_performance(candidate_result),
         })
         if not replay:
             game["error"] = "candidate_replay_missing"
@@ -204,6 +254,8 @@ def main() -> int:
                             for grade in ("strong", "partial", "weak", "missing")},
                  "candidate_outcomes": {outcome: sum(g.get("candidate_outcome") == outcome for g in games)
                                         for outcome in ("win", "loss", "unknown")},
+                 "outcome_performance_grades": {grade: sum((g.get("outcome_performance") or {}).get("grade") == grade for g in games)
+                                                 for grade in ("win", "competitive_loss", "partial_loss", "early_loss", "unverified")},
                  "short_games": sum(g.get("short_game") is True for g in games),
                  "signals": {name: sum(g["replay"].get("signals", {}).get(name, False) for g in valid)
                              for name in ("economy", "construction", "production", "combat")}}

@@ -1,0 +1,34 @@
+--- third_party/kestrel-opening-v22-candidate/Kestrel.cpp	2026-09-20 21:54:52
++++ third_party/kestrel-opening-v24-candidate/Kestrel.cpp	2026-09-20 22:03:33
+@@ -414,6 +414,15 @@
+             if (homeUnit->exists() && homeUnit->isCompleted() &&
+                 homeUnit->getType() == BWAPI::UnitTypes::Protoss_Zealot &&
+                 homeUnit->getDistance(home) < 12 * 32) ++localCompletedZealots;
++        }
++        BWAPI::Unit focusTarget = nullptr;
++        for (auto candidate : sorted(BWAPI::Broodwar->self()->getUnits())) {
++            if (!candidate->exists() || !candidate->isCompleted()) continue;
++            const bool combatCandidate = candidate->getType() == BWAPI::UnitTypes::Protoss_Zealot ||
++                                         candidate->getType() == BWAPI::UnitTypes::Protoss_Dragoon;
++            if (!combatCandidate) continue;
++            focusTarget = visibleEnemyTarget(candidate);
++            if (focusTarget) break;
+         }
+         if (scoutId_ < 0 && count(BWAPI::UnitTypes::Protoss_Probe) >= 9) {
+             for (auto probe : sorted(BWAPI::Broodwar->self()->getUnits())) {
+@@ -436,7 +445,14 @@
+                 continue;
+             }
+             if (unit->isAttacking() && unit->getOrderTarget()) continue;
+-            BWAPI::Unit enemy = visibleEnemyTarget(unit);
++            BWAPI::Unit enemy = nullptr;
++            if (combat && focusTarget && focusTarget->exists() && focusTarget->isVisible() &&
++                focusTarget->isDetected() && !focusTarget->isFlying() &&
++                BWAPI::Broodwar->self()->isEnemy(focusTarget->getPlayer())) {
++                enemy = focusTarget;
++            } else {
++                enemy = visibleEnemyTarget(unit);
++            }
+             if (enemy) {
+                 const int frame = BWAPI::Broodwar->getFrameCount();
+                 const auto previous = attackRequests_.find(unit->getID());
