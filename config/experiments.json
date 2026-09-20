@@ -963,6 +963,22 @@
         "20260920T083343-fde4d42b5ae3",
         "20260920T083345-3668c7a9941b"
       ]
+    },
+    {
+      "id": "kestrel-opening-v17",
+      "title": "Kestrel tests a wider supply buffer",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Requesting the next supply Pylon at a six-supply margin will preserve the faster v16 opening while allowing two local Zealots to overlap before the first local loss.",
+      "notes": "The candidate still built only one Pylon in both games and accepted no structure after its first Zealot. It reached one local completed Zealot before first loss on both maps; Heartbreak also reached only nine Probes. All four games were clean and all eight replays parsed.",
+      "conclusion": "Rejected. The wider supply margin did not reach a second-Pylon request before pressure and did not improve the registered overlap or production gates. Canonical Kestrel v13 remains unchanged.",
+      "evidence_run_ids": [
+        "20260920T084337-eb5d53849d66",
+        "20260920T084339-c8fc4ee37fde",
+        "20260920T084341-e7d34e7bcb6b",
+        "20260920T084342-429930b76944"
+      ]
     }
   ]
 }
