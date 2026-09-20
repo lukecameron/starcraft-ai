@@ -1,0 +1,103 @@
+diff --git a/third_party/kestrel-opening-v22-candidate/Kestrel.cpp b/third_party/kestrel-opening-v26-candidate/Kestrel.cpp
+index bd5b53f..55a07e8 100644
+--- a/third_party/kestrel-opening-v22-candidate/Kestrel.cpp
++++ b/third_party/kestrel-opening-v26-candidate/Kestrel.cpp
+@@ -54,8 +54,16 @@ class Kestrel final : public BWAPI::AIModule {
+     bool knownZerg_ = false;
+     bool firstZealotQueued_ = false;
+     int acceptedZealotTrains_ = 0;
++    int firstDragoonTrainFrame_ = -1;
++    int secondGatewayAcceptedFrame_ = -1;
+     int secondGatewayCurrentFrame_ = -1;
+     int secondGatewayCompletedFrame_ = -1;
++    int firstAssimilatorAcceptedFrame_ = -1;
++    int firstAssimilatorCurrentFrame_ = -1;
++    int firstAssimilatorCompletedFrame_ = -1;
++    int firstCoreAcceptedFrame_ = -1;
++    int firstCoreCurrentFrame_ = -1;
++    int firstCoreCompletedFrame_ = -1;
+     int firstHomeThreatFrame_ = -1;
+     int firstHomeZealotLossFrame_ = -1;
+     int maxLocalCompletedZealotsBeforeLoss_ = 0;
+@@ -141,8 +149,16 @@ class Kestrel final : public BWAPI::AIModule {
+             << ",\"first_zealot_train_frame\":" << firstZealotTrainFrame_
+             << ",\"first_zealot_completed_frame\":" << firstZealotCompletedFrame_
+             << ",\"accepted_zealot_trains\":" << acceptedZealotTrains_
++            << ",\"first_dragoon_train_frame\":" << firstDragoonTrainFrame_
++            << ",\"second_gateway_accepted_frame\":" << secondGatewayAcceptedFrame_
+             << ",\"second_gateway_current_frame\":" << secondGatewayCurrentFrame_
+             << ",\"second_gateway_completed_frame\":" << secondGatewayCompletedFrame_
++            << ",\"first_assimilator_accepted_frame\":" << firstAssimilatorAcceptedFrame_
++            << ",\"first_assimilator_current_frame\":" << firstAssimilatorCurrentFrame_
++            << ",\"first_assimilator_completed_frame\":" << firstAssimilatorCompletedFrame_
++            << ",\"first_core_accepted_frame\":" << firstCoreAcceptedFrame_
++            << ",\"first_core_current_frame\":" << firstCoreCurrentFrame_
++            << ",\"first_core_completed_frame\":" << firstCoreCompletedFrame_
+             << ",\"first_home_threat_frame\":" << firstHomeThreatFrame_
+             << ",\"first_home_zealot_loss_frame\":" << firstHomeZealotLossFrame_
+             << ",\"max_local_completed_zealots_before_loss\":" << maxLocalCompletedZealotsBeforeLoss_
+@@ -227,7 +243,11 @@ class Kestrel final : public BWAPI::AIModule {
+         if (accepted) {
+             if (firstZealotTrainFrame_ >= 0) ++acceptedStructuresAfterFirstZealot_;
+             if (type == BWAPI::UnitTypes::Protoss_Pylon && firstPylonAcceptedFrame_ < 0) firstPylonAcceptedFrame_ = frame;
+-            if (type == BWAPI::UnitTypes::Protoss_Gateway && firstGatewayAcceptedFrame_ < 0) firstGatewayAcceptedFrame_ = frame;
++            if (type == BWAPI::UnitTypes::Protoss_Gateway) {
++                if (firstGatewayAcceptedFrame_ < 0) firstGatewayAcceptedFrame_ = frame;
++                else if (secondGatewayAcceptedFrame_ < 0) secondGatewayAcceptedFrame_ = frame;
++            }
++            if (type == BWAPI::UnitTypes::Protoss_Cybernetics_Core && firstCoreAcceptedFrame_ < 0) firstCoreAcceptedFrame_ = frame;
+             pendingBuildType_ = type;
+             pendingBuildBaseline_ = count(type);
+             pendingBuildFrame_ = frame;
+@@ -255,6 +275,7 @@ class Kestrel final : public BWAPI::AIModule {
+         const bool accepted = issue(worker->build(BWAPI::UnitTypes::Protoss_Assimilator, best->getTilePosition()), BuildCommand);
+         if (accepted) {
+             if (firstZealotTrainFrame_ >= 0) ++acceptedStructuresAfterFirstZealot_;
++            if (firstAssimilatorAcceptedFrame_ < 0) firstAssimilatorAcceptedFrame_ = frame;
+             pendingBuildType_ = BWAPI::UnitTypes::Protoss_Assimilator;
+             pendingBuildBaseline_ = count(pendingBuildType_);
+             pendingBuildFrame_ = frame;
+@@ -285,7 +306,8 @@ class Kestrel final : public BWAPI::AIModule {
+                 if (count(BWAPI::UnitTypes::Protoss_Cybernetics_Core, true) > 0 &&
+                     BWAPI::Broodwar->self()->minerals() >= 125 && BWAPI::Broodwar->self()->gas() >= 50 &&
+                     unit->canTrain(BWAPI::UnitTypes::Protoss_Dragoon)) {
+-                    issue(unit->train(BWAPI::UnitTypes::Protoss_Dragoon), TrainCommand);
++                    if (issue(unit->train(BWAPI::UnitTypes::Protoss_Dragoon), TrainCommand) && firstDragoonTrainFrame_ < 0)
++                        firstDragoonTrainFrame_ = BWAPI::Broodwar->getFrameCount();
+                 } else if (BWAPI::Broodwar->self()->minerals() >= 100 && unit->canTrain(BWAPI::UnitTypes::Protoss_Zealot)) {
+                     if (issue(unit->train(BWAPI::UnitTypes::Protoss_Zealot), TrainCommand)) {
+                         ++acceptedZealotTrains_;
+@@ -320,10 +342,6 @@ class Kestrel final : public BWAPI::AIModule {
+         if (supplyUsed >= 18 && gateways < 1 && self->minerals() >= 150) {
+             if (build(BWAPI::UnitTypes::Protoss_Gateway, home)) return;
+         }
+-        if (knownZerg_ && firstGatewayCurrentFrame_ >= 0 && secondGatewayCurrentFrame_ < 0 &&
+-            self->minerals() >= 150) {
+-            if (build(BWAPI::UnitTypes::Protoss_Gateway, home)) return;
+-        }
+         if (!knownZerg_ && supplyUsed >= 26 && gateways < 2 && self->minerals() >= 150) {
+             if (build(BWAPI::UnitTypes::Protoss_Gateway, home)) return;
+         }
+@@ -335,6 +353,11 @@ class Kestrel final : public BWAPI::AIModule {
+             count(BWAPI::UnitTypes::Protoss_Cybernetics_Core) < 1 && self->minerals() >= 200) {
+             if (build(BWAPI::UnitTypes::Protoss_Cybernetics_Core, home)) return;
+         }
++        if (knownZerg_ && acceptedZealotTrains_ >= 2 &&
++            count(BWAPI::UnitTypes::Protoss_Cybernetics_Core) > 0 && firstGatewayCurrentFrame_ >= 0 &&
++            secondGatewayCurrentFrame_ < 0 && self->minerals() >= 150) {
++            if (build(BWAPI::UnitTypes::Protoss_Gateway, home)) return;
++        }
+         if (count(BWAPI::UnitTypes::Protoss_Cybernetics_Core, true) > 0 && gateways < 4 && self->minerals() >= 250) {
+             build(BWAPI::UnitTypes::Protoss_Gateway, home);
+         }
+@@ -474,6 +497,10 @@ class Kestrel final : public BWAPI::AIModule {
+         if (count(BWAPI::UnitTypes::Protoss_Zealot, true) > 0 && firstZealotCompletedFrame_ < 0) firstZealotCompletedFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Gateway) >= 2 && secondGatewayCurrentFrame_ < 0) secondGatewayCurrentFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Gateway, true) >= 2 && secondGatewayCompletedFrame_ < 0) secondGatewayCompletedFrame_ = frame;
++        if (count(BWAPI::UnitTypes::Protoss_Assimilator) > 0 && firstAssimilatorCurrentFrame_ < 0) firstAssimilatorCurrentFrame_ = frame;
++        if (count(BWAPI::UnitTypes::Protoss_Assimilator, true) > 0 && firstAssimilatorCompletedFrame_ < 0) firstAssimilatorCompletedFrame_ = frame;
++        if (count(BWAPI::UnitTypes::Protoss_Cybernetics_Core) > 0 && firstCoreCurrentFrame_ < 0) firstCoreCurrentFrame_ = frame;
++        if (count(BWAPI::UnitTypes::Protoss_Cybernetics_Core, true) > 0 && firstCoreCompletedFrame_ < 0) firstCoreCompletedFrame_ = frame;
+         const BWAPI::TilePosition start = game.self()->getStartLocation();
+         const BWAPI::Position home(start.x * 32 + 64, start.y * 32 + 48);
+         if (firstHomeThreatFrame_ < 0) {
