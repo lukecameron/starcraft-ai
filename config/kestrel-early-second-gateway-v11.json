@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "experiment_id": "kestrel-early-second-gateway-v11",
+  "title": "Kestrel early second-Gateway screen",
+  "registered_at": "2026-09-20T07:08:18.524259+00:00",
+  "final_source_recorded_at": "2026-09-20T07:10:21.950959+00:00",
+  "build_identity_recorded_at": "2026-09-20T07:10:53.254142+00:00",
+  "hypothesis": "Against known Zerg, making the second Gateway the next production structure before gas provides two simultaneously completed Zealots in the home fight before the first Zealot dies.",
+  "stop_condition": "Exactly two candidate games, serial and without retries or replacement seeds. Preserve every attempt and stop after an infrastructure-invalid attempt.",
+  "purpose": "Preregistered Kestrel v11 early second-Gateway mechanism screen; no rating or strength-promotion claim",
+  "wall_timeout_seconds": 120,
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "candidate": {
+    "name": "Kestrel v11 early second Gateway",
+    "race": "Protoss",
+    "sha256": "e997841c5f173d5218f7599ab60b9dc391335f8a45788f69df3fea3bc740f49c"
+  },
+  "opponents": {
+    "zzzk-z": {
+      "name": "ZZZKBot",
+      "race": "Zerg",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+    }
+  },
+  "games": [
+    {
+      "opponent": "zzzk-z",
+      "map": "sscai/(2)Benzene.scx",
+      "candidate_player": 1,
+      "scenario_seed": 6103
+    },
+    {
+      "opponent": "zzzk-z",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "candidate_player": 1,
+      "scenario_seed": 6104
+    }
+  ],
+  "execution": {
+    "concurrency": 1,
+    "learning_state": "empty isolated per-player read/write directories",
+    "bot_seeds": "none"
+  }
+}

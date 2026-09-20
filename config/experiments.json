@@ -386,7 +386,7 @@
       "status": "completed",
       "decision": "REJECT",
       "hypothesis": "Five exact build/race configurations complete twelve clean comparisons and form a connected graph on two previously unused maps.",
-      "notes": "All twelve attempted; nine clean and three conflicting-winner outcomes. All24 replays parse and match owner frames. Local estimates retain broad model-dependent intervals and prior sensitivity.",
+      "notes": "All twelve attempted; nine clean and three conflicting-winner outcomes. All 24 replays parse and match owner frames. Local estimates retain broad model-dependent intervals and prior sensitivity.",
       "conclusion": "The clean-cohort gate failed. Show the nine reviewed games as a partial uncalibrated league; investigate McRave\u2013Stardust terminal integrity and McRave losses on Heartbreak Ridge. No promotion or BASIL estimate.",
       "evidence_run_ids": [
         "20260920T055717-7842246af878",
@@ -447,7 +447,7 @@
       "status": "completed",
       "decision": "REJECT",
       "hypothesis": "Preserving the pending builder allows the original lifecycle to complete with at most 12 pylon/gateway build commands.",
-      "notes": "Kestrel won its WorkerRush diagnostic smoke. Replay and telemetry show 27 probes,5 pylons,4 gateways,9 zealots and 2 dragoons at peak; both replays parse and terminal results agree.",
+      "notes": "Kestrel won its WorkerRush diagnostic smoke. Replay and telemetry show 27 probes, 5 pylons, 4 gateways, 9 zealots and 2 dragoons at peak; both replays parse and terminal results agree.",
       "conclusion": "The lifecycle passed, but 16 build commands exceed the registered 12-command ceiling. Retain as the first working lifecycle reference; continue command management. This fixture is not a rating anchor.",
       "evidence_run_ids": [
         "20260920T060713-1258ac57a72c"
@@ -459,8 +459,8 @@
       "date": "2026-09-20",
       "status": "completed",
       "decision": "REJECT",
-      "hypothesis": "The original bot completes two benchmark games with plausible production, fewer rejected commands and at least 384 durablefps.",
-      "notes": "Both games completed with opposing outcomes and parsed replays; Kestrel lost both. ZZZK:2557fps and 18% commands rejected. UAlberta:3287fps and 71% rejected;16 pylon/gateway orders.",
+      "hypothesis": "The original bot completes two benchmark games with plausible production, fewer rejected commands and at least 384 durable fps.",
+      "notes": "Both games completed with opposing outcomes and parsed replays; Kestrel lost both. ZZZK: 2557 fps and 18% of commands rejected. UAlberta: 3287 fps and 71% rejected; 16 pylon/gateway orders.",
       "conclusion": "Compatibility and lifecycle passed, but the command-quality gate failed. Fix repeated attack requests before expanding the strength cohort. Two losses do not provide a calibrated Elo.",
       "evidence_run_ids": [
         "20260920T061023-430740c71f57",
@@ -474,7 +474,7 @@
       "status": "completed",
       "decision": "ADOPT",
       "hypothesis": "A bounded real-game diagnostic identifies a directly observed regeneration case representing at least 20% and 100 generated paths for a semantics-preserving shadow comparison.",
-      "notes": "Support generated 24,676 JPS results;23,795 were unreachable. Combat march generated 36,180 and retreat 33,569. Match ended cleanly with two retained replays.",
+      "notes": "Support generated 24,676 JPS results; 23,795 were unreachable. Combat march generated 36,180 and retreat 33,569. Match ended cleanly with two retained replays.",
       "conclusion": "Adopt the next diagnostic step only: test fresh per-search JPS callback memoization and count cheap rejection separately. No caching across frames, speed claim or bot promotion.",
       "evidence_run_ids": [
         "20260920T060444-344951b48e0f"
@@ -505,7 +505,7 @@
       "status": "completed",
       "decision": "REJECT",
       "hypothesis": "Per-unit request state and cooldowns reduce rejected combat requests while retaining production and legal combat.",
-      "notes": "Both benchmark games completed cleanly with two parsed replay copies each. Rejected-command fractions were43.5% against ZZZK and42.4% against UAlberta Terran.",
+      "notes": "Both benchmark games completed cleanly with two parsed replay copies each. Rejected-command fractions were 43.5% against ZZZK and 42.4% against UAlberta Terran.",
       "conclusion": "Both command-quality gates failed. Target changes can bypass per-target cooldowns; test stable target retention with attributed command telemetry. No strength promotion.",
       "evidence_run_ids": [
         "20260920T062152-c192464ca3eb",
@@ -533,7 +533,7 @@
       "status": "completed",
       "decision": "ADOPT",
       "hypothesis": "A fresh per-search callback memo preserves reachability, exact distance and ordered path results in real Support searches.",
-      "notes": "16,773 comparisons produced zero mismatches. Callback evaluations fell65.65%; most unreachable cases really searched rather than returning cheaply.",
+      "notes": "16,773 comparisons produced zero mismatches. Callback evaluations fell 65.65%; most unreachable cases really searched rather than returning cheaply.",
       "conclusion": "Proceed to the separate production gate only. Diagnostic timing does not establish full-match speed or playing strength.",
       "evidence_run_ids": [
         "20260920T061222-aea159a208bb"
@@ -545,7 +545,7 @@
       "date": "2026-09-20",
       "status": "completed",
       "decision": "REJECT",
-      "notes": "Nine clean wins, one unscored old-engine terminal conflict. All20 replay copies parse. Four valid games missed384fps; clean aggregate366.7fps.",
+      "notes": "Nine clean wins, one unscored old-engine terminal conflict. All 20 replay copies parse. Four valid games missed 384 fps; clean aggregate 366.7 fps.",
       "conclusion": "Reject engineering acceptance. The invalid result separately leaves integrity evidence incomplete; it cannot erase the valid slow-tail failures. Retain the isolated candidate for diagnosis, with no strength promotion."
     },
     {
@@ -554,7 +554,7 @@
       "date": "2026-09-20",
       "status": "completed",
       "hypothesis": "The same five frozen build/race nodes form a clean connected comparison graph across four maps on the repaired engine.",
-      "notes": "24 of24 registered games clean;48 SHA-matching replay copies parsed with race/frame checks. Five exact build/race nodes connect across four maps. Current and historical engines remain separate.",
+      "notes": "24 of 24 registered games clean; 48 SHA-matching replay copies parsed with race/frame checks. Five exact build/race nodes connect across four maps. Current and historical engines remain separate.",
       "conclusion": "Adopt the complete local rating display cohort, with wide conditional intervals and prior sensitivity. No bot promotion or BASIL-scale claim. Next compare Stardust directly with ZZZK and McRave with both UAlberta races.",
       "decision": "ADOPT",
       "evidence_run_ids": [
@@ -589,7 +589,7 @@
       "title": "Current-engine calibration: stardust",
       "date": "2026-09-20",
       "status": "completed",
-      "notes": "Part of the24-game four-map local-calibration-v2 cohort. All eight games in this sub-batch passed review.",
+      "notes": "Part of the 24-game four-map local-calibration-v2 cohort. All eight games in this sub-batch passed review.",
       "conclusion": "See the parent cohort for the complete graph and uncertainty; this sub-batch does not promote a bot."
     },
     {
@@ -597,7 +597,7 @@
       "title": "Current-engine calibration: uab-t",
       "date": "2026-09-20",
       "status": "completed",
-      "notes": "Part of the24-game four-map local-calibration-v2 cohort. All eight games in this sub-batch passed review.",
+      "notes": "Part of the 24-game four-map local-calibration-v2 cohort. All eight games in this sub-batch passed review.",
       "conclusion": "See the parent cohort for the complete graph and uncertainty; this sub-batch does not promote a bot."
     },
     {
@@ -605,7 +605,7 @@
       "title": "Current-engine calibration: mcrave",
       "date": "2026-09-20",
       "status": "completed",
-      "notes": "Part of the24-game four-map local-calibration-v2 cohort. All eight games in this sub-batch passed review.",
+      "notes": "Part of the 24-game four-map local-calibration-v2 cohort. All eight games in this sub-batch passed review.",
       "conclusion": "See the parent cohort for the complete graph and uncertainty; this sub-batch does not promote a bot."
     },
     {
@@ -615,7 +615,7 @@
       "status": "completed",
       "decision": "ADOPT",
       "hypothesis": "Public BWAPI training checks remove avoidable busy/supply requests while preserving production and combat.",
-      "notes": "Two clean benchmark losses with parsed replays. Zero train/attack rejections in both; overall rejection0% against ZZZK and4% against UAlberta Terran.",
+      "notes": "Two clean benchmark losses with parsed replays. Zero train/attack rejections in both; overall rejection 0% against ZZZK and 4% against UAlberta Terran.",
       "conclusion": "Adopt as the first command-quality baseline. It remains strategically weak; next prioritize the first combat unit against early Zerg pressure. No win-rate or Elo promotion.",
       "evidence_run_ids": [
         "20260920T063735-568f09f7d3a0",
@@ -629,13 +629,131 @@
       "status": "completed",
       "decision": "ADOPT",
       "hypothesis": "Crossing fixed seeds with two maps distinguishes opener selection from map-dependent production delay.",
-      "notes": "All four games clean with paired replays. Seed1001 chose9Pool and seed6301 choseGaspool on both maps. Opener choice shifted first Zergling timing about559 frames; within-opener map differences were51\u201362 frames.",
+      "notes": "All four games clean with paired replays. Seed 1001 chose 9Pool and seed 6301 chose Gaspool on both maps. Opener choice shifted first Zergling timing about 559 frames; within-opener map differences were 51\u201362 frames.",
       "conclusion": "Adopt the diagnosis: selected opening explains the observed delay in these cells. Preregister a separate strategy comparison; this diagnostic does not establish a stronger bot.",
       "evidence_run_ids": [
         "20260920T063857-4d53d8292099",
         "20260920T063934-d495601949d7",
         "20260920T064006-320cd0c4815e",
         "20260920T064021-77d0cb29d7ec"
+      ]
+    },
+    {
+      "id": "local-calibration-v3",
+      "title": "Fill missing direct rating matchups",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "ADOPT",
+      "hypothesis": "Direct Stardust\u2013ZZZK and McRave\u2013UAlberta comparisons add missing edges to the current exact-build graph.",
+      "notes": "All 12 games clean with 24 hash-checked, parsed replay copies. Stardust\u2013ZZZK 4\u20130; McRave\u2013UAlberta Protoss 4\u20130 and Terran 3\u20131.",
+      "conclusion": "Adopt the complete extension for local display. Current-engine evidence now totals 36 games in one component. Intervals remain conditional and wide; no bot promotion or BASIL transfer.",
+      "evidence_run_ids": [
+        "20260920T064337-e561a04c0d65",
+        "20260920T064337-b4f66ed157ec",
+        "20260920T064344-0e2b9a339910",
+        "20260920T064344-f930c925b24b",
+        "20260920T064500-63375f13d9a1",
+        "20260920T064500-9c3dec0ed8fc",
+        "20260920T064542-131c3c757481",
+        "20260920T064543-6deedfe631ea",
+        "20260920T064623-507443e7b6d2",
+        "20260920T064646-bdf8ce6b277c",
+        "20260920T064722-9363505343cb",
+        "20260920T064725-cd82ffc70735"
+      ]
+    },
+    {
+      "id": "kestrel-first-zealot-v8",
+      "title": "Kestrel tests an earlier first Zealot",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Prioritizing the first Zealot improves early exposure against Zerg pressure.",
+      "notes": "The exact-row first Zealot train arrived 396 frames earlier, but Kestrel lost 16 workers and ended 62 frames sooner. The held-out game also failed lifecycle floors. Both games completed cleanly.",
+      "conclusion": "Reject the strategy candidate and retain v7. Earlier training alone did not bridge the period before an army could defend workers. Test visible-threat worker defense separately.",
+      "evidence_run_ids": [
+        "20260920T064202-95acc7e7959a",
+        "20260920T064215-e798f5386b3a"
+      ]
+    },
+    {
+      "id": "local-calibration-v3-stardust",
+      "title": "Missing-edge calibration: stardust",
+      "date": "2026-09-20",
+      "status": "completed",
+      "notes": "Reviewed sub-batch of the 12-game local-calibration-v3 extension.",
+      "conclusion": "See the parent cohort for direct matchups and cumulative uncertainty. No bot promotion."
+    },
+    {
+      "id": "local-calibration-v3-mcrave",
+      "title": "Missing-edge calibration: mcrave",
+      "date": "2026-09-20",
+      "status": "completed",
+      "notes": "Reviewed sub-batch of the 12-game local-calibration-v3 extension.",
+      "conclusion": "See the parent cohort for direct matchups and cumulative uncertainty. No bot promotion."
+    },
+    {
+      "id": "kestrel-worker-defense-v9",
+      "title": "Kestrel tests worker defense near home",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "A bounded worker pull against visible ground threats improves early defense while preserving production.",
+      "notes": "Both games completed cleanly. Six previously harvesting probes engaged near-home threats and later returned to gathering, but Kestrel lost 18 and 16 workers and produced only one and two Zealots.",
+      "conclusion": "Reject the worker-pull candidate. Matched survival and army-production gates failed; v7 remains the accepted command-quality baseline. Scout contact timestamps are distinct from threats reaching home.",
+      "evidence_run_ids": [
+        "20260920T064926-fec5e08f179d",
+        "20260920T064928-c44db719d1cb"
+      ]
+    },
+    {
+      "id": "mcrave-zvz-9pool-candidate-v1",
+      "title": "McRave tests a fixed 9Pool opening",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "Changing only the selected ZvZ PoolLair opener to 9Pool improves matched outcomes against ZZZK while meeting resource guards.",
+      "notes": "All 16 games valid and all 32 replay copies hash-checked and parsed. Treatment won 7/8 versus control 6/8. Two of four effective pairs improved, with no effective regression; an unchanged-opening pair flipped against treatment.",
+      "conclusion": "Advance only to independent confirmation. Minimum treatment throughput 631.9 fps and CPU/frame +0.43% passed the guards. The one-win overall advantage and no-op outcome variation do not justify production adoption.",
+      "decision": "ADOPT"
+    },
+    {
+      "id": "kestrel-zerg-zealot-v10",
+      "title": "Kestrel delays gas for early Zealots",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Delaying Zerg-matchup gas and Core spending produces a defensive army sooner without changing micro.",
+      "notes": "Both games completed cleanly with zero rejected commands. Gas was delayed, but the matched third Zealot train was only 132 frames earlier than v7, below the required 200; neither game queued a fourth Zealot.",
+      "conclusion": "Reject the timing and lifecycle result. Keep v7 and inspect the first home engagement with public-state telemetry before another policy change.",
+      "evidence_run_ids": [
+        "20260920T065835-c63b3213ff8c",
+        "20260920T065837-abeb0ce86bea"
+      ]
+    },
+    {
+      "id": "kestrel-fight-diagnostic-v1",
+      "title": "Kestrel traces its first home fight",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "Public-state traces can distinguish delayed production, misplaced combat units and ineffective engagement in the fixed v7 loss.",
+      "notes": "One instrumented v7 game, Benzene seed 6103, with no policy change. Both clients exited cleanly and both replays parsed. This is diagnostic evidence, not a rating or performance trial.",
+      "conclusion": "The first two Zealots fought near home but arrived separately against five and then at least eight Zerglings. The second Gateway started too late to contribute to the first fight, while minerals were banked. Test earlier second-Gateway construction; this single trace does not establish a general cause or a strength improvement.",
+      "evidence_run_ids": [
+        "20260920T070255-f110c96947fd"
+      ]
+    },
+    {
+      "id": "kestrel-early-second-gateway-v11",
+      "title": "Kestrel moves its second Gateway before gas",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Earlier second-Gateway construction against known Zerg will provide two completed Zealots together near home before the first defender dies.",
+      "notes": "Two fixed games against ZZZK, Benzene seed 6103 and Heartbreak seed 6104. Both completed cleanly with zero rejected commands and parsed replay pairs. Native and official BWAPI header compilation passed.",
+      "conclusion": "Both games lost with at most one completed Zealot in the home-fight window. The second Gateway appeared by frame 2904/2894 but completed at 3875/3865, after home pressure at 3704/3590. Earlier capacity alone did not satisfy the mechanism or lifecycle checks; retain v7.",
+      "evidence_run_ids": [
+        "20260920T071134-0c1c99b3cdfb",
+        "20260920T071137-c12df661de50"
       ]
     }
   ]

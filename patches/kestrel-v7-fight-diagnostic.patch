@@ -1,0 +1,141 @@
+--- a/bots/kestrel/Kestrel.cpp
++++ b/bots/kestrel/Kestrel.cpp
+@@ -7,6 +7,7 @@
+ #include <ctime>
+ #include <fstream>
+ #include <limits>
++#include <string>
+ #include <unordered_map>
+ #include <vector>
+ 
+@@ -47,6 +48,58 @@
+     std::unordered_map<int, AttackRequest> attackRequests_;
+     double callbackCpuSeconds_ = 0.0;
+     std::vector<double> callbackMs_;
++
++    static const char* diagnosticPath() { return "bwapi-data/write/kestrel-fight-diagnostic.jsonl"; }
++
++    void logAccepted(const char* kind, BWAPI::Unit actor, BWAPI::UnitType produced, BWAPI::Position position) const {
++        std::ofstream out(diagnosticPath(), std::ios::app);
++        out << "{\"event\":\"accepted_" << kind << "\",\"frame\":" << BWAPI::Broodwar->getFrameCount()
++            << ",\"actor_id\":" << (actor ? actor->getID() : -1)
++            << ",\"unit_type\":\"" << produced.getName() << "\""
++            << ",\"x\":" << position.x << ",\"y\":" << position.y << "}\n";
++        out.flush();
++    }
++
++    void logSnapshot() const {
++        auto self = BWAPI::Broodwar->self();
++        const BWAPI::TilePosition start = self->getStartLocation();
++        const BWAPI::Position home(start.x * 32 + 64, start.y * 32 + 48);
++        std::ofstream out(diagnosticPath(), std::ios::app);
++        out << "{\"event\":\"snapshot\",\"frame\":" << BWAPI::Broodwar->getFrameCount()
++            << ",\"minerals\":" << self->minerals() << ",\"gas\":" << self->gas()
++            << ",\"supply_used\":" << self->supplyUsed() << ",\"supply_total\":" << self->supplyTotal()
++            << ",\"zealots_all\":" << count(BWAPI::UnitTypes::Protoss_Zealot)
++            << ",\"zealots_completed\":" << count(BWAPI::UnitTypes::Protoss_Zealot, true)
++            << ",\"probes_all\":" << count(BWAPI::UnitTypes::Protoss_Probe)
++            << ",\"probes_completed\":" << count(BWAPI::UnitTypes::Protoss_Probe, true)
++            << ",\"own_units\":[";
++        bool first = true;
++        for (auto unit : sorted(self->getUnits())) {
++            const auto type = unit->getType();
++            if (!unit->exists() || (type != BWAPI::UnitTypes::Protoss_Probe && type != BWAPI::UnitTypes::Protoss_Zealot)) continue;
++            if (!first) out << ',';
++            first = false;
++            const auto position = unit->getPosition();
++            out << "{\"id\":" << unit->getID() << ",\"type\":\"" << type.getName()
++                << "\",\"x\":" << position.x << ",\"y\":" << position.y
++                << ",\"hp\":" << unit->getHitPoints() << ",\"completed\":" << (unit->isCompleted() ? "true" : "false")
++                << ",\"order\":\"" << unit->getOrder().getName() << "\"}";
++        }
++        out << "],\"nearby_visible_enemies\":[";
++        first = true;
++        for (auto unit : BWAPI::Broodwar->getAllUnits()) {
++            if (!unit->exists() || !unit->isVisible() || !unit->isDetected() || unit->isFlying() ||
++                !self->isEnemy(unit->getPlayer()) || unit->getDistance(home) >= 16 * 32) continue;
++            if (!first) out << ',';
++            first = false;
++            const auto position = unit->getPosition();
++            out << "{\"id\":" << unit->getID() << ",\"type\":\"" << unit->getType().getName()
++                << "\",\"x\":" << position.x << ",\"y\":" << position.y
++                << ",\"hp\":" << unit->getHitPoints() << "}";
++        }
++        out << "]}\n";
++        out.flush();
++    }
+ 
+     static std::vector<BWAPI::Unit> sorted(const BWAPI::Unitset& units) {
+         std::vector<BWAPI::Unit> result(units.begin(), units.end());
+@@ -165,6 +218,7 @@
+         builderId_ = worker->getID();
+         const bool accepted = issue(worker->build(type, tile), BuildCommand);
+         if (accepted) {
++            logAccepted("build", worker, type, BWAPI::Position(tile));
+             pendingBuildType_ = type;
+             pendingBuildBaseline_ = count(type);
+             pendingBuildFrame_ = frame;
+@@ -190,6 +244,7 @@
+         builderId_ = worker->getID();
+         const bool accepted = issue(worker->build(BWAPI::UnitTypes::Protoss_Assimilator, best->getTilePosition()), BuildCommand);
+         if (accepted) {
++            logAccepted("build", worker, BWAPI::UnitTypes::Protoss_Assimilator, BWAPI::Position(best->getTilePosition()));
+             pendingBuildType_ = BWAPI::UnitTypes::Protoss_Assimilator;
+             pendingBuildBaseline_ = count(pendingBuildType_);
+             pendingBuildFrame_ = frame;
+@@ -205,14 +260,17 @@
+             const BWAPI::UnitType type = unit->getType();
+             if (type == BWAPI::UnitTypes::Protoss_Nexus && probes < 28 && BWAPI::Broodwar->self()->minerals() >= 50 &&
+                 unit->canTrain(BWAPI::UnitTypes::Protoss_Probe)) {
+-                issue(unit->train(BWAPI::UnitTypes::Protoss_Probe), TrainCommand);
++                if (issue(unit->train(BWAPI::UnitTypes::Protoss_Probe), TrainCommand))
++                    logAccepted("train", unit, BWAPI::UnitTypes::Protoss_Probe, unit->getPosition());
+             } else if (type == BWAPI::UnitTypes::Protoss_Gateway) {
+                 if (count(BWAPI::UnitTypes::Protoss_Cybernetics_Core, true) > 0 &&
+                     BWAPI::Broodwar->self()->minerals() >= 125 && BWAPI::Broodwar->self()->gas() >= 50 &&
+                     unit->canTrain(BWAPI::UnitTypes::Protoss_Dragoon)) {
+-                    issue(unit->train(BWAPI::UnitTypes::Protoss_Dragoon), TrainCommand);
++                    if (issue(unit->train(BWAPI::UnitTypes::Protoss_Dragoon), TrainCommand))
++                        logAccepted("train", unit, BWAPI::UnitTypes::Protoss_Dragoon, unit->getPosition());
+                 } else if (BWAPI::Broodwar->self()->minerals() >= 100 && unit->canTrain(BWAPI::UnitTypes::Protoss_Zealot)) {
+-                    issue(unit->train(BWAPI::UnitTypes::Protoss_Zealot), TrainCommand);
++                    if (issue(unit->train(BWAPI::UnitTypes::Protoss_Zealot), TrainCommand))
++                        logAccepted("train", unit, BWAPI::UnitTypes::Protoss_Zealot, unit->getPosition());
+                 }
+             }
+         }
+@@ -358,6 +416,7 @@
+         maxZealots_ = std::max(maxZealots_, count(BWAPI::UnitTypes::Protoss_Zealot));
+         maxDragoons_ = std::max(maxDragoons_, count(BWAPI::UnitTypes::Protoss_Dragoon));
+         const int frame = game.getFrameCount();
++        if (frame <= 6000 && frame % 120 == 0) logSnapshot();
+         const int cadence = std::max(6, game.getLatencyFrames());
+         if (frame % cadence != 0) return;
+         assignEconomy();
+@@ -369,6 +428,7 @@
+ public:
+     void onStart() override {
+         latency_ = BWAPI::Broodwar->getLatencyFrames();
++        std::ofstream(diagnosticPath(), std::ios::trunc) << "{\"event\":\"start\",\"diagnostic_only\":true}\n";
+         writeResult(false);
+     }
+ 
+@@ -382,6 +442,18 @@
+     }
+ 
+     void onEnd(bool won) override { writeResult(true, won); }
++
++    void onUnitDestroy(BWAPI::Unit unit) override {
++        if (!unit || !BWAPI::Broodwar->self() || unit->getPlayer() != BWAPI::Broodwar->self()) return;
++        const auto type = unit->getType();
++        if (type != BWAPI::UnitTypes::Protoss_Probe && type != BWAPI::UnitTypes::Protoss_Zealot) return;
++        const auto position = unit->getPosition();
++        std::ofstream out(diagnosticPath(), std::ios::app);
++        out << "{\"event\":\"own_death\",\"frame\":" << BWAPI::Broodwar->getFrameCount()
++            << ",\"id\":" << unit->getID() << ",\"unit_type\":\"" << type.getName()
++            << "\",\"x\":" << position.x << ",\"y\":" << position.y << "}\n";
++        out.flush();
++    }
+ };
+ 
+ } // namespace

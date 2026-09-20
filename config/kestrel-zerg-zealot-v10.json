@@ -1,21 +1,20 @@
 {
   "schema_version": 1,
-  "experiment_id": "kestrel-worker-defense-v9",
-  "title": "Kestrel visible-base-threat worker defense",
-  "registered_at": "2026-09-20T06:46:16.234696+00:00",
-  "prelaunch_amendment_at": "2026-09-20T06:48:43.553359+00:00",
-  "prelaunch_amendment": "The unrun 7518c14b candidate allowed construction selection to take a newly assigned defender. It was replaced before launch by cf3e8409, which excludes current defenders from availableProbe. Tactical numbers and decision gates are unchanged.",
-  "hypothesis": "A bounded probe defense triggered only by a visible ground threat near Kestrel's starting base will preserve the v7 build while improving survival against ZZZK's early pressure.",
+  "experiment_id": "kestrel-zerg-zealot-v10",
+  "title": "Kestrel Zerg-defense production screen",
+  "registered_at": "2026-09-20T06:56:28.225315+00:00",
+  "build_identity_recorded_at": "2026-09-20T06:58:03.604333+00:00",
+  "hypothesis": "Against known Zerg, delaying gas and Core until four Zealots are current or queued while retaining v7's probes, supply, and two Gateways will produce an earlier small defensive army.",
   "stop_condition": "Exactly two candidate games, serial and without retries or replacement seeds. Preserve every attempt and stop after an infrastructure failure.",
-  "purpose": "Preregistered Kestrel v9 worker-defense mechanism and directional strength probe; no rating or strength-promotion claim",
+  "purpose": "Preregistered Kestrel v10 Zerg-defense production mechanism screen; no rating or strength-promotion claim",
   "wall_timeout_seconds": 120,
   "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
   "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
   "game_data_dir": "third_party/game-data/runtime",
   "candidate": {
-    "name": "Kestrel v9 worker defense",
+    "name": "Kestrel v10 Zerg defense",
     "race": "Protoss",
-    "sha256": "cf3e84099dd8946933cc3c80a200a0f2cd94aaf7ff6041bde2aad8c82bd81625"
+    "sha256": "2c029177df5d728b17045440d9dc6bb1104e3b206c11be2b9c15ecf7b307c86d"
   },
   "opponents": {
     "zzzk-z": {

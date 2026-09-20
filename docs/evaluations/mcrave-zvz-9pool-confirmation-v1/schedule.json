@@ -1,0 +1,1368 @@
+{
+  "schema_version": 1,
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "wall_timeout_seconds": 120,
+  "stop_after_consecutive_invalid": 2,
+  "allowed_kill_events": [
+    {
+      "source": "controller_not_occupied_after_action",
+      "action_id": 87
+    },
+    {
+      "source": "transport_callback",
+      "action_id": -1
+    }
+  ],
+  "experiment_id": "mcrave-zvz-9pool-confirmation-v1",
+  "eval_plan_sha256": "cb5b9883cf86bc2be047e30527dd5a0e1dd1da9be3bc67b17df4e59587c1f155",
+  "purpose": "Independent paired confirmation of experimental McRave ZvZ 9Pool override versus ZZZKBot",
+  "cohort_wall_cap_seconds": 9000,
+  "attempts": [
+    {
+      "attempt": 1,
+      "pair": 1,
+      "arm": "control",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9101,
+      "candidate_bot_seed": 9101,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 2,
+      "pair": 1,
+      "arm": "treatment",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9101,
+      "candidate_bot_seed": 9101,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 3,
+      "pair": 2,
+      "arm": "treatment",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9102,
+      "candidate_bot_seed": 9102,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 4,
+      "pair": 2,
+      "arm": "control",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9102,
+      "candidate_bot_seed": 9102,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 5,
+      "pair": 3,
+      "arm": "control",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9103,
+      "candidate_bot_seed": 9103,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 6,
+      "pair": 3,
+      "arm": "treatment",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9103,
+      "candidate_bot_seed": 9103,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 7,
+      "pair": 4,
+      "arm": "treatment",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9104,
+      "candidate_bot_seed": 9104,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 8,
+      "pair": 4,
+      "arm": "control",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9104,
+      "candidate_bot_seed": 9104,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 9,
+      "pair": 5,
+      "arm": "control",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9105,
+      "candidate_bot_seed": 9105,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 10,
+      "pair": 5,
+      "arm": "treatment",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9105,
+      "candidate_bot_seed": 9105,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 11,
+      "pair": 6,
+      "arm": "treatment",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9106,
+      "candidate_bot_seed": 9106,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 12,
+      "pair": 6,
+      "arm": "control",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9106,
+      "candidate_bot_seed": 9106,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 13,
+      "pair": 7,
+      "arm": "control",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9107,
+      "candidate_bot_seed": 9107,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 14,
+      "pair": 7,
+      "arm": "treatment",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9107,
+      "candidate_bot_seed": 9107,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 15,
+      "pair": 8,
+      "arm": "treatment",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9108,
+      "candidate_bot_seed": 9108,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 16,
+      "pair": 8,
+      "arm": "control",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9108,
+      "candidate_bot_seed": 9108,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 17,
+      "pair": 9,
+      "arm": "control",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9109,
+      "candidate_bot_seed": 9109,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 18,
+      "pair": 9,
+      "arm": "treatment",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9109,
+      "candidate_bot_seed": 9109,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 19,
+      "pair": 10,
+      "arm": "treatment",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9110,
+      "candidate_bot_seed": 9110,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 20,
+      "pair": 10,
+      "arm": "control",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9110,
+      "candidate_bot_seed": 9110,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 21,
+      "pair": 11,
+      "arm": "control",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9111,
+      "candidate_bot_seed": 9111,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 22,
+      "pair": 11,
+      "arm": "treatment",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9111,
+      "candidate_bot_seed": 9111,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 23,
+      "pair": 12,
+      "arm": "treatment",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9112,
+      "candidate_bot_seed": 9112,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 24,
+      "pair": 12,
+      "arm": "control",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9112,
+      "candidate_bot_seed": 9112,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 25,
+      "pair": 13,
+      "arm": "control",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9113,
+      "candidate_bot_seed": 9113,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 26,
+      "pair": 13,
+      "arm": "treatment",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9113,
+      "candidate_bot_seed": 9113,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 27,
+      "pair": 14,
+      "arm": "treatment",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9114,
+      "candidate_bot_seed": 9114,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 28,
+      "pair": 14,
+      "arm": "control",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9114,
+      "candidate_bot_seed": 9114,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 29,
+      "pair": 15,
+      "arm": "control",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9115,
+      "candidate_bot_seed": 9115,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 30,
+      "pair": 15,
+      "arm": "treatment",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9115,
+      "candidate_bot_seed": 9115,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 31,
+      "pair": 16,
+      "arm": "treatment",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9116,
+      "candidate_bot_seed": 9116,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 32,
+      "pair": 16,
+      "arm": "control",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9116,
+      "candidate_bot_seed": 9116,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 33,
+      "pair": 17,
+      "arm": "control",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9117,
+      "candidate_bot_seed": 9117,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 34,
+      "pair": 17,
+      "arm": "treatment",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9117,
+      "candidate_bot_seed": 9117,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 35,
+      "pair": 18,
+      "arm": "treatment",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9118,
+      "candidate_bot_seed": 9118,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 36,
+      "pair": 18,
+      "arm": "control",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9118,
+      "candidate_bot_seed": 9118,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 37,
+      "pair": 19,
+      "arm": "control",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9119,
+      "candidate_bot_seed": 9119,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 38,
+      "pair": 19,
+      "arm": "treatment",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9119,
+      "candidate_bot_seed": 9119,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 39,
+      "pair": 20,
+      "arm": "treatment",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9120,
+      "candidate_bot_seed": 9120,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 40,
+      "pair": 20,
+      "arm": "control",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9120,
+      "candidate_bot_seed": 9120,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 41,
+      "pair": 21,
+      "arm": "control",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9121,
+      "candidate_bot_seed": 9121,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 42,
+      "pair": 21,
+      "arm": "treatment",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9121,
+      "candidate_bot_seed": 9121,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 43,
+      "pair": 22,
+      "arm": "treatment",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9122,
+      "candidate_bot_seed": 9122,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 44,
+      "pair": 22,
+      "arm": "control",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9122,
+      "candidate_bot_seed": 9122,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 45,
+      "pair": 23,
+      "arm": "control",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9123,
+      "candidate_bot_seed": 9123,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 46,
+      "pair": 23,
+      "arm": "treatment",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9123,
+      "candidate_bot_seed": 9123,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 47,
+      "pair": 24,
+      "arm": "treatment",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9124,
+      "candidate_bot_seed": 9124,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 48,
+      "pair": 24,
+      "arm": "control",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9124,
+      "candidate_bot_seed": 9124,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 49,
+      "pair": 25,
+      "arm": "control",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9125,
+      "candidate_bot_seed": 9125,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 50,
+      "pair": 25,
+      "arm": "treatment",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9125,
+      "candidate_bot_seed": 9125,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 51,
+      "pair": 26,
+      "arm": "treatment",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9126,
+      "candidate_bot_seed": 9126,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 52,
+      "pair": 26,
+      "arm": "control",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9126,
+      "candidate_bot_seed": 9126,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 53,
+      "pair": 27,
+      "arm": "control",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9127,
+      "candidate_bot_seed": 9127,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 54,
+      "pair": 27,
+      "arm": "treatment",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9127,
+      "candidate_bot_seed": 9127,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 55,
+      "pair": 28,
+      "arm": "treatment",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9128,
+      "candidate_bot_seed": 9128,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 56,
+      "pair": 28,
+      "arm": "control",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9128,
+      "candidate_bot_seed": 9128,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 57,
+      "pair": 29,
+      "arm": "control",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9129,
+      "candidate_bot_seed": 9129,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 58,
+      "pair": 29,
+      "arm": "treatment",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9129,
+      "candidate_bot_seed": 9129,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 59,
+      "pair": 30,
+      "arm": "treatment",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9130,
+      "candidate_bot_seed": 9130,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 60,
+      "pair": 30,
+      "arm": "control",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9130,
+      "candidate_bot_seed": 9130,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 61,
+      "pair": 31,
+      "arm": "control",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9131,
+      "candidate_bot_seed": 9131,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 62,
+      "pair": 31,
+      "arm": "treatment",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9131,
+      "candidate_bot_seed": 9131,
+      "candidate_player": 1,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 63,
+      "pair": 32,
+      "arm": "treatment",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9132,
+      "candidate_bot_seed": 9132,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-9Pool-treatment",
+        "race": "Zerg",
+        "path": "artifacts/builds/fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa/mcrave-zvz-9pool-candidate/McRave.dylib",
+        "sha256": "fd174fa451c5c79af53b84d882f983630536c31fe116d22b76495cd1610cacfa"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    },
+    {
+      "attempt": 64,
+      "pair": 32,
+      "arm": "control",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9132,
+      "candidate_bot_seed": 9132,
+      "candidate_player": 2,
+      "candidate": {
+        "name": "McRave-control",
+        "race": "Zerg",
+        "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+        "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+      },
+      "opponent": {
+        "name": "ZZZKBot",
+        "race": "Zerg",
+        "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+        "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+      }
+    }
+  ]
+}

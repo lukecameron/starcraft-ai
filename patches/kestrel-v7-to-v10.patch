@@ -1,0 +1,68 @@
+--- a/bots/kestrel/Kestrel.cpp
++++ b/bots/kestrel/Kestrel.cpp
+@@ -40,6 +40,8 @@
+     int maxGateways_ = 0;
+     int maxZealots_ = 0;
+     int maxDragoons_ = 0;
++    int firstWorkerLossFrame_ = -1;
++    int firstHomeThreatFrame_ = -1;
+     struct AttackRequest {
+         int targetId;
+         int frame;
+@@ -106,6 +108,8 @@
+             << ",\"max_gateways\":" << maxGateways_
+             << ",\"max_zealots\":" << maxZealots_
+             << ",\"max_dragoons\":" << maxDragoons_
++            << ",\"first_worker_loss_frame\":" << firstWorkerLossFrame_
++            << ",\"first_home_threat_frame\":" << firstHomeThreatFrame_
+             << "}\n";
+         out.close();
+         if (out) {
+@@ -236,10 +240,13 @@
+         if (supplyUsed >= 26 && gateways < 2 && self->minerals() >= 150) {
+             if (build(BWAPI::UnitTypes::Protoss_Gateway, home)) return;
+         }
+-        if (gateways > 0 && count(BWAPI::UnitTypes::Protoss_Assimilator) < 1 && self->minerals() >= 100) {
++        const BWAPI::Player enemy = BWAPI::Broodwar->enemy();
++        const bool zergDefensePhase = enemy && enemy->getRace() == BWAPI::Races::Zerg &&
++            count(BWAPI::UnitTypes::Protoss_Zealot) < 4;
++        if (!zergDefensePhase && gateways > 0 && count(BWAPI::UnitTypes::Protoss_Assimilator) < 1 && self->minerals() >= 100) {
+             if (buildAssimilator()) return;
+         }
+-        if (count(BWAPI::UnitTypes::Protoss_Assimilator, true) > 0 &&
++        if (!zergDefensePhase && count(BWAPI::UnitTypes::Protoss_Assimilator, true) > 0 &&
+             count(BWAPI::UnitTypes::Protoss_Cybernetics_Core) < 1 && self->minerals() >= 200) {
+             if (build(BWAPI::UnitTypes::Protoss_Cybernetics_Core, home)) return;
+         }
+@@ -357,6 +364,17 @@
+         maxGateways_ = std::max(maxGateways_, count(BWAPI::UnitTypes::Protoss_Gateway));
+         maxZealots_ = std::max(maxZealots_, count(BWAPI::UnitTypes::Protoss_Zealot));
+         maxDragoons_ = std::max(maxDragoons_, count(BWAPI::UnitTypes::Protoss_Dragoon));
++        if (firstHomeThreatFrame_ < 0) {
++            const BWAPI::TilePosition start = game.self()->getStartLocation();
++            const BWAPI::Position home(start.x * 32 + 64, start.y * 32 + 48);
++            for (auto enemy : game.getAllUnits()) {
++                if (enemy->exists() && enemy->isVisible() && enemy->isDetected() && !enemy->isFlying() &&
++                    game.self()->isEnemy(enemy->getPlayer()) && enemy->getDistance(home) < 12 * 32) {
++                    firstHomeThreatFrame_ = game.getFrameCount();
++                    break;
++                }
++            }
++        }
+         const int frame = game.getFrameCount();
+         const int cadence = std::max(6, game.getLatencyFrames());
+         if (frame % cadence != 0) return;
+@@ -382,6 +400,13 @@
+     }
+ 
+     void onEnd(bool won) override { writeResult(true, won); }
++
++    void onUnitDestroy(BWAPI::Unit unit) override {
++        if (firstWorkerLossFrame_ < 0 && unit && BWAPI::Broodwar->self() &&
++            unit->getPlayer() == BWAPI::Broodwar->self() && unit->getType() == BWAPI::UnitTypes::Protoss_Probe) {
++            firstWorkerLossFrame_ = BWAPI::Broodwar->getFrameCount();
++        }
++    }
+ };
+ 
+ } // namespace

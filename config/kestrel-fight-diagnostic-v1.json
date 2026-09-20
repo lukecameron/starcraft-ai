@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "experiment_id": "kestrel-fight-diagnostic-v1",
+  "title": "Kestrel v7 first-home-fight diagnostic",
+  "registered_at": "2026-09-20T07:01:53.425458+00:00",
+  "build_identity_recorded_at": "2026-09-20T07:02:32.647017+00:00",
+  "hypothesis": "Public state around the first home fight can distinguish production/resource shortage, isolated combat units, and ineffective local engagement in v7's ZZZK loss.",
+  "stop_condition": "Exactly one fixed diagnostic game with no retry or replacement.",
+  "purpose": "Diagnostic-only Kestrel v7 public-state capture; no policy, rating, strength, or performance claim",
+  "wall_timeout_seconds": 120,
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "candidate": {
+    "name": "Kestrel v7 fight diagnostic",
+    "race": "Protoss",
+    "sha256": "084160cc9afcee500a54a851f434388c462ab00d81aa60536f47ab217f68d1ef"
+  },
+  "opponents": {
+    "zzzk-z": {
+      "name": "ZZZKBot",
+      "race": "Zerg",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+    }
+  },
+  "games": [
+    {
+      "opponent": "zzzk-z",
+      "map": "sscai/(2)Benzene.scx",
+      "candidate_player": 1,
+      "scenario_seed": 6103
+    }
+  ],
+  "execution": {
+    "concurrency": 1,
+    "learning_state": "empty isolated per-player read/write directories",
+    "bot_seeds": "none"
+  }
+}

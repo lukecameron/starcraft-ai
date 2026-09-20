@@ -38,7 +38,15 @@
              << "}\n";
          out.close();
          if (out) {
-@@ -256,7 +268,8 @@
+@@ -126,6 +138,7 @@
+         for (auto unit : sorted(BWAPI::Broodwar->self()->getUnits())) {
+             if (!unit->exists() || !unit->isCompleted() || unit->getType() != BWAPI::UnitTypes::Protoss_Probe) continue;
+             if (!allowScout && unit->getID() == scoutId_) continue;
++            if (defenders_.count(unit->getID()) != 0) continue;
+             if (!unit->isConstructing()) return unit;
+         }
+         return nullptr;
+@@ -256,7 +269,8 @@
          }
          for (auto worker : sorted(self->getUnits())) {
              if (!worker->exists() || !worker->isCompleted() || worker->getType() != BWAPI::UnitTypes::Protoss_Probe) continue;
@@ -48,17 +56,16 @@
              BWAPI::Unit target = nullptr;
              int best = std::numeric_limits<int>::max();
              const bool wantGas = count(BWAPI::UnitTypes::Protoss_Assimilator, true) > 0 && self->gas() < 250 && gasWorkers < 3;
-@@ -289,6 +302,40 @@
-             if (distance < best) { best = distance; target = enemy; }
+@@ -290,7 +304,41 @@
          }
          return target;
-+    }
+     }
 +
 +    void updateDefenseAssignments() {
 +        defenders_.clear();
 +        const int army = count(BWAPI::UnitTypes::Protoss_Zealot, true) + count(BWAPI::UnitTypes::Protoss_Dragoon, true);
 +        if (army >= 4) return;
-+
+ 
 +        const BWAPI::TilePosition start = BWAPI::Broodwar->self()->getStartLocation();
 +        const BWAPI::Position home(start.x * 32 + 64, start.y * 32 + 48);
 +        BWAPI::Unit threat = nullptr;
@@ -86,10 +93,12 @@
 +        for (int i = 0; i < defenderCount; ++i) defenders_.insert(probes[static_cast<size_t>(i)]->getID());
 +        if (!defenders_.empty() && defenseTriggerFrame_ < 0) defenseTriggerFrame_ = BWAPI::Broodwar->getFrameCount();
 +        maxDefenders_ = std::max(maxDefenders_, static_cast<int>(defenders_.size()));
-     }
- 
++    }
++
      BWAPI::Position unexploredStart(BWAPI::Unit from) {
-@@ -328,7 +375,8 @@
+         std::vector<BWAPI::TilePosition> starts(BWAPI::Broodwar->getStartLocations().begin(), BWAPI::Broodwar->getStartLocations().end());
+         std::sort(starts.begin(), starts.end(), [](BWAPI::TilePosition a, BWAPI::TilePosition b) {
+@@ -328,7 +376,8 @@
              if (!unit->exists() || !unit->isCompleted()) continue;
              const bool combat = unit->getType() == BWAPI::UnitTypes::Protoss_Zealot || unit->getType() == BWAPI::UnitTypes::Protoss_Dragoon;
              const bool scout = unit->getID() == scoutId_;
@@ -99,7 +108,7 @@
              if (unit->isAttacking() && unit->getOrderTarget()) continue;
              BWAPI::Unit enemy = visibleEnemyTarget(unit);
              if (enemy) {
-@@ -357,9 +405,22 @@
+@@ -357,9 +406,22 @@
          maxGateways_ = std::max(maxGateways_, count(BWAPI::UnitTypes::Protoss_Gateway));
          maxZealots_ = std::max(maxZealots_, count(BWAPI::UnitTypes::Protoss_Zealot));
          maxDragoons_ = std::max(maxDragoons_, count(BWAPI::UnitTypes::Protoss_Dragoon));
@@ -122,7 +131,7 @@
          assignEconomy();
          trainUnits();
          constructOpening();
-@@ -382,6 +443,13 @@
+@@ -382,6 +444,13 @@
      }
  
      void onEnd(bool won) override { writeResult(true, won); }
