@@ -64,11 +64,14 @@ def outcome_performance(candidate_result: dict[str, object]) -> dict[str, object
     }
     production_score = sum(production_fields.values())
     survival_score = sum(early_threat_survival.values())
+    rejection_free = rejected == 0
     if winner is True:
         grade = "win"
     elif winner is not False:
         grade = "unverified"
-    elif production_score >= 3 and survival_score >= 2:
+    elif not rejection_free:
+        grade = "partial_loss"
+    elif production_score >= 3 and survival_score == 3 and isinstance(frames, int) and frames >= 12000:
         grade = "competitive_loss"
     elif production_score >= 2 or survival_score >= 1:
         grade = "partial_loss"
@@ -82,6 +85,7 @@ def outcome_performance(candidate_result: dict[str, object]) -> dict[str, object
         "early_threat_survival": early_threat_survival,
         "command_counts": {"train": train_count, "build": build_count, "attack": attack_count},
         "rejected_commands": rejected,
+        "rejection_free": rejection_free,
         "note": "Descriptive heuristic only: thresholds are max counters and terminal metadata, not a causal measure of strength or hidden-state survival.",
     }
 

@@ -25,7 +25,7 @@ The next registered refinement raises the local hold threshold from two to three
 - Plan SHA-256: `da1e662e2e63f27f3355eeec344e55bd045ac78eb2b2ad6058734662f0d6512e`.
 - Schedule SHA-256: `c185ba41dd4fb8d896d21e43940e4e8230be1158c6afd966a7dd319d0dfdb86f`.
 - Manifest SHA-256: `6af006fbb3c359dcd861253c817766cc8566cf2f1c160a58488014a56d641d39`.
-- Scorecard SHA-256: `31db3132bde5dd3ef2138cf8668e51b21f6a792370be28459aac41fcd16f2a86`.
+- Scorecard SHA-256: `27e50a45dc72853696d19f9188602c75c3cd476219188d1b3743a0377751091c`.
 - Candidate binary SHA-256: `6e112c43d6dace13d1152c834658aa35647ceea29b761159187d44d3837fcf57`.
 - Candidate source SHA-256: `e82345ea48dbd32c4296e10c57f2ddd0804f4a8141a5ab417262f7a645758cb5`.
 

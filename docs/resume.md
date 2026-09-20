@@ -20,6 +20,13 @@ Checkpoint: 20 September 2026, 11:45 UTC. Latest user scope: **finish the curren
 - Root owns `config/experiments.json`, `docs/kestrel-bot.md`, this resume and publication. Avoid overlapping edits without handoff.
 - Local HTTP server session 85590, PID 1285, serves `public` at 127.0.0.1:8787. Chrome CLI works while Mac is locked; do not bypass the lock. Current browser is immutable a634def1, desktop 1200. Prior mobile 390 and desktop layout checks passed.
 
+## Current hill-climb checkpoint (2026-09-20 12:30 UTC)
+
+- The five-way Kestrel hill-climb loop is active. The v19 recovery baseline completed 5/5 losses with clean command telemetry; v22 combined the race-general public-threat hold, local Zealot counting and two-train tech unlock and also completed 5/5 losses; v23's three-local-Zealot threshold was rejected after 5/5 losses; v24's shared-target focus was rejected after 5/5 losses. All 20 candidate replays are preserved and scorecarded.
+- v22 remains the best exploratory base: the Protoss lane reached three local Zealots and eleven post-first-train structures, and the Stardust lane recorded no local Zealot loss before game end. None of these screens updates Elo or changes canonical v13.
+- The scorecard now separates descriptive replay signal coverage from outcome performance grades and exposes survival/production thresholds in the dashboard experiment cards.
+- Dashboard source includes per-bot profiles, bot-filtered replay views, provenance, and scorecard details. Publish the current tracked snapshot with `scripts/publish_dashboard.sh` after this checkpoint.
+
 ## Current engine
 
 **Adopted:** engine `eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b`, launcher `af1682393f9fe43afe885b35a1637e9c464719ef93c83e799d614beed20316c1`. Exact paths in `config/engine.json`; rebuild route `docs/engine-terminal-drain.md`. Frozen flat package under `artifacts/builds/<engine-sha>/openbw-terminal-drain/`. Patch `patches/openbw-terminal-drain.patch`, SHA `787c642705c8181ac814ce68d44709e07a20116a5f02a0ad0950998e4ec5f2a8`.

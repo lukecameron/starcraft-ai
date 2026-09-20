@@ -21,7 +21,7 @@ The two-local-Zealot v22 policy remains the stronger hill-climb base because it 
 - Plan SHA-256: `fe51dce738f468a43fa5fe94d06c89036a110e002be54d50967eed63f75274f2`.
 - Schedule SHA-256: `c76d240c9071a6d5df123d2db1731cd60bf69fb2a5f2f926c14572e584b597c7`.
 - Manifest SHA-256: `d85e314201298c50153c7fb6871b26a5fd6351974e86f36fa8ea1be32dd9e1ed`.
-- Scorecard SHA-256: `f4b05579f6dfcaec613fea64e89601bdcb906a83c163f81914d1c703705ffec1`.
+- Scorecard SHA-256: `e7eae0747c1af73ff7e2861845600d08fc8455ceb69ad3496f94da2e987cca36`.
 - Candidate binary SHA-256: `2e013e45b8fb79a66930e57c66fbfcedd58835df1e3f4d40d15a8136f648cd7e`.
 - Candidate source SHA-256: `7297f946bde34402a228f79e1860790a2303269fe654dba6b1baf128235226df`.
 

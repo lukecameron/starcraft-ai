@@ -1151,6 +1151,30 @@
         "origin": "Original",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
       }
+    },
+    {
+      "id": "kestrel-hillclimb-v4",
+      "title": "Kestrel v24 shared-target focus hill-climb",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Sharing one currently visible, detected enemy target across completed combat units after the two-local hold will reduce split engagements and improve conversion.",
+      "notes": "Five concurrent games completed with five valid parsed replays and zero Kestrel wins. The Terran lane survived to frame 19,905 without a recorded local Zealot loss, but the Protoss lane had 15 gather Unit_Busy rejections. No hidden evaluator state was used.",
+      "conclusion": "Reject v24 for adoption and leave Elo unchanged. Retain v22 as the better hill-climb base; shared-target focus needs an isolated order-level review before reuse.",
+      "evidence_run_ids": [
+        "20260920T120513-7a2575b425c5",
+        "20260920T120513-04f17fa470e2",
+        "20260920T120513-21b6d3b604b6",
+        "20260920T120513-7f6bd086889a",
+        "20260920T120513-cd153210cf1e1"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v4",
+      "candidate_binary_sha256": "32dca20dd6f6e5a12b626f1321f44405124856fa8832a23a21e33cc1a4108512",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      }
     }
   ]
 }
