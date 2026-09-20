@@ -20,21 +20,25 @@ class KestrelV41CandidateTest(unittest.TestCase):
         self.assertIn("kZergTwoGatewayProbeReserve = 250", self.source)
         self.assertIn("openingReserve = kZergTwoGatewayProbeReserve;", self.source)
         self.assertIn("openingReserve = 100;", self.source)
+        self.assertIn("zerg_pre_pylon_probe_reserve_frames", self.source)
+        self.assertNotIn("zerg_two_gateway_reserve_frames", self.source)
         self.assertIn("kZergTwoGatewayProbeReserve = 250", patch)
         self.assertNotIn("kZergTwoGatewayProbeReserve = 200", patch)
 
     def test_reserve_is_zerg_only_and_stops_at_second_gateway_current(self):
         train_units = self.source[self.source.index("    void trainUnits()") : self.source.index("    void constructOpening()")]
         early_policy = re.search(
-            r"if \(knownZerg_ && completedProbes >= 6 && firstPylonCurrentFrame_ < 0\) \{"
-            r"\s*openingReserve = kZergTwoGatewayProbeReserve;",
+            r"const bool zergPrePylonProbeReserve =\s*"
+            r"knownZerg_ && completedProbes >= 6 && firstPylonCurrentFrame_ < 0;\s*"
+            r"if \(zergPrePylonProbeReserve\) \{\s*"
+            r"openingReserve = kZergTwoGatewayProbeReserve;",
             train_units,
         )
         self.assertIsNotNone(early_policy)
         self.assertIn("else if (knownZerg_ && firstPylonAcceptedFrame_ >= 0)", train_units)
         self.assertIn("else if (secondGatewayCurrentFrame_ < 0) openingReserve = 250;", train_units)
         self.assertIn("openingProbeReserve_ = knownZerg_ ? openingReserve : 0;", train_units)
-        self.assertIn("zergTwoGatewayReserveFrames_", train_units)
+        self.assertIn("if (zergPrePylonProbeReserve) ++zergPrePylonProbeReserveFrames_;", train_units)
 
     def test_policy_does_not_change_gateway_training_or_non_zerg_opening(self):
         train_units = self.source[self.source.index("    void trainUnits()") : self.source.index("    void constructOpening()")]

@@ -24,8 +24,10 @@ Gateway-Probe policy and changes one opening resource decision:
   handling, range research, and all non-Zerg branches are unchanged.
 
 The policy reads only public BWAPI self state and the public enemy race already
-used by v40. `zerg_two_gateway_reserve_frames` records how many cadence passes
-used the new reserve; it is diagnostic output and is not read by gameplay.
+used by v40. `zerg_pre_pylon_probe_reserve_frames` records only cadence passes
+where all three treatment conditions are true: known Zerg, at least six
+completed Probes, and the first Pylon is not current. It is diagnostic output
+and is not read by gameplay.
 
 ## Identity and validation
 
@@ -33,13 +35,13 @@ Parent: `Kestrel-v40-nearest-gateway-probe`.
 
 Candidate binary:
 
-`artifacts/builds/d7f147ba269ac9dfd3387a003a2ade531cf11eaa2fe4770f4b2b647ca1ab3fd8/kestrel-opening-v41-zerg-two-gateway-bank/Kestrel.dylib`
+`artifacts/builds/2e39f690e1ec598dd03d0bbfe35de75f282ab626d7b6b0c135a6fb9947ed984d/kestrel-opening-v41-zerg-two-gateway-bank/Kestrel.dylib`
 
-- Binary SHA-256: `d7f147ba269ac9dfd3387a003a2ade531cf11eaa2fe4770f4b2b647ca1ab3fd8`
-- `Kestrel.cpp` SHA-256: `570cc241c98cd6c91d20dc1f409907dcb8553dcd1716cde3b42a1501f858fc6d`
-- Source-combination SHA-256: `621cba159541c6eda92fd2f24474968e32527968820a2c6527a89516a256cc4a`
+- Binary SHA-256: `2e39f690e1ec598dd03d0bbfe35de75f282ab626d7b6b0c135a6fb9947ed984d`
+- `Kestrel.cpp` SHA-256: `fec0f4f6c1a1a37924827be427fabe9ce695cad84ef17f5bde23e77d754218ad`
+- Source-combination SHA-256: `a6d9a19debf32131aabb16b57f6726e09c9312917be83e25362e2aeafa340d3a`
 - Patch: `patches/kestrel-v40-to-v41-zerg-two-gateway-bank.patch`
-- Patch SHA-256: `c26739ec47881f13fec624d85046fb6c0fbb1fc18c8c9507aade94fdda2c27fa`
+- Patch SHA-256: `446a560f4aab5c4bb167118ee82bd2fe7bb41702ef7b7c415a853eb25466ae07`
 
 Native OpenBW and official BWAPI header builds passed with C++14, warnings as
 errors, and Release configuration. The focused candidate lifecycle tests and
