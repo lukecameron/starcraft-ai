@@ -1439,6 +1439,31 @@
         "origin": "Original",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
       }
+    },
+    {
+      "id": "kestrel-hillclimb-v14",
+      "title": "Kestrel v35 construction bookkeeping and emergency-episode hill-climb",
+      "date": "2026-09-21",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Capturing construction pending baselines before issue() and capping cumulative emergency Probe assignments at two unique identities per continuous threat episode will improve early Zerg survival while preserving the v34 reserve, staged offense, commandability and non-Zerg behavior.",
+      "notes": "Five concurrent games completed with five valid short terminal losses and ten verified replays. The v35 construction and episode telemetry gates were complete; the fresh ZZZK lane had the second Gateway current before threat but only one completed combat unit at the first qualifying threat. McRave exercised the retained staged-offense latch. No Elo update.",
+      "conclusion": "Rejected at zero verified wins and a failed fresh-ZZZK two-combat-unit mechanism gate. The cumulative emergency cap assigned exactly two Probe identities and blocked replacements after both deaths. Preserve the evidence as diagnostic and keep canonical Kestrel v13.",
+      "evidence_run_ids": [
+        "20260920T172834-a24ddd2354af",
+        "20260920T172834-10b086b67de6",
+        "20260920T172834-b37083f8e82c",
+        "20260920T172834-d3c44e82dd7b",
+        "20260920T172834-ddae2ddc1b2b"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v14",
+      "candidate_binary_sha256": "8e85a4389b18caf7f55d857d81889e1d7ecfa4d41333794a5797f69a10769270",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "author": "Luke Cameron",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      }
     }
   ]
 }

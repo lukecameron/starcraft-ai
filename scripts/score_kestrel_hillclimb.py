@@ -359,6 +359,7 @@ def _emergency_episode_summary(metadata: dict[str, object], opponent_race: str |
             "invalid_fields": [],
             "assignment_cap": 2,
             "episodes": [],
+            "reset_frames": [],
             "assignments": {"episode_ids": [], "batches": []},
             "cap_blocks": {"total": 0, "frames": [], "counts": []},
             "current": {"id": 0, "assignment_count": 0, "threat_present": False},
@@ -408,6 +409,7 @@ def _emergency_episode_summary(metadata: dict[str, object], opponent_race: str |
 
     row_count = min(len(episode_ids), len(starts), len(episode_counts))
     episodes = [{"index": index, "id": episode_ids[index], "start_frame": starts[index],
+                 "reset_frame": resets[index] if index < len(resets) else None,
                  "assignment_count": episode_counts[index]} for index in range(row_count)]
     for row in episodes:
         if any(not isinstance(row[key], int) or isinstance(row[key], bool)
@@ -541,6 +543,7 @@ def _emergency_episode_summary(metadata: dict[str, object], opponent_race: str |
         "invalid_fields": sorted(set(invalid_fields + invalid_scalars)),
         "assignment_cap": 2,
         "episodes": episodes,
+        "reset_frames": resets,
         "assignments": {"episode_ids": assignment_episode_ids, "batches": assignment_rows},
         "cap_blocks": {"total": cap_blocks, "frames": block_frames, "counts": block_counts},
         "current": {"id": current_id, "assignment_count": current_count, "threat_present": threat_present},
@@ -551,6 +554,27 @@ def _emergency_episode_summary(metadata: dict[str, object], opponent_race: str |
         "opportunity_notes": [] if episodes else ["threat_episode_unobserved"],
         "note": "v35 episode telemetry is public-threat state; the registered cumulative assignment cap is two unique Probes per episode.",
     }
+
+
+def _aggregate_emergency_episode_summaries(episode_games: list[dict[str, object]]) -> dict[str, object]:
+    """Aggregate v35 episode summaries while preserving list-shaped traces."""
+    review_flags: dict[str, int] = {}
+    aggregate = {
+        "games": len(episode_games),
+        "observed": sum(bool(item.get("episodes")) for item in episode_games),
+        "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade for item in episode_games)
+                   for grade in ("pass", "untested", "review")},
+        "episode_count": sum(len(item.get("episodes", [])) for item in episode_games),
+        "assignments": sum(len((item.get("assignments") or {}).get("episode_ids", []))
+                            for item in episode_games),
+        "cap_blocks": sum((item.get("cap_blocks") or {}).get("total", 0) for item in episode_games),
+        "review_flags": review_flags,
+    }
+    for item in episode_games:
+        for flag in item.get("review_flags", []):
+            review_flags[flag] = review_flags.get(flag, 0) + 1
+    aggregate["review_flags"] = dict(sorted(review_flags.items()))
+    return aggregate
 
 
 def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | None = None) -> dict[str, object]:
@@ -1393,7 +1417,7 @@ def _resolve_replay_command_owner(parsed: dict[str, object], process_player: obj
 
 def score_kestrel_match(manifest: dict[str, object], manifest_path: Path, screp: Path,
                         candidate_name: str = "Kestrel", candidate_sha: str | None = None,
-                        root: Path | None = None) -> dict[str, object]:
+                        root: Path | None = None, record: dict[str, object] | None = None) -> dict[str, object]:
     """Return a reviewable, descriptive summary for one archived match."""
     root = root or Path(__file__).resolve().parents[1]
     players = manifest.get("players") if isinstance(manifest.get("players"), list) else []
@@ -1416,7 +1440,8 @@ def score_kestrel_match(manifest: dict[str, object], manifest_path: Path, screp:
         "run_id": manifest.get("run_id"),
         "status": manifest.get("status"),
         "outcome_verified": manifest.get("outcome_verified"),
-        "opponent": opponent_player.get("name") if isinstance(opponent_player, dict) else None,
+        "opponent": (opponent_player.get("name") if isinstance(opponent_player, dict) else None)
+                     or (record.get("opponent") if isinstance(record, dict) else None),
         "opponent_race": opponent_race,
         "map": ((manifest.get("inputs") or {}).get("map") or {}).get("configured_path") if isinstance(manifest.get("inputs"), dict) else None,
     }
@@ -1696,7 +1721,7 @@ def main() -> int:
             game["integrity"] = {"grade": "invalid", "reasons": [game["error"]]}
             games.append(game)
             continue
-        game.update(score_kestrel_match(manifest, manifest_path, screp, candidate_name, candidate_sha, root))
+        game.update(score_kestrel_match(manifest, manifest_path, screp, candidate_name, candidate_sha, root, record))
         games.append(game)
     valid = [g for g in games if isinstance(g.get("replay"), dict) and g["replay"].get("exists")]
     aggregate = {"games": len(games), "scored_replays": len(valid),
@@ -1750,22 +1775,7 @@ def main() -> int:
         (bridge.get("episodes") or {}) for bridge in bridge_games
         if isinstance(bridge.get("episodes"), dict) and (bridge.get("episodes") or {}).get("generation") == "v35"
     ]
-    episode_review_flags: dict[str, int] = {}
-    aggregate["emergency_bridge"]["episodes"] = {
-        "games": len(episode_games),
-        "observed": sum(bool(item.get("episodes")) for item in episode_games),
-        "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade for item in episode_games)
-                    for grade in ("pass", "untested", "review")},
-        "episode_count": sum(len(item.get("episodes", [])) for item in episode_games),
-        "assignments": sum(sum(len(ids) for ids in ((item.get("assignments") or {}).get("episode_ids", {}) or {}).values())
-                            for item in episode_games),
-        "cap_blocks": sum((item.get("cap_blocks") or {}).get("total", 0) for item in episode_games),
-        "review_flags": episode_review_flags,
-    }
-    for item in episode_games:
-        for flag in item.get("review_flags", []):
-            episode_review_flags[flag] = episode_review_flags.get(flag, 0) + 1
-    aggregate["emergency_bridge"]["episodes"]["review_flags"] = dict(sorted(episode_review_flags.items()))
+    aggregate["emergency_bridge"]["episodes"] = _aggregate_emergency_episode_summaries(episode_games)
     stage_games = [g.get("zerg_offense_stage") for g in games if isinstance(g.get("zerg_offense_stage"), dict)]
     stage_review_flags: dict[str, int] = {}
     stage_opportunity_notes: dict[str, int] = {}

@@ -173,7 +173,9 @@ class KestrelScorecardTests(TestCase):
 
         episode = scorer._emergency_episode_summary(metadata, "Zerg")
         self.assertEqual(episode["quantitative_grade"]["grade"], "pass")
-        self.assertEqual(episode["episodes"], [{"index": 0, "id": 1, "start_frame": 90, "assignment_count": 2}])
+        self.assertEqual(episode["episodes"], [{"index": 0, "id": 1, "start_frame": 90,
+                                                  "reset_frame": 250, "assignment_count": 2}])
+        self.assertEqual(episode["reset_frames"], [250])
         self.assertEqual(episode["assignments"]["batches"][0]["episode_id"], 1)
         self.assertTrue(episode["checks"]["per_episode_cap"])
         self.assertTrue(episode["checks"]["cap_block_alignment"])
@@ -183,6 +185,20 @@ class KestrelScorecardTests(TestCase):
         self.assertEqual(bridge["release_threshold"], 3)
         self.assertEqual(bridge["episodes"]["assignment_cap"], 2)
         self.assertTrue(bridge["checks"]["episode_state_consistent"])
+
+    def test_v35_episode_aggregate_counts_list_shaped_assignment_ids(self):
+        aggregate = scorer._aggregate_emergency_episode_summaries([{
+            "episodes": [{"index": 0, "id": 1, "start_frame": 90, "reset_frame": 250,
+                          "assignment_count": 2}],
+            "assignments": {"episode_ids": [1, 1]},
+            "cap_blocks": {"total": 1},
+            "quantitative_grade": {"grade": "pass"},
+            "review_flags": [],
+        }])
+
+        self.assertEqual(aggregate["episode_count"], 1)
+        self.assertEqual(aggregate["assignments"], 2)
+        self.assertEqual(aggregate["review_flags"], {})
 
     def test_v35_episode_summary_rejects_duplicate_probe_and_misaligned_cap_trace(self):
         metadata = self.v35_metadata()
@@ -624,7 +640,7 @@ class KestrelScorecardTests(TestCase):
                 "inputs": {"map": {"configured_path": "map.scx"}},
                 "players": [
                     {"player": 1, "name": "Kestrel-v1", "return_code": 0, "result_metadata": metadata},
-                    {"player": 2, "name": "Opponent", "return_code": 0,
+                    {"player": 2, "name": None, "return_code": 0,
                      "environment": {"BWAPI_CONFIG_AUTO_MENU__RACE": "Terran"},
                      "result_metadata": {"winner": True}},
                 ],
@@ -652,7 +668,8 @@ class KestrelScorecardTests(TestCase):
                 return value
 
             with patch.object(scorer, "parse_replay", side_effect=fake_parse):
-                result = scorer.score_kestrel_match(manifest, root / "manifest.json", Path("screp"), root=root)
+                result = scorer.score_kestrel_match(manifest, root / "manifest.json", Path("screp"),
+                                                    root=root, record={"opponent": "Opponent fallback"})
 
             self.assertEqual(result["candidate_outcome"], "loss")
             self.assertEqual(result["integrity"]["grade"], "valid")
@@ -662,5 +679,6 @@ class KestrelScorecardTests(TestCase):
             self.assertEqual(result["defense"]["local_combat_at_first_home_army_threat"], 2)
             self.assertEqual(result["reserve_offense"]["home_move_orders"], 4)
             self.assertEqual(result["opponent_race"], "terran")
+            self.assertEqual(result["opponent"], "Opponent fallback")
             self.assertTrue(result["emergency_bridge"]["expected_inactive"])
             self.assertEqual(len(result["replays"]), 2)
