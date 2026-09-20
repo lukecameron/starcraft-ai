@@ -1,0 +1,482 @@
+diff --git a/third_party/kestrel-opening-v29-candidate/Kestrel.cpp b/third_party/kestrel-opening-v30-diagnostic/Kestrel.cpp
+index 8a593c9..78defcb 100644
+--- a/third_party/kestrel-opening-v29-candidate/Kestrel.cpp
++++ b/third_party/kestrel-opening-v30-diagnostic/Kestrel.cpp
+@@ -65,10 +65,17 @@ class Kestrel final : public BWAPI::AIModule {
+     int secondGatewayCompletedFrame_ = -1;
+     int firstHomeThreatFrame_ = -1;
+     int firstHomeZealotLossFrame_ = -1;
++    int firstHomeCombatLossFrame_ = -1;
++    int firstLocalEngagementFrame_ = -1;
+     int maxLocalCompletedZealotsBeforeLoss_ = 0;
++    int maxCompletedCombatUnits_ = 0;
++    int combatCompletionCount_ = 0;
++    std::array<int, 3> combatCompletionFrames_{{-1, -1, -1}};
+     int acceptedStructuresAfterFirstZealot_ = 0;
+     int zealotLossPositionMissing_ = 0;
+     std::unordered_map<int, BWAPI::Position> lastZealotPositions_;
++    std::unordered_map<int, BWAPI::Position> lastPublicPositions_;
++    std::unordered_map<int, int> loggedCombatCompletions_;
+     struct AttackRequest {
+         int targetId;
+         int frame;
+@@ -85,6 +92,236 @@ class Kestrel final : public BWAPI::AIModule {
+         return result;
+     }
+ 
++    static const char* diagnosticPath() {
++        return "bwapi-data/write/kestrel-v30-first-engagement-diagnostic.jsonl";
++    }
++
++    static constexpr int kHomeRadiusTiles = 12;
++    static constexpr int kLocalContactRadiusTiles = 6;
++    static constexpr int kSnapshotEnemyRadiusTiles = 16;
++
++    static void writePosition(std::ofstream& out, BWAPI::Position position) {
++        if (position.isValid()) {
++            out << "\"x\":" << position.x << ",\"y\":" << position.y;
++        } else {
++            out << "\"x\":null,\"y\":null";
++        }
++    }
++
++    void writeAcceptedCommand(const char* command, BWAPI::Unit actor,
++                              BWAPI::UnitType produced, BWAPI::Position position) const {
++        std::ofstream out(diagnosticPath(), std::ios::app);
++        if (!out) return;
++        out << "{\"record\":\"event\",\"event\":\"accepted_command\",\"command\":\""
++            << command << "\",\"frame\":" << BWAPI::Broodwar->getFrameCount()
++            << ",\"actor_id\":" << (actor ? actor->getID() : -1)
++            << ",\"actor_type\":\"" << (actor ? actor->getType().getName() : "None")
++            << "\",\"produced_type\":\"" << produced.getName() << "\",\"position\":{";
++        writePosition(out, position);
++        out << "}}\n";
++        out.flush();
++    }
++
++    void writeAcceptedAttack(BWAPI::Unit actor, BWAPI::Unit target, bool targetChanged) const {
++        std::ofstream out(diagnosticPath(), std::ios::app);
++        if (!out) return;
++        const BWAPI::Position actorPosition = actor ? actor->getPosition() : BWAPI::Positions::None;
++        const BWAPI::Position targetPosition = target ? target->getPosition() : BWAPI::Positions::None;
++        const int distance = actor && target ? actor->getDistance(target) : -1;
++        out << "{\"record\":\"event\",\"event\":\"accepted_attack\",\"frame\":"
++            << BWAPI::Broodwar->getFrameCount()
++            << ",\"target_changed\":" << (targetChanged ? "true" : "false")
++            << ",\"actor_id\":" << (actor ? actor->getID() : -1)
++            << ",\"actor_type\":\"" << (actor ? actor->getType().getName() : "None")
++            << "\",\"actor_position\":{";
++        writePosition(out, actorPosition);
++        out << "},\"target_id\":" << (target ? target->getID() : -1)
++            << ",\"target_type\":\"" << (target ? target->getType().getName() : "None")
++            << "\",\"target_position\":{";
++        writePosition(out, targetPosition);
++        out << "},\"distance\":" << distance << "}\n";
++        out.flush();
++    }
++
++    void writeDeath(BWAPI::Unit unit, BWAPI::Position lastPosition, BWAPI::Position home) const {
++        std::ofstream out(diagnosticPath(), std::ios::app);
++        if (!out) return;
++        const bool local = lastPosition.isValid() && lastPosition.getApproxDistance(home) < kHomeRadiusTiles * 32;
++        const int distance = lastPosition.isValid() ? lastPosition.getApproxDistance(home) : -1;
++        out << "{\"record\":\"event\",\"event\":\"death\",\"frame\":"
++            << BWAPI::Broodwar->getFrameCount()
++            << ",\"unit_id\":" << (unit ? unit->getID() : -1)
++            << ",\"unit_type\":\"" << (unit ? unit->getType().getName() : "None")
++            << "\",\"position\":{";
++        writePosition(out, lastPosition);
++        out << "},\"distance_from_home\":" << distance << ",\"local\":"
++            << (local ? "true" : "false") << "}\n";
++        out.flush();
++    }
++
++    void writeCombatCompletion(BWAPI::Unit unit, int ordinal) const {
++        std::ofstream out(diagnosticPath(), std::ios::app);
++        if (!out) return;
++        out << "{\"record\":\"event\",\"event\":\"combat_completion\",\"frame\":"
++            << BWAPI::Broodwar->getFrameCount() << ",\"ordinal\":" << ordinal
++            << ",\"unit_id\":" << (unit ? unit->getID() : -1)
++            << ",\"unit_type\":\"" << (unit ? unit->getType().getName() : "None") << "\"}\n";
++        out.flush();
++    }
++
++    void writeLocalEngagement(BWAPI::Unit own, BWAPI::Unit enemy, int localOwnCount,
++                              int globalOwnCount, int visibleLocalEnemyAttackers) const {
++        std::ofstream out(diagnosticPath(), std::ios::app);
++        if (!out) return;
++        out << "{\"record\":\"event\",\"event\":\"first_local_engagement\",\"frame\":"
++            << BWAPI::Broodwar->getFrameCount() << ",\"radius_tiles\":"
++            << kLocalContactRadiusTiles << ",\"own_id\":" << (own ? own->getID() : -1)
++            << ",\"own_type\":\"" << (own ? own->getType().getName() : "None")
++            << "\",\"own_position\":{";
++        writePosition(out, own ? own->getPosition() : BWAPI::Positions::None);
++        out << "},\"enemy_id\":" << (enemy ? enemy->getID() : -1)
++            << ",\"enemy_type\":\"" << (enemy ? enemy->getType().getName() : "None")
++            << "\",\"enemy_position\":{";
++        writePosition(out, enemy ? enemy->getPosition() : BWAPI::Positions::None);
++        out << "},\"distance_between\":" << (own && enemy ? own->getDistance(enemy) : -1)
++            << ",\"local_own_combat_units\":" << localOwnCount
++            << ",\"global_completed_combat_units\":" << globalOwnCount
++            << ",\"visible_local_enemy_attackers\":" << visibleLocalEnemyAttackers << "}\n";
++        out.flush();
++    }
++
++    void writeHomeCombatLoss(BWAPI::Unit unit, BWAPI::Position lastPosition, BWAPI::Position home) const {
++        std::ofstream out(diagnosticPath(), std::ios::app);
++        if (!out) return;
++        const int distance = lastPosition.isValid() ? lastPosition.getApproxDistance(home) : -1;
++        out << "{\"record\":\"event\",\"event\":\"first_home_combat_loss\",\"frame\":"
++            << BWAPI::Broodwar->getFrameCount()
++            << ",\"unit_id\":" << (unit ? unit->getID() : -1)
++            << ",\"unit_type\":\"" << (unit ? unit->getType().getName() : "None")
++            << "\",\"position\":{";
++        writePosition(out, lastPosition);
++        out << "},\"distance_from_home\":" << distance << ",\"local\":true}\n";
++        out.flush();
++    }
++
++    void writeHomeThreat(BWAPI::Unit enemy, int localOwnCount, int globalOwnCount,
++                         int visibleLocalEnemyAttackers) const {
++        std::ofstream out(diagnosticPath(), std::ios::app);
++        if (!out) return;
++        const auto self = BWAPI::Broodwar->self();
++        out << "{\"record\":\"event\",\"event\":\"first_home_threat\",\"frame\":"
++            << BWAPI::Broodwar->getFrameCount() << ",\"enemy_id\":" << (enemy ? enemy->getID() : -1)
++            << ",\"enemy_type\":\"" << (enemy ? enemy->getType().getName() : "None")
++            << "\",\"enemy_position\":{";
++        writePosition(out, enemy ? enemy->getPosition() : BWAPI::Positions::None);
++        out << "},\"minerals\":" << (self ? self->minerals() : -1)
++            << ",\"gas\":" << (self ? self->gas() : -1)
++            << ",\"supply_used\":" << (self ? self->supplyUsed() : -1)
++            << ",\"supply_total\":" << (self ? self->supplyTotal() : -1)
++            << ",\"local_own_combat_units\":" << localOwnCount
++            << ",\"global_completed_combat_units\":" << globalOwnCount
++            << ",\"visible_local_enemy_attackers\":" << visibleLocalEnemyAttackers << "}\n";
++        out.flush();
++    }
++
++    void writeSnapshot(const char* trigger) const {
++        auto self = BWAPI::Broodwar->self();
++        if (!self) return;
++        const BWAPI::TilePosition start = self->getStartLocation();
++        const BWAPI::Position home(start.x * 32 + 64, start.y * 32 + 48);
++        std::ofstream out(diagnosticPath(), std::ios::app);
++        if (!out) return;
++        out << "{\"record\":\"snapshot\",\"trigger\":\"" << trigger
++            << "\",\"frame\":" << BWAPI::Broodwar->getFrameCount()
++            << ",\"home_position\":{";
++        writePosition(out, home);
++        out << "},\"minerals\":" << self->minerals() << ",\"gas\":" << self->gas()
++            << ",\"supply_used\":" << self->supplyUsed() << ",\"supply_total\":" << self->supplyTotal()
++            << ",\"probe_count\":" << count(BWAPI::UnitTypes::Protoss_Probe)
++            << ",\"completed_probe_count\":" << count(BWAPI::UnitTypes::Protoss_Probe, true)
++            << ",\"gateway_count\":" << count(BWAPI::UnitTypes::Protoss_Gateway)
++            << ",\"completed_gateway_count\":" << count(BWAPI::UnitTypes::Protoss_Gateway, true)
++            << ",\"zealot_count\":" << count(BWAPI::UnitTypes::Protoss_Zealot)
++            << ",\"completed_zealot_count\":" << count(BWAPI::UnitTypes::Protoss_Zealot, true)
++            << ",\"dragoon_count\":" << count(BWAPI::UnitTypes::Protoss_Dragoon)
++            << ",\"completed_dragoon_count\":" << count(BWAPI::UnitTypes::Protoss_Dragoon, true)
++            << ",\"own_combat_units\":[";
++        bool first = true;
++        for (auto unit : sorted(self->getUnits())) {
++            if (!unit->exists()) continue;
++            const BWAPI::UnitType type = unit->getType();
++            if (type != BWAPI::UnitTypes::Protoss_Zealot && type != BWAPI::UnitTypes::Protoss_Dragoon) continue;
++            if (!first) out << ',';
++            first = false;
++            const BWAPI::Position position = unit->getPosition();
++            const BWAPI::Position targetPosition = unit->getOrderTargetPosition();
++            const BWAPI::Unit target = unit->getOrderTarget();
++            out << "{\"id\":" << unit->getID() << ",\"type\":\"" << type.getName()
++                << "\",\"completed\":" << (unit->isCompleted() ? "true" : "false")
++                << ",\"position\":{";
++            writePosition(out, position);
++            out << "},\"hit_points\":" << unit->getHitPoints() << ",\"shields\":" << unit->getShields()
++                << ",\"order\":\"" << unit->getOrder().getName() << "\",\"order_target_id\":"
++                << (target ? target->getID() : -1) << ",\"order_target_position\":{";
++            writePosition(out, targetPosition);
++            out << "},\"distance_from_home\":" << unit->getDistance(home) << "}";
++        }
++        out << "],\"own_producers\":[";
++        first = true;
++        for (auto unit : sorted(self->getUnits())) {
++            if (!unit->exists()) continue;
++            const BWAPI::UnitType type = unit->getType();
++            if (type != BWAPI::UnitTypes::Protoss_Nexus && type != BWAPI::UnitTypes::Protoss_Gateway) continue;
++            if (!first) out << ',';
++            first = false;
++            out << "{\"id\":" << unit->getID() << ",\"type\":\"" << type.getName()
++                << "\",\"completed\":" << (unit->isCompleted() ? "true" : "false")
++                << ",\"position\":{";
++            writePosition(out, unit->getPosition());
++            out << "},\"training\":" << (unit->isTraining() ? "true" : "false")
++                << ",\"remaining_train_time\":" << unit->getRemainingTrainTime()
++                << ",\"training_queue\":[";
++            bool firstQueued = true;
++            for (const auto queued : unit->getTrainingQueue()) {
++                if (!firstQueued) out << ',';
++                firstQueued = false;
++                out << "\"" << queued.getName() << "\"";
++            }
++            out << "]}";
++        }
++        out << "],\"visible_ground_enemies\":[";
++        first = true;
++        for (auto unit : sorted(BWAPI::Broodwar->getAllUnits())) {
++            if (!unit->exists() || !unit->isVisible() || !unit->isDetected() || unit->isFlying() ||
++                !self->isEnemy(unit->getPlayer()) || unit->getDistance(home) >= kSnapshotEnemyRadiusTiles * 32) continue;
++            if (!first) out << ',';
++            first = false;
++            const BWAPI::UnitType type = unit->getType();
++            out << "{\"id\":" << unit->getID() << ",\"type\":\"" << type.getName()
++                << "\",\"position\":{";
++            writePosition(out, unit->getPosition());
++            out << "},\"hit_points\":" << unit->getHitPoints() << ",\"shields\":" << unit->getShields()
++                << ",\"attack_capable\":" << (type.canAttack() ? "true" : "false")
++                << ",\"distance_from_home\":" << unit->getDistance(home) << "}";
++        }
++        out << "]}\n";
++        out.flush();
++    }
++
++    void writeEnded(bool won) const {
++        std::ofstream out(diagnosticPath(), std::ios::app);
++        if (!out) return;
++        out << "{\"record\":\"event\",\"event\":\"ended\",\"frame\":"
++            << BWAPI::Broodwar->getFrameCount() << ",\"won\":" << (won ? "true" : "false")
++            << ",\"max_completed_combat_units\":" << maxCompletedCombatUnits_
++            << ",\"first_home_threat_frame\":" << firstHomeThreatFrame_
++            << ",\"first_local_engagement_frame\":" << firstLocalEngagementFrame_
++            << ",\"first_home_combat_loss_frame\":" << firstHomeCombatLossFrame_
++            << ",\"combat_completion_frames\":[" << combatCompletionFrames_[0] << ','
++            << combatCompletionFrames_[1] << ',' << combatCompletionFrames_[2] << "]}\n";
++        out.flush();
++    }
++
+     bool issue(bool accepted, CommandCategory category) {
+         ++commands_;
+         ++attemptedByCategory_[category];
+@@ -159,6 +396,12 @@ class Kestrel final : public BWAPI::AIModule {
+             << ",\"second_gateway_completed_frame\":" << secondGatewayCompletedFrame_
+             << ",\"first_home_threat_frame\":" << firstHomeThreatFrame_
+             << ",\"first_home_zealot_loss_frame\":" << firstHomeZealotLossFrame_
++            << ",\"first_home_combat_loss_frame\":" << firstHomeCombatLossFrame_
++            << ",\"first_local_engagement_frame\":" << firstLocalEngagementFrame_
++            << ",\"max_completed_combat_units\":" << maxCompletedCombatUnits_
++            << ",\"first_combat_completion_frame\":" << combatCompletionFrames_[0]
++            << ",\"second_combat_completion_frame\":" << combatCompletionFrames_[1]
++            << ",\"third_combat_completion_frame\":" << combatCompletionFrames_[2]
+             << ",\"max_local_completed_zealots_before_loss\":" << maxLocalCompletedZealotsBeforeLoss_
+             << ",\"accepted_structures_after_first_zealot\":" << acceptedStructuresAfterFirstZealot_
+             << ",\"zealot_loss_position_missing\":" << zealotLossPositionMissing_
+@@ -245,6 +488,7 @@ class Kestrel final : public BWAPI::AIModule {
+         builderId_ = worker->getID();
+         const bool accepted = issue(worker->build(type, tile), BuildCommand);
+         if (accepted) {
++            writeAcceptedCommand("build", worker, type, BWAPI::Position(tile));
+             lastAcceptedBuildFrame_ = frame;
+             if (firstZealotTrainFrame_ >= 0) ++acceptedStructuresAfterFirstZealot_;
+             if (type == BWAPI::UnitTypes::Protoss_Pylon && firstPylonAcceptedFrame_ < 0) firstPylonAcceptedFrame_ = frame;
+@@ -282,6 +526,8 @@ class Kestrel final : public BWAPI::AIModule {
+         builderId_ = worker->getID();
+         const bool accepted = issue(worker->build(BWAPI::UnitTypes::Protoss_Assimilator, best->getTilePosition()), BuildCommand);
+         if (accepted) {
++            writeAcceptedCommand("build", worker, BWAPI::UnitTypes::Protoss_Assimilator,
++                                 BWAPI::Position(best->getTilePosition()));
+             lastAcceptedBuildFrame_ = frame;
+             if (firstZealotTrainFrame_ >= 0) ++acceptedStructuresAfterFirstZealot_;
+             pendingBuildType_ = BWAPI::UnitTypes::Protoss_Assimilator;
+@@ -309,14 +555,17 @@ class Kestrel final : public BWAPI::AIModule {
+             if (type == BWAPI::UnitTypes::Protoss_Nexus && probes < 28 &&
+                 BWAPI::Broodwar->self()->minerals() >= 50 + openingReserve &&
+                 unit->canTrain(BWAPI::UnitTypes::Protoss_Probe)) {
+-                issue(unit->train(BWAPI::UnitTypes::Protoss_Probe), TrainCommand);
++                if (issue(unit->train(BWAPI::UnitTypes::Protoss_Probe), TrainCommand))
++                    writeAcceptedCommand("train", unit, BWAPI::UnitTypes::Protoss_Probe, unit->getPosition());
+             } else if (type == BWAPI::UnitTypes::Protoss_Gateway) {
+                 if (count(BWAPI::UnitTypes::Protoss_Cybernetics_Core, true) > 0 &&
+                     BWAPI::Broodwar->self()->minerals() >= 125 && BWAPI::Broodwar->self()->gas() >= 50 &&
+                     unit->canTrain(BWAPI::UnitTypes::Protoss_Dragoon)) {
+-                    issue(unit->train(BWAPI::UnitTypes::Protoss_Dragoon), TrainCommand);
++                    if (issue(unit->train(BWAPI::UnitTypes::Protoss_Dragoon), TrainCommand))
++                        writeAcceptedCommand("train", unit, BWAPI::UnitTypes::Protoss_Dragoon, unit->getPosition());
+                 } else if (BWAPI::Broodwar->self()->minerals() >= 100 && unit->canTrain(BWAPI::UnitTypes::Protoss_Zealot)) {
+                     if (issue(unit->train(BWAPI::UnitTypes::Protoss_Zealot), TrainCommand)) {
++                        writeAcceptedCommand("train", unit, BWAPI::UnitTypes::Protoss_Zealot, unit->getPosition());
+                         ++acceptedZealotTrains_;
+                         firstZealotQueued_ = true;
+                         if (firstZealotTrainFrame_ < 0) firstZealotTrainFrame_ = BWAPI::Broodwar->getFrameCount();
+@@ -472,7 +721,8 @@ class Kestrel final : public BWAPI::AIModule {
+                 const bool targetChanged = previous == attackRequests_.end() || previous->second.targetId != enemy->getID();
+                 const int retryFrames = 96;
+                 if (targetChanged || frame - previous->second.frame >= retryFrames) {
+-                    issue(unit->attack(enemy), AttackCommand);
++                    const bool accepted = issue(unit->attack(enemy), AttackCommand);
++                    if (accepted) writeAcceptedAttack(unit, enemy, targetChanged);
+                     attackRequests_[unit->getID()] = {enemy->getID(), frame};
+                 }
+                 continue;
+@@ -493,9 +743,30 @@ class Kestrel final : public BWAPI::AIModule {
+         maxZealots_ = std::max(maxZealots_, count(BWAPI::UnitTypes::Protoss_Zealot));
+         maxDragoons_ = std::max(maxDragoons_, count(BWAPI::UnitTypes::Protoss_Dragoon));
+         const int frame = game.getFrameCount();
+-        for (auto unit : game.self()->getUnits())
+-            if (unit->exists() && unit->getType() == BWAPI::UnitTypes::Protoss_Zealot)
++        int completedCombatUnits = 0;
++        for (auto unit : sorted(game.self()->getUnits())) {
++            if (!unit->exists()) continue;
++            const BWAPI::UnitType type = unit->getType();
++            if (type == BWAPI::UnitTypes::Protoss_Probe || type == BWAPI::UnitTypes::Protoss_Zealot ||
++                type == BWAPI::UnitTypes::Protoss_Dragoon) {
++                lastPublicPositions_[unit->getID()] = unit->getPosition();
++            }
++            if (type == BWAPI::UnitTypes::Protoss_Zealot)
+                 lastZealotPositions_[unit->getID()] = unit->getPosition();
++            if (type != BWAPI::UnitTypes::Protoss_Zealot && type != BWAPI::UnitTypes::Protoss_Dragoon) continue;
++            if (!unit->isCompleted()) continue;
++            ++completedCombatUnits;
++            if (loggedCombatCompletions_.find(unit->getID()) == loggedCombatCompletions_.end()) {
++                const int ordinal = ++combatCompletionCount_;
++                loggedCombatCompletions_[unit->getID()] = ordinal;
++                writeCombatCompletion(unit, ordinal);
++                if (ordinal <= static_cast<int>(combatCompletionFrames_.size())) {
++                    combatCompletionFrames_[ordinal - 1] = frame;
++                }
++            }
++        }
++        maxCompletedCombatUnits_ = std::max(maxCompletedCombatUnits_, completedCombatUnits);
++        if (frame % 120 == 0) writeSnapshot("periodic");
+         if (count(BWAPI::UnitTypes::Protoss_Pylon) > 0 && firstPylonCurrentFrame_ < 0) firstPylonCurrentFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Pylon, true) > 0 && firstPylonCompletedFrame_ < 0) firstPylonCompletedFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Pylon) >= 6 && sixthPylonCurrentFrame_ < 0) sixthPylonCurrentFrame_ = frame;
+@@ -508,12 +779,65 @@ class Kestrel final : public BWAPI::AIModule {
+         const BWAPI::TilePosition start = game.self()->getStartLocation();
+         const BWAPI::Position home(start.x * 32 + 64, start.y * 32 + 48);
+         if (firstHomeThreatFrame_ < 0) {
+-            for (auto enemy : game.getAllUnits()) {
++            BWAPI::Unit firstHomeThreatEnemy = nullptr;
++            int visibleLocalEnemyAttackers = 0;
++            for (auto enemy : sorted(game.getAllUnits())) {
++                if (!enemy->exists() || !enemy->isVisible() || !enemy->isDetected() || enemy->isFlying() ||
++                    !enemy->getType().canAttack() || !game.self()->isEnemy(enemy->getPlayer()) ||
++                    enemy->getDistance(home) >= kHomeRadiusTiles * 32) continue;
++                if (!firstHomeThreatEnemy) firstHomeThreatEnemy = enemy;
++                ++visibleLocalEnemyAttackers;
++            }
++            if (firstHomeThreatEnemy) {
++                int localOwnCombatUnits = 0;
++                for (auto own : game.self()->getUnits()) {
++                    if (own->exists() && own->isCompleted() &&
++                        (own->getType() == BWAPI::UnitTypes::Protoss_Zealot ||
++                         own->getType() == BWAPI::UnitTypes::Protoss_Dragoon) &&
++                        own->getDistance(home) < kHomeRadiusTiles * 32) ++localOwnCombatUnits;
++                }
++                firstHomeThreatFrame_ = frame;
++                writeSnapshot("first_home_threat");
++                writeHomeThreat(firstHomeThreatEnemy, localOwnCombatUnits, completedCombatUnits,
++                                visibleLocalEnemyAttackers);
++            }
++        }
++        if (firstLocalEngagementFrame_ < 0) {
++            int localOwnCombatUnits = 0;
++            for (auto own : game.self()->getUnits()) {
++                if (own->exists() && own->isCompleted() &&
++                    (own->getType() == BWAPI::UnitTypes::Protoss_Zealot ||
++                     own->getType() == BWAPI::UnitTypes::Protoss_Dragoon) &&
++                    own->getDistance(home) < kHomeRadiusTiles * 32) ++localOwnCombatUnits;
++            }
++            std::vector<BWAPI::Unit> localEnemyAttackers;
++            for (auto enemy : sorted(game.getAllUnits())) {
+                 if (enemy->exists() && enemy->isVisible() && enemy->isDetected() && !enemy->isFlying() &&
+-                    enemy->getType().canAttack() && game.self()->isEnemy(enemy->getPlayer()) && enemy->getDistance(home) < 12 * 32) {
+-                    firstHomeThreatFrame_ = frame;
+-                    break;
++                    game.self()->isEnemy(enemy->getPlayer()) && enemy->getType().canAttack() &&
++                    enemy->getDistance(home) < kHomeRadiusTiles * 32)
++                    localEnemyAttackers.push_back(enemy);
++            }
++            BWAPI::Unit engagementOwn = nullptr;
++            BWAPI::Unit engagementEnemy = nullptr;
++            for (auto own : sorted(game.self()->getUnits())) {
++                if (!own->exists() || !own->isCompleted() ||
++                    (own->getType() != BWAPI::UnitTypes::Protoss_Zealot &&
++                     own->getType() != BWAPI::UnitTypes::Protoss_Dragoon) ||
++                    own->getDistance(home) >= kHomeRadiusTiles * 32) continue;
++                for (auto enemy : localEnemyAttackers) {
++                    if (own->getDistance(enemy) <= kLocalContactRadiusTiles * 32) {
++                        engagementOwn = own;
++                        engagementEnemy = enemy;
++                        break;
++                    }
+                 }
++                if (engagementOwn) break;
++            }
++            if (engagementOwn && engagementEnemy) {
++                firstLocalEngagementFrame_ = frame;
++                writeSnapshot("first_local_engagement");
++                writeLocalEngagement(engagementOwn, engagementEnemy, localOwnCombatUnits,
++                                     completedCombatUnits, static_cast<int>(localEnemyAttackers.size()));
+             }
+         }
+         if (firstHomeThreatFrame_ >= 0 && firstHomeZealotLossFrame_ < 0) {
+@@ -536,6 +860,8 @@ public:
+         latency_ = BWAPI::Broodwar->getLatencyFrames();
+         knownZerg_ = BWAPI::Broodwar->enemy() && BWAPI::Broodwar->enemy()->getRace() == BWAPI::Races::Zerg;
+         std::remove("bwapi-data/write/gas-worker-guard.jsonl");
++        std::remove(diagnosticPath());
++        writeSnapshot("start");
+         writeResult(false);
+     }
+ 
+@@ -548,21 +874,38 @@ public:
+         if (BWAPI::Broodwar->getFrameCount() % 240 == 0) writeResult(false);
+     }
+ 
+-    void onEnd(bool won) override { writeResult(true, won); }
++    void onEnd(bool won) override {
++        writeEnded(won);
++        writeResult(true, won);
++    }
+ 
+     void onUnitDestroy(BWAPI::Unit unit) override {
+-        if (!unit || !BWAPI::Broodwar->self() || unit->getPlayer() != BWAPI::Broodwar->self() ||
+-            unit->getType() != BWAPI::UnitTypes::Protoss_Zealot || firstHomeThreatFrame_ < 0 ||
+-            firstHomeZealotLossFrame_ >= 0) return;
+-        const auto observed = lastZealotPositions_.find(unit->getID());
+-        if (observed == lastZealotPositions_.end() || !observed->second.isValid()) {
+-            ++zealotLossPositionMissing_;
+-            return;
+-        }
++        if (!unit || !BWAPI::Broodwar->self() || unit->getPlayer() != BWAPI::Broodwar->self()) return;
++        const BWAPI::UnitType type = unit->getType();
+         const BWAPI::TilePosition start = BWAPI::Broodwar->self()->getStartLocation();
+         const BWAPI::Position home(start.x * 32 + 64, start.y * 32 + 48);
+-        if (observed->second.getApproxDistance(home) < 12 * 32)
+-            firstHomeZealotLossFrame_ = BWAPI::Broodwar->getFrameCount();
++        if (type == BWAPI::UnitTypes::Protoss_Probe || type == BWAPI::UnitTypes::Protoss_Zealot ||
++            type == BWAPI::UnitTypes::Protoss_Dragoon) {
++            auto observed = lastPublicPositions_.find(unit->getID());
++            const BWAPI::Position lastPosition = observed == lastPublicPositions_.end()
++                ? unit->getPosition() : observed->second;
++            writeDeath(unit, lastPosition, home);
++        }
++        if (type != BWAPI::UnitTypes::Protoss_Zealot && type != BWAPI::UnitTypes::Protoss_Dragoon) return;
++        if (firstHomeThreatFrame_ < 0) return;
++        auto observed = lastPublicPositions_.find(unit->getID());
++        if (observed == lastPublicPositions_.end() || !observed->second.isValid()) {
++            if (type == BWAPI::UnitTypes::Protoss_Zealot) ++zealotLossPositionMissing_;
++            return;
++        }
++        if (observed->second.getApproxDistance(home) < kHomeRadiusTiles * 32) {
++            if (firstHomeCombatLossFrame_ < 0) {
++                firstHomeCombatLossFrame_ = BWAPI::Broodwar->getFrameCount();
++                writeHomeCombatLoss(unit, observed->second, home);
++            }
++            if (type == BWAPI::UnitTypes::Protoss_Zealot && firstHomeZealotLossFrame_ < 0)
++                firstHomeZealotLossFrame_ = BWAPI::Broodwar->getFrameCount();
++        }
+     }
+ };
+ 
+

@@ -4,6 +4,8 @@ Registered 2026-09-20 after the v29 five-lane screen produced five verified loss
 
 The candidate starts from the exact v29 policy: source SHA-256 `0dbb8404b62197e52020655d098c888abdb25aaeca79b60358d44b4a806b4fe3`, combined source SHA-256 `956c5882e2948d54fce8d5dbf4e8fa963121e2998a09a6179a136d3e6b4f924d`, and binary SHA-256 `c7196ea991f5755b6e34c9c9ebff87faf3884d221de9492a7952ce20cc57d56c`. v30 may add observations only. It must not change build order, economy, production, targeting, movement, cadence, thresholds or any other gameplay decision.
 
+Build identity amendment, before match launch: the instrumented source SHA-256 is `c90ab2992e3f8017edb6b52a84e5fa99d9d146f5851d71eb6390a11f43944645`, combined source SHA-256 is `1d57de56d44e347557f115bdf974bcd7d78fd1615643f84b68761a84b8f55145`, reconstruction patch SHA-256 is `afba2070e1b423fac6f354cfc233215ebd9b7babb9e42f7bc03935fde8da9504`, and frozen diagnostic binary SHA-256 is `2fe8d4868a8957a634d0d33629632c590cf2198d1a7985f0b1966a2c9b812476`. Native OpenBW and official BWAPI 4.4 header targets compiled successfully with Apple Clang 21.0.0.
+
 Append a durable JSONL diagnostic at start, every 120 frames, at first detected home threat, first local engagement, accepted build/train/attack commands, each newly completed Zealot or Dragoon, own Probe/Zealot/Dragoon deaths, and game end. Each snapshot uses public BWAPI observations only and records:
 
 - frame, trigger, minerals, gas and supply;
