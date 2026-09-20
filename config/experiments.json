@@ -1199,6 +1199,30 @@
         "origin": "Original",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
       }
+    },
+    {
+      "id": "kestrel-hillclimb-v6",
+      "title": "Kestrel v26 Zerg tech-first construction hill-climb",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Starting the Assimilator and Cybernetics Core before a known-Zerg second Gateway will produce earlier Dragoon tech while preserving Kestrel v22's existing defense.",
+      "notes": "Five valid concurrent games completed with five losses, five hash-matched parsed replays and zero rejected Kestrel commands. Both Zerg lanes accepted a Core before any second Gateway, but neither produced a Dragoon; all integrity and throughput gates passed.",
+      "conclusion": "Reject v26 because it recorded zero wins. The intended tech ordering is verified as a mechanism signal, but it did not convert to Zerg-lane Dragoon production or strength. Leave canonical Kestrel v13 and local Elo unchanged.",
+      "evidence_run_ids": [
+        "20260920T132810-8ffbb2ccff92",
+        "20260920T132810-d50396f0e52d",
+        "20260920T132810-5a58121f0bdd",
+        "20260920T132810-285b823f37d9",
+        "20260920T132810-5d2c18cb2959"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v6",
+      "candidate_binary_sha256": "45726aff4461d5367efb6f3ac4b355c4f3dd03dc537dfe46dca49a36fae72070",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      }
     }
   ]
 }

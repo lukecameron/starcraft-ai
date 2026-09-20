@@ -20,10 +20,10 @@ Checkpoint: 20 September 2026, 11:45 UTC. Latest user scope: **finish the curren
 - Root owns `config/experiments.json`, `docs/kestrel-bot.md`, this resume and publication. Avoid overlapping edits without handoff.
 - Local HTTP server session 85590, PID 1285, serves `public` at 127.0.0.1:8787. Chrome CLI works while Mac is locked; do not bypass the lock. Current browser is immutable a634def1, desktop 1200. Prior mobile 390 and desktop layout checks passed.
 
-## Current hill-climb checkpoint (2026-09-20 12:25 UTC)
+## Current hill-climb checkpoint (2026-09-20 13:30 UTC)
 
-- The five-way Kestrel hill-climb loop has now preserved v19 recovery, v22, v23, v24 and v25 screens. Each candidate screen has zero verified wins; v23's three-local hold and v24's shared-target focus were rejected, and v25's combat-target priority was inconclusive after one unverified UAlberta-Terran attempt. No screen changes Elo or canonical v13.
-- v22 remains the strongest exploratory base: its five games were valid losses with zero Kestrel command rejections, and it improved early tech/Protoss local-overlap signals. v25's invalid attempt is explicitly excluded from evidence.
+- The five-way Kestrel hill-climb loop has now preserved v19 recovery and v22 through v26. Each candidate screen has zero verified wins. v26 passed every integrity gate and verified Core-before-second-Gateway ordering in both Zerg lanes, but neither Zerg lane produced a Dragoon and all five games were losses. No screen changes Elo or canonical v13.
+- v22 remains the exploratory base. v26 is rejected for zero wins while retaining its positive construction-order signal for diagnosis. Exact result: `docs/evaluations/kestrel-hillclimb-v6/RESULT.md`; runs `20260920T132810-8ffbb2ccff92`, `20260920T132810-d50396f0e52d`, `20260920T132810-5a58121f0bdd`, `20260920T132810-285b823f37d9`, `20260920T132810-5d2c18cb2959`.
 - The scorecard separates descriptive replay coverage from outcome performance grades and includes command-regression and unverified states. Dashboard experiment cards publish those grades with the preserved replay links.
 - Latest dashboard deployment: https://763dbc0d.starcraft-ai.pages.dev.
 
