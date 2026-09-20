@@ -16,8 +16,14 @@ def bot_identity(player):
     name=Path(str(raw)).name if raw else "Unknown bot"
     return BOT_NAMES.get(name,Path(name).stem or "Unknown bot")
 
-def identity_for(module_name, identities):
-    value=identities.get(Path(str(module_name or "")).name,{}) if isinstance(identities,dict) else {}
+def identity_for(module_name, identities, module_sha=None):
+    family=identities.get(Path(str(module_name or "")).name,{}) if isinstance(identities,dict) else {}
+    value=family
+    overrides=family.get("sha256_overrides",{}) if isinstance(family,dict) else {}
+    if module_sha and isinstance(overrides,dict) and isinstance(overrides.get(module_sha),dict):
+        # Variant records may change local ownership/origin only; family-level
+        # upstream attribution must remain intact for every binary.
+        value={**family,**{k:v for k,v in overrides[module_sha].items() if k in {"ownership","origin"}}}
     if not isinstance(value,dict): value={}
     return {"ownership":value.get("ownership","unknown"),"origin":value.get("origin","unknown"),"upstream_name":value.get("upstream_name"),"author":value.get("author"),"author_url":value.get("author_url"),"source_url":value.get("source_url"),"provenance_verified":bool(value)}
 
@@ -36,7 +42,7 @@ def public_manifest(path, identities=None):
         module=inp.get("bot_module",{}) if isinstance(inp,dict) else {}; provenance=module.get("build_provenance",{}) if isinstance(module,dict) else {}
         usage=player.get("resource_usage",{}) if isinstance(player.get("resource_usage"),dict) else {}
         build_name=Path(str(module.get("path",""))).name or Path(str(env.get("BWAPI_CONFIG_AI__AI",""))).name or None
-        identity=identity_for(build_name,identities or {})
+        identity=identity_for(build_name,identities or {},module.get("sha256"))
         players.append({"player":player.get("player"),"name":inp.get("name"),"bot":identity.get("upstream_name") or bot_identity(player),"race":inp.get("race") or (env.get("BWAPI_CONFIG_AUTO_MENU__RACE") if isinstance(env,dict) else None),"build_name":build_name,"module_sha256":module.get("sha256"),**identity,"source_url":identity.get("source_url") or provenance.get("source_repository") or inp.get("source_url"),"source_revision":provenance.get("source_revision"),"return_code":player.get("return_code"),"peak_rss_raw":usage.get("peak_rss_raw"),"user_cpu_seconds":usage.get("user_cpu_seconds"),"result":{k:result.get(k) for k in ("ended","winner","frame_count","latency_frames","command_count","rejected_commands")} if isinstance(result,dict) else None})
     replays=[]
     for index,replay in enumerate(source.get("replays",[]),1):
@@ -49,6 +55,15 @@ def public_manifest(path, identities=None):
 def public_experiment(path, identities=None):
     source=load_json(path,{})
     if not isinstance(source,dict) or not source.get("experiment_id"): return {}
+    result={"id":source["experiment_id"]}
+    for key in ("title","status","hypothesis","summary","started_at","finished_at","decision"):
+        if source.get(key) is not None and source.get(key) != "": result[key]=source[key]
+    if source.get("started_at"):
+        result["date"]=str(source["started_at"])[:10]
+    if source.get("conclusion") not in (None,""):
+        result["conclusion"]=source["conclusion"]
+    elif source.get("decision") not in (None,""):
+        result["conclusion"]=source["decision"]
     games=[]
     for game in source.get("games",[]):
         if not isinstance(game,dict): continue
@@ -57,8 +72,12 @@ def public_experiment(path, identities=None):
     candidate=source.get("candidate",{}) if isinstance(source.get("candidate"),dict) else {}
     opponents={}
     for name,value in (source.get("opponents",{}) if isinstance(source.get("opponents"),dict) else {}).items():
-        if isinstance(value,dict): opponents[name]={"race":value.get("race"),**identity_for(value.get("path"),identities or {})}
-    return {"id":source.get("experiment_id"),"title":source.get("title") or source.get("experiment_id"),"date":str(source.get("started_at") or "")[:10] or None,"started_at":source.get("started_at"),"finished_at":source.get("finished_at"),"status":source.get("status"),"decision":source.get("decision"),"hypothesis":source.get("hypothesis"),"conclusion":source.get("conclusion") or source.get("decision"),"summary":source.get("summary"),"candidate":{"sha256":candidate.get("sha256"),**identity_for(candidate.get("path"),identities or {})},"opponents":opponents,"games":games}
+        if isinstance(value,dict): opponents[name]={"race":value.get("race"),**identity_for(value.get("path"),identities or {},value.get("sha256"))}
+    if candidate:
+        result["candidate"]={"sha256":candidate.get("sha256"),**identity_for(candidate.get("path"),identities or {},candidate.get("sha256"))}
+    if opponents: result["opponents"]=opponents
+    if games: result["games"]=games
+    return result
 
 def append_unique(existing, additions, fields):
     result=[x for x in existing if isinstance(x,dict)]; keys={tuple(x.get(f) for f in fields) for x in result}

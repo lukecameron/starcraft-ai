@@ -17,13 +17,14 @@
       "id": "competitive-bot-ports",
       "title": "Competitive bot ports",
       "date": "2026-09-20",
-      "status": "in_progress",
+      "status": "completed",
       "hypothesis": "McRave and ZZZKBot can run natively without disabling gameplay.",
-      "notes": "Both source ports compile and have diagnostic evidence; the cohort remains uncalibrated and source revisions are not ladder binary matches.",
-      "conclusion": "Both compile and have diagnostic evidence; strength calibration is pending.",
+      "notes": "Both native ports completed real headless games and passed official BWAPI header compilation. The cohort remains uncalibrated and source revisions are not ladder binary matches.",
+      "conclusion": "McRave and ZZZKBot are runnable native ports with archived replays; broader reliability and strength calibration remain separate.",
       "evidence_run_ids": [
         "20260920T020618-09905c5f8fef",
-        "20260920T022831-ee2139f58ecb"
+        "20260920T022831-ee2139f58ecb",
+        "20260920T023737-795afabea26a"
       ],
       "retrospective": true
     },
@@ -131,13 +132,65 @@
       "decision": "INCONCLUSIVE",
       "hypothesis": "With matching engine and bot seeds, the distance cache improves throughput while preserving compatible early commands.",
       "notes": "Four games completed cleanly, and the openings matched within both pairs. The command-compatibility gate failed at frame 3: worker order and tied mineral targets differed. Source inspection traced this to containers ordered by object pointers.",
-      "conclusion": "Candidate throughput was 7.78% and 10.99% higher, but differing trajectories prevent a causal performance claim. No strength gain or baseline promotion. Next compare variants with stable worker and mineral traversal.",
+      "conclusion": "Candidate throughput was 7.78% and 10.99% higher, but differing trajectories prevent a causal performance claim. No strength gain or baseline promotion. A subsequent stable-traversal repeat also failed; compare both selectors on identical live states next.",
       "evidence_run_ids": [
         "20260920T031834-6b2e6bccd324",
         "20260920T032008-0612bbfdc30b",
         "20260920T032211-8dc43b1938ab",
         "20260920T032312-56ef416d36d2"
       ]
+    },
+    {
+      "id": "mcrave-stable-traversal-v1",
+      "title": "Check whether unit-ID traversal repeats",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Sorting workers and minerals by public unit ID will make identical seeded opening commands repeatable.",
+      "notes": "Two identical baseline games completed, but raw commands differed at frame 2 and mineral targets differed at frame 3. Source inspection found that OpenBW BWAPI assigns public unit IDs in first-access order from a pointer-hashed container.",
+      "conclusion": "The repeatability gate failed. No candidate game was launched and no speed or strength comparison was made. Further traversal changes were stopped as planned.",
+      "evidence_run_ids": [
+        "20260920T032943-b3600552589a",
+        "20260920T033151-e6f376be4df7"
+      ]
+    },
+    {
+      "id": "mcrave-station-coordinates-v1",
+      "title": "Correct station defense coordinates",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "One station-defense insertion stores a relative offset where consumers require an absolute map tile; correcting it will remove invalid defense candidates.",
+      "notes": "The diagnostic baseline exposed out-of-map defense (0,-3) at base (64,118). The one-line candidate produced absolute tile (64,115), and all recorded defense entries were valid. Both games completed and retained both-player replays.",
+      "conclusion": "The replay confirms an accepted Creep Colony build at corrected tile (64,115), frame 3,542. Accept the coordinate repair for integration; no win-rate or strength improvement is inferred from these two games.",
+      "evidence_run_ids": [
+        "20260920T034044-719571d92fba",
+        "20260920T034112-72902ec44f57"
+      ],
+      "decision": "ADOPT"
+    },
+    {
+      "id": "mcrave-goal-shadow-v1",
+      "title": "Compare goal selectors on identical live states",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "The cached and original goal selectors choose identical ordered units from the same live state, while caching reduces distance queries.",
+      "notes": "The corrected diagnostic completed 5,780 goal-assignment calls and 2,124 actual selections with zero differences between both shadow selectors and original gameplay. A pre-review attempt was interrupted and preserved.",
+      "conclusion": "The largest call had three eligible units and requested two. The required large-state coverage was 20 eligible and 10 requested, so this does not validate the profiled hotspot or establish a speed improvement.",
+      "evidence_run_ids": [
+        "20260920T034342-41a758b6eb77",
+        "20260920T034508-c3b3abeca73e"
+      ],
+      "decision": "INCONCLUSIVE"
+    },
+    {
+      "id": "mcrave-goal-shadow-large-v1",
+      "title": "Exercise goal caching with the profiled opening",
+      "date": "2026-09-20",
+      "status": "in_progress",
+      "hypothesis": "Reusing the opening from the profiled slow game will expose large real goal-selection calls and allow both algorithms to be compared on identical states.",
+      "notes": "One isolated diagnostic forces the existing HatchPool / 11Hatch / 3HatchMuta opening. The original zero-divergence and large-state requirements remain unchanged; no production throughput or strength claim is planned.",
+      "conclusion": null,
+      "evidence_run_ids": []
     }
   ]
 }

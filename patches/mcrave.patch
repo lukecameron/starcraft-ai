@@ -33,6 +33,26 @@ index c57e97e..f9d8256 100644
 -} // namespace BWEB::Blocks
 \ No newline at end of file
 +} // namespace BWEB::Blocks
+diff --git a/Source/BWEB/Station.cpp b/Source/BWEB/Station.cpp
+index 7ce4e74..2969a1f 100644
+--- a/Source/BWEB/Station.cpp
++++ b/Source/BWEB/Station.cpp
+@@ -471,7 +471,7 @@ namespace BWEB {
+                         Map::isPlaceable(Zerg_Sunken_Colony, base->Location() + defense)) {
+                         mediumTiles.insert(base->Location() + medium);
+                         smallTiles.insert(base->Location() + small);
+-                        defenses.insert(defense);
++                        defenses.insert(base->Location() + defense);
+                         break;
+                     }
+                 }
+@@ -728,4 +728,4 @@ namespace BWEB::Stations {
+     const Station *getStartingNatural() { return startNatStation; }
+ 
+     const vector<Station> &getStations() { return stations; }
+-} // namespace BWEB::Stations
+\ No newline at end of file
++} // namespace BWEB::Stations
 diff --git a/Source/BWEB/Wall.h b/Source/BWEB/Wall.h
 index d2e1ace..9dd3e4c 100644
 --- a/Source/BWEB/Wall.h

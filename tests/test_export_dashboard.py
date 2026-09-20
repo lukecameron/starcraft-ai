@@ -3,10 +3,19 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.export_dashboard import absolutize_replays, export, public_manifest
+from scripts.export_dashboard import absolutize_replays, export, identity_for, public_manifest
 
 
 class ExportDashboardTest(unittest.TestCase):
+    def test_binary_sha_overrides_family_identity_and_unknown_falls_back(self):
+        identities = {"McRave.dylib": {"ownership": "project", "origin": "port", "upstream_name": "McRave", "author": "Christian McCrave", "source_url": "https://github.com/Cmccrave/McRave", "sha256_overrides": {"fork-sha": {"origin": "fork", "author": None}}}}
+        self.assertEqual(identity_for("McRave.dylib", identities, "port-sha")["origin"], "port")
+        fork = identity_for("McRave.dylib", identities, "fork-sha")
+        self.assertEqual(fork["origin"], "fork")
+        self.assertEqual(fork["author"], "Christian McCrave")
+        self.assertEqual(fork["source_url"], "https://github.com/Cmccrave/McRave")
+        self.assertEqual(identity_for("Unknown.dylib", identities, "anything")["ownership"], "unknown")
+
     def test_startup_attempt_keeps_bot_identity_before_process_launch(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "manifest.json"
@@ -27,6 +36,23 @@ class ExportDashboardTest(unittest.TestCase):
             public = export(root, root / "out")
             self.assertEqual(public["experiments"][0]["status"], "completed")
             self.assertEqual(public["experiments"][0]["notes"], "Verified")
+
+    def test_sparse_experiment_index_does_not_erase_configured_details(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "dashboard").mkdir(); (root / "dashboard/index.html").write_text("ok")
+            (root / "config").mkdir()
+            (root / "config/experiments.json").write_text(json.dumps({"experiments": [{"id": "station", "title": "Station coordinates", "date": "2026-09-20", "hypothesis": "Configured hypothesis", "notes": "Configured notes", "conclusion": "Configured conclusion", "status": "planned"}]}))
+            sparse = root / "artifacts/experiments/mcrave-station-coordinates-v1/manifest.json"; sparse.parent.mkdir(parents=True)
+            sparse.write_text(json.dumps({"experiment_id": "station", "status": "completed", "runs": [], "controls": {}}))
+            public = export(root, root / "out")
+            item = public["experiments"][0]
+            self.assertEqual(item["status"], "completed")
+            self.assertEqual(item["title"], "Station coordinates")
+            self.assertEqual(item["hypothesis"], "Configured hypothesis")
+            self.assertEqual(item["date"], "2026-09-20")
+            self.assertEqual(item["conclusion"], "Configured conclusion")
+            self.assertNotIn("games", item)
 
     def test_export_allowlists_manifest_and_names_bot(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -83,6 +109,7 @@ class ExportDashboardTest(unittest.TestCase):
             first = export(root, root / "one")
             second = export(root, root / "two")
             self.assertEqual(first["experiments"][0]["conclusion"], "c")
+            self.assertEqual(first["experiments"][0]["decision"], "c")
             self.assertNotIn("secret", json.dumps(first))
             self.assertEqual(len(second["local_elo_history"]), 2)
             self.assertEqual(second["local_elo_history"][-1]["rating"], 42)

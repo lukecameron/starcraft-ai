@@ -1,10 +1,79 @@
 {
   "schema_version": 1,
   "bots": {
-    "McRave.dylib": {"name": "McRave", "ownership": "project", "origin": "port", "upstream_name": "McRave", "author": "Christian McCrave", "author_url": "https://github.com/Cmccrave", "source_url": "https://github.com/Cmccrave/McRave"},
-    "ZZZKBot.dylib": {"name": "ZZZKBot", "ownership": "project", "origin": "port", "upstream_name": "ZZZKBot", "author": "Chris Coxe", "author_url": "https://github.com/chriscoxe", "source_url": "https://github.com/chriscoxe/ZZZKBot"},
-    "UAlbertaBot.dylib": {"name": "UAlbertaBot", "ownership": "project", "origin": "port", "upstream_name": "UAlbertaBot", "author": "David Churchill", "author_url": "https://davechurchill.ca/", "source_url": "https://github.com/davechurchill/ualbertabot"},
-    "WorkerRush.dylib": {"name": "WorkerRush", "ownership": "project", "origin": "original", "upstream_name": null, "author": "Starcraft AI project", "author_url": null, "source_url": "https://github.com/lukecameron/starcraft-ai"},
-    "Idle.dylib": {"name": "Idle", "ownership": "project", "origin": "original", "upstream_name": null, "author": "Starcraft AI project", "author_url": null, "source_url": "https://github.com/lukecameron/starcraft-ai"}
+    "McRave.dylib": {
+      "name": "McRave",
+      "ownership": "project",
+      "origin": "port",
+      "upstream_name": "McRave",
+      "author": "Christian McCrave",
+      "author_url": "https://github.com/Cmccrave",
+      "source_url": "https://github.com/Cmccrave/McRave",
+      "sha256_overrides": {
+        "c49ee3c4b20a2772f1bfca03249c182d32a7238f9453a7a568990a188a1c4c65": {
+          "origin": "port"
+        },
+        "7b089ca77fa9b2a057320b88d8fd4cf3d6b984bca0715e2fe3aca517b7a1f998": {
+          "origin": "port"
+        },
+        "0c351cc92ba662e03808ebe499ae8afdefe2066dd81e92b94f20f9c74cad4a8a": {
+          "origin": "fork"
+        },
+        "3c81f2ebd1c54a612345a0156909f7bebf001a03d363a9f344a54b25d5c1baf5": {
+          "origin": "fork"
+        },
+        "879c0f1785bac559090a87cf77e8f2d905fc6227642b6b15154e9e131cd3078f": {
+          "origin": "fork"
+        },
+        "3e922a4aa2dd3a786061f43e63a5eb1612abab715c77afc5c51c44a681c11fbe": {
+          "origin": "fork"
+        },
+        "454404a6937f56940b81354c923b0f2f74267abca3412fe231e21204d16a7744": {
+          "origin": "port"
+        },
+        "5fed1ec386773e40d8a437df3e1418bb6618ae296f6a2f95ae6c25ed29cb8a62": {
+          "origin": "fork"
+        },
+        "98df26327cba498ac6ea1759d00b748f63870c655b34ecad6e24eb0e6851f1df": {
+          "origin": "fork"
+        }
+      }
+    },
+    "ZZZKBot.dylib": {
+      "name": "ZZZKBot",
+      "ownership": "project",
+      "origin": "port",
+      "upstream_name": "ZZZKBot",
+      "author": "Chris Coxe",
+      "author_url": "https://github.com/chriscoxe",
+      "source_url": "https://github.com/chriscoxe/ZZZKBot"
+    },
+    "UAlbertaBot.dylib": {
+      "name": "UAlbertaBot",
+      "ownership": "project",
+      "origin": "port",
+      "upstream_name": "UAlbertaBot",
+      "author": "David Churchill",
+      "author_url": "https://davechurchill.ca/",
+      "source_url": "https://github.com/davechurchill/ualbertabot"
+    },
+    "WorkerRush.dylib": {
+      "name": "WorkerRush",
+      "ownership": "project",
+      "origin": "original",
+      "upstream_name": null,
+      "author": "Starcraft AI project",
+      "author_url": null,
+      "source_url": "https://github.com/lukecameron/starcraft-ai"
+    },
+    "Idle.dylib": {
+      "name": "Idle",
+      "ownership": "project",
+      "origin": "original",
+      "upstream_name": null,
+      "author": "Starcraft AI project",
+      "author_url": null,
+      "source_url": "https://github.com/lukecameron/starcraft-ai"
+    }
   }
 }
