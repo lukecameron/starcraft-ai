@@ -1,0 +1,28 @@
+diff --git a/third_party/kestrel-opening-v16-control/Kestrel.cpp b/third_party/kestrel-opening-v16-candidate/Kestrel.cpp
+index 277c8bb..627bb4e 100644
+--- a/third_party/kestrel-opening-v16-control/Kestrel.cpp
++++ b/third_party/kestrel-opening-v16-candidate/Kestrel.cpp
+@@ -265,8 +265,11 @@ class Kestrel final : public BWAPI::AIModule {
+ 
+     void trainUnits() {
+         const int probes = count(BWAPI::UnitTypes::Protoss_Probe);
++        const int completedProbes = count(BWAPI::UnitTypes::Protoss_Probe, true);
+         int openingReserve = 0;
+-        if (knownZerg_ && firstPylonAcceptedFrame_ >= 0) {
++        if (knownZerg_ && completedProbes >= 6 && firstPylonCurrentFrame_ < 0) {
++            openingReserve = 100;
++        } else if (knownZerg_ && firstPylonAcceptedFrame_ >= 0) {
+             if (firstGatewayCurrentFrame_ < 0) openingReserve = 150;
+             else if (secondGatewayCurrentFrame_ < 0) openingReserve = 150;
+             else if (!firstZealotQueued_) openingReserve = 100;
+@@ -302,6 +305,10 @@ class Kestrel final : public BWAPI::AIModule {
+         if (constructionPending()) return;
+         const int pylons = count(BWAPI::UnitTypes::Protoss_Pylon);
+         const int completedPylons = count(BWAPI::UnitTypes::Protoss_Pylon, true);
++        const int completedProbes = count(BWAPI::UnitTypes::Protoss_Probe, true);
++        if (knownZerg_ && completedProbes >= 6 && firstPylonCurrentFrame_ < 0 && self->minerals() >= 100) {
++            if (build(BWAPI::UnitTypes::Protoss_Pylon, home)) return;
++        }
+         if (knownZerg_ && firstPylonAcceptedFrame_ >= 0 && completedPylons > 0 &&
+             firstGatewayCurrentFrame_ < 0 && self->minerals() >= 150) {
+             if (build(BWAPI::UnitTypes::Protoss_Gateway, home)) return;

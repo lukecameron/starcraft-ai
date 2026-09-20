@@ -1,0 +1,123 @@
+diff --git a/Source/McRave/Main/McRave.cpp b/Source/McRave/Main/McRave.cpp
+index 984ccdb..e8f0ae8 100644
+--- a/Source/McRave/Main/McRave.cpp
++++ b/Source/McRave/Main/McRave.cpp
+@@ -118,6 +118,7 @@ void McRaveModule::onStart()
+ 
+ void McRaveModule::onEnd(bool isWinner)
+ {
++    Grids::writeVisibilityBoundsShadow(true);
+     writeDiagnostics(true, isWinner);
+     // @McRave ☑ has taken "drop all your weapons at the end of a csgo match" to the ai scene
+     for (auto &unit : Units::getUnits(PlayerState::Self))
+diff --git a/Source/McRave/Map/Grids/Grids.cpp b/Source/McRave/Map/Grids/Grids.cpp
+index 969efb3..88ca147 100644
+--- a/Source/McRave/Map/Grids/Grids.cpp
++++ b/Source/McRave/Map/Grids/Grids.cpp
+@@ -45,6 +45,26 @@ namespace McRave::Grids {
+         int mapWalkWidth  = 0;
+         int mapWalkHeight = 0;
+ 
++        uint64_t visibilityShadowChecks = 0;
++        uint64_t visibilityShadowMismatches = 0;
++        uint64_t visibilitySentinelChecks = 0;
++        uint64_t visibilitySentinelMismatches = 0;
++        TilePosition visibilityFirstMismatch = TilePositions::Invalid;
++
++        bool directVisibilityDomain(const TilePosition &tile, int width, int height)
++        {
++            return tile.x >= 0 && tile.y >= 0 && tile.x < width && tile.y < height;
++        }
++
++        void compareVisibilitySentinel(const TilePosition &tile, int width, int height)
++        {
++            const auto authoritative = tile.x < 256 && tile.y < 256 && tile.isValid();
++            const auto shadow = directVisibilityDomain(tile, width, height);
++            visibilitySentinelChecks++;
++            if (authoritative != shadow)
++                visibilitySentinelMismatches++;
++        }
++
+         void addThreat(UnitInfo &unit) {}
+ 
+         void addCluster(UnitInfo &unit, WalkPosition) {}
+@@ -230,10 +250,23 @@ namespace McRave::Grids {
+         void updateVisibility()
+         {
+             // TODO: Enemy visibility
++            const auto width = min(256, Broodwar->mapWidth());
++            const auto height = min(256, Broodwar->mapHeight());
+             for (int x = 0; x < 256; x++) {
+                 for (int y = 0; y < 256; y++) {
+                     TilePosition t(x, y);
+-                    if (t.isValid() && Broodwar->isVisible(t))
++                    const auto authoritative = t.isValid();
++                    const auto shadow = directVisibilityDomain(t, width, height);
++                    const auto firstMismatchThisCall = authoritative != shadow && visibilityShadowMismatches == 0;
++                    visibilityShadowChecks++;
++                    if (authoritative != shadow) {
++                        visibilityShadowMismatches++;
++                        if (firstMismatchThisCall) {
++                            visibilityFirstMismatch = t;
++                            writeVisibilityBoundsShadow(false);
++                        }
++                    }
++                    if (authoritative && Broodwar->isVisible(t))
+                         selfGrid[gridTileScale * y + x].visible = currentGridFrame;
+                 }
+             }
+@@ -385,10 +418,35 @@ namespace McRave::Grids {
+     void onStart()
+     {
+         initializeLogTable();
++        const auto width = min(256, Broodwar->mapWidth());
++        const auto height = min(256, Broodwar->mapHeight());
++        const vector<TilePosition> sentinels = {
++            TilePosition(-1, 0), TilePosition(0, -1), TilePosition(0, 0),
++            TilePosition(width - 1, height - 1), TilePosition(width, 0),
++            TilePosition(0, height), TilePosition(255, 255), TilePosition(256, 256)};
++        for (const auto &tile : sentinels)
++            compareVisibilitySentinel(tile, width, height);
+         initializeMobility();
+         updateVisibility();
+     }
+ 
++    void writeVisibilityBoundsShadow(bool ended)
++    {
++        ofstream output("bwapi-data/write/visibility-bounds-shadow.json.tmp", ios::trunc);
++        output << "{\"frame_count\":" << Broodwar->getFrameCount()
++               << ",\"ended\":" << (ended ? "true" : "false")
++               << ",\"map_tile_width\":" << Broodwar->mapWidth()
++               << ",\"map_tile_height\":" << Broodwar->mapHeight()
++               << ",\"gameplay_checks\":" << visibilityShadowChecks
++               << ",\"gameplay_mismatches\":" << visibilityShadowMismatches
++               << ",\"sentinel_checks\":" << visibilitySentinelChecks
++               << ",\"sentinel_mismatches\":" << visibilitySentinelMismatches
++               << ",\"first_mismatch_x\":" << visibilityFirstMismatch.x
++               << ",\"first_mismatch_y\":" << visibilityFirstMismatch.y << "}\n";
++        output.close();
++        rename("bwapi-data/write/visibility-bounds-shadow.json.tmp", "bwapi-data/write/visibility-bounds-shadow.json");
++    }
++
+     template <typename T> //
+     T getGridValue(const Grid *gridArray, int x, int y, T Grid::*member)
+     {
+diff --git a/Source/McRave/Map/Grids/Grids.h b/Source/McRave/Map/Grids/Grids.h
+index e804e65..e3384f5 100644
+--- a/Source/McRave/Map/Grids/Grids.h
++++ b/Source/McRave/Map/Grids/Grids.h
+@@ -5,6 +5,7 @@ namespace McRave::Grids
+ {
+     void onFrame();
+     void onStart();
++    void writeVisibilityBoundsShadow(bool ended = false);
+ 
+     float getGroundThreat(BWAPI::Position, PlayerState);
+     float getGroundThreat(BWAPI::WalkPosition, PlayerState);
+@@ -23,4 +24,4 @@ namespace McRave::Grids
+     int getMobility(BWAPI::Position);
+     int getLastVisibleFrame(BWAPI::Position);
+     int getLastVisibleFrame(BWAPI::TilePosition);
+-}
+\ No newline at end of file
++}

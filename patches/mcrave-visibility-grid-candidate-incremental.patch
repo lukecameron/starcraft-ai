@@ -1,0 +1,20 @@
+diff --git a/Source/McRave/Map/Grids/Grids.cpp b/Source/McRave/Map/Grids/Grids.cpp
+index 969efb3..e23a20a 100644
+--- a/Source/McRave/Map/Grids/Grids.cpp
++++ b/Source/McRave/Map/Grids/Grids.cpp
+@@ -230,10 +230,12 @@ namespace McRave::Grids {
+         void updateVisibility()
+         {
+             // TODO: Enemy visibility
+-            for (int x = 0; x < 256; x++) {
+-                for (int y = 0; y < 256; y++) {
++            const auto width = min(256, Broodwar->mapWidth());
++            const auto height = min(256, Broodwar->mapHeight());
++            for (int x = 0; x < width; x++) {
++                for (int y = 0; y < height; y++) {
+                     TilePosition t(x, y);
+-                    if (t.isValid() && Broodwar->isVisible(t))
++                    if (Broodwar->isVisible(t))
+                         selfGrid[gridTileScale * y + x].visible = currentGridFrame;
+                 }
+             }

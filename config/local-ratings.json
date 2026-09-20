@@ -10,7 +10,8 @@
     "local-calibration-v2-uab-t",
     "local-calibration-v2-mcrave",
     "local-calibration-v3-stardust",
-    "local-calibration-v3-mcrave"
+    "local-calibration-v3-mcrave",
+    "local-anchor-calibration-v4"
   ],
   "reviewed_runs": {
     "20260920T055755-fa9bfeecf7e3": "cbb786b46f654e4c65edcb119c40c52d8aed6cccd172f44ec1b2dd127c4ba97d",
@@ -57,7 +58,19 @@
     "20260920T064623-507443e7b6d2": "9ce1c22c3d48131f4c37f7e34e55921b8c6c19f8fd995d7550c4aec484bc84f7",
     "20260920T064646-bdf8ce6b277c": "a7ba1da76b6c5d2248b39e4d1903c64cfdc57c94a10bfc292ad932cfc8b00aab",
     "20260920T064722-9363505343cb": "5ffbf73e9015d81e3c14090e0c036a7b73f2803c91b989733404912d85af14d9",
-    "20260920T064725-cd82ffc70735": "59cd6f8d0e29c343c8c36f4de473a08bfedbde437c4466296b9a41b698a21241"
+    "20260920T064725-cd82ffc70735": "59cd6f8d0e29c343c8c36f4de473a08bfedbde437c4466296b9a41b698a21241",
+    "20260920T075647-f2c82022020e": "902741d0d18ee67a28acd35c262b27dae958ecf754b0ca13a7b0aca969060727",
+    "20260920T075653-a1049ca15ccb": "92c09fe4628727064422d7a06b1898b0a0aebceecda98ba65ece44824b74f149",
+    "20260920T075658-e5ba6d8266a8": "01f71c95d81816c2feb0bb41ac1871d7c8d67449da3d19899c2ed28a5c80b6c1",
+    "20260920T075659-7b7a72d97fa9": "4b44bdcb8c4b71cb273758041993f892b65d82e50205166149893caa65b9be20",
+    "20260920T075701-aebb777dbdc6": "489d865ebbf439634a6f537b95373ac8a3b8ef8a5c3eb6a55a3e758fc51d10b1",
+    "20260920T075704-52527ee6e142": "95fb25a7e061d33761ac82f70699bb3d60392bd35e2f98d51e2f78201e865a67",
+    "20260920T075712-ba1b23e678c4": "9ed581c6154317b68fb87adef93fd4dfd06c055484abf2b452a52ce14b449339",
+    "20260920T075714-296415650f3f": "9f79985ad314b880da365487658df8437228ecbb3be1c14a1c6c47745617181b",
+    "20260920T075716-ae7d07b7eaaf": "ba17ef2ce451c8284dda97de748fc69a9db414135cddadfacbd603f5a74d0bba",
+    "20260920T075719-db16ec49bde0": "c42630bae9a2a82cad2782b5b2c31b0eb52de162289d22d2a97df06eee6785ad",
+    "20260920T075728-de42d0d80d1b": "57f46c7be74b7b9ecd8baf10ccbcdd2764829710b194bba49f57953d511cf418",
+    "20260920T075731-3b9832d9ec80": "32477a59a6219dffe086141babaccf29f66b6cf3dfc441d56f2772d57bee06ec"
   },
   "cohorts": [
     {
@@ -93,6 +106,16 @@
         "local-calibration-v3-mcrave"
       ],
       "expected_nodes": 5,
+      "expected_games": 12
+    },
+    {
+      "id": "local-anchor-calibration-v4",
+      "label": "Reference and close-matchup extension",
+      "current": true,
+      "experiment_ids": [
+        "local-anchor-calibration-v4"
+      ],
+      "expected_nodes": 3,
       "expected_games": 12
     }
   ]

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "experiment_id": "kestrel-opening-v15",
+  "registered_at": "2026-09-20T08:02:28.855495+00:00",
+  "control_sha256": "67413847356807ce6c9a8c69dd02d888ead1284a71ed94237c98c81d1c819dd5",
+  "candidate_sha256": "42f3ea9c3218a2873803962d5437d4f5e313e4883eef6f89ca4a63d6a30713a2",
+  "games": [
+    {"arm":"control","map":"sscai/(2)Benzene.scx","seed":6201,"run_id":"20260920T080538-e35c25c645dc"},
+    {"arm":"candidate","map":"sscai/(2)Benzene.scx","seed":6201,"run_id":"20260920T080551-1efd13ce87a9"},
+    {"arm":"candidate","map":"sscai/(2)Heartbreak Ridge.scx","seed":6202,"run_id":"20260920T080605-421e6f8cfebe"},
+    {"arm":"control","map":"sscai/(2)Heartbreak Ridge.scx","seed":6202,"run_id":"20260920T080618-93e99ecac705"}
+  ]
+}

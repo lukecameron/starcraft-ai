@@ -1,0 +1,75 @@
+--- a/Kestrel.cpp
++++ b/Kestrel.cpp
+@@ -51,6 +51,8 @@
+     int firstGatewayCompletedFrame_ = -1;
+     int firstZealotTrainFrame_ = -1;
+     int firstZealotCompletedFrame_ = -1;
++    bool knownZerg_ = false;
++    bool firstZealotQueued_ = false;
+     struct AttackRequest {
+         int targetId;
+         int frame;
+@@ -244,10 +246,16 @@
+ 
+     void trainUnits() {
+         const int probes = count(BWAPI::UnitTypes::Protoss_Probe);
++        int openingReserve = 0;
++        if (knownZerg_ && firstPylonAcceptedFrame_ >= 0) {
++            if (firstGatewayCurrentFrame_ < 0) openingReserve = 150;
++            else if (!firstZealotQueued_) openingReserve = 100;
++        }
+         for (auto unit : sorted(BWAPI::Broodwar->self()->getUnits())) {
+             if (!unit->exists() || !unit->isCompleted() || unit->isTraining()) continue;
+             const BWAPI::UnitType type = unit->getType();
+-            if (type == BWAPI::UnitTypes::Protoss_Nexus && probes < 28 && BWAPI::Broodwar->self()->minerals() >= 50 &&
++            if (type == BWAPI::UnitTypes::Protoss_Nexus && probes < 28 &&
++                BWAPI::Broodwar->self()->minerals() >= 50 + openingReserve &&
+                 unit->canTrain(BWAPI::UnitTypes::Protoss_Probe)) {
+                 issue(unit->train(BWAPI::UnitTypes::Protoss_Probe), TrainCommand);
+             } else if (type == BWAPI::UnitTypes::Protoss_Gateway) {
+@@ -256,8 +264,10 @@
+                     unit->canTrain(BWAPI::UnitTypes::Protoss_Dragoon)) {
+                     issue(unit->train(BWAPI::UnitTypes::Protoss_Dragoon), TrainCommand);
+                 } else if (BWAPI::Broodwar->self()->minerals() >= 100 && unit->canTrain(BWAPI::UnitTypes::Protoss_Zealot)) {
+-                    if (issue(unit->train(BWAPI::UnitTypes::Protoss_Zealot), TrainCommand) && firstZealotTrainFrame_ < 0)
+-                        firstZealotTrainFrame_ = BWAPI::Broodwar->getFrameCount();
++                    if (issue(unit->train(BWAPI::UnitTypes::Protoss_Zealot), TrainCommand)) {
++                        firstZealotQueued_ = true;
++                        if (firstZealotTrainFrame_ < 0) firstZealotTrainFrame_ = BWAPI::Broodwar->getFrameCount();
++                    }
+                 }
+             }
+         }
+@@ -271,6 +281,10 @@
+         if (constructionPending()) return;
+         const int pylons = count(BWAPI::UnitTypes::Protoss_Pylon);
+         const int completedPylons = count(BWAPI::UnitTypes::Protoss_Pylon, true);
++        if (knownZerg_ && firstPylonAcceptedFrame_ >= 0 && completedPylons > 0 &&
++            firstGatewayCurrentFrame_ < 0 && self->minerals() >= 150) {
++            if (build(BWAPI::UnitTypes::Protoss_Gateway, home)) return;
++        }
+         if (supplyTotal - supplyUsed <= 4 && pylons < 5 && pylons == completedPylons && self->minerals() >= 100) {
+             if (build(BWAPI::UnitTypes::Protoss_Pylon, home)) return;
+         }
+@@ -278,10 +292,11 @@
+         if (supplyUsed >= 18 && gateways < 1 && self->minerals() >= 150) {
+             if (build(BWAPI::UnitTypes::Protoss_Gateway, home)) return;
+         }
+-        if (supplyUsed >= 26 && gateways < 2 && self->minerals() >= 150) {
++        if ((!knownZerg_ || firstZealotQueued_) && supplyUsed >= 26 && gateways < 2 && self->minerals() >= 150) {
+             if (build(BWAPI::UnitTypes::Protoss_Gateway, home)) return;
+         }
+-        if (gateways > 0 && count(BWAPI::UnitTypes::Protoss_Assimilator) < 1 && self->minerals() >= 100) {
++        if ((!knownZerg_ || firstZealotQueued_) && gateways > 0 &&
++            count(BWAPI::UnitTypes::Protoss_Assimilator) < 1 && self->minerals() >= 100) {
+             if (buildAssimilator()) return;
+         }
+         if (count(BWAPI::UnitTypes::Protoss_Assimilator, true) > 0 &&
+@@ -419,6 +434,7 @@
+ public:
+     void onStart() override {
+         latency_ = BWAPI::Broodwar->getLatencyFrames();
++        knownZerg_ = BWAPI::Broodwar->enemy() && BWAPI::Broodwar->enemy()->getRace() == BWAPI::Races::Zerg;
+         std::remove("bwapi-data/write/gas-worker-guard.jsonl");
+         writeResult(false);
+     }

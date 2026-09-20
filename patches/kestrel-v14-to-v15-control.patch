@@ -1,0 +1,114 @@
+--- a/Kestrel.cpp
++++ b/Kestrel.cpp
+@@ -53,6 +53,15 @@
+     int firstZealotCompletedFrame_ = -1;
+     bool knownZerg_ = false;
+     bool firstZealotQueued_ = false;
++    int acceptedZealotTrains_ = 0;
++    int secondGatewayCurrentFrame_ = -1;
++    int secondGatewayCompletedFrame_ = -1;
++    int firstHomeThreatFrame_ = -1;
++    int firstHomeZealotLossFrame_ = -1;
++    int maxLocalCompletedZealotsBeforeLoss_ = 0;
++    int acceptedStructuresAfterFirstZealot_ = 0;
++    int zealotLossPositionMissing_ = 0;
++    std::unordered_map<int, BWAPI::Position> lastZealotPositions_;
+     struct AttackRequest {
+         int targetId;
+         int frame;
+@@ -131,6 +140,14 @@
+             << ",\"first_gateway_completed_frame\":" << firstGatewayCompletedFrame_
+             << ",\"first_zealot_train_frame\":" << firstZealotTrainFrame_
+             << ",\"first_zealot_completed_frame\":" << firstZealotCompletedFrame_
++            << ",\"accepted_zealot_trains\":" << acceptedZealotTrains_
++            << ",\"second_gateway_current_frame\":" << secondGatewayCurrentFrame_
++            << ",\"second_gateway_completed_frame\":" << secondGatewayCompletedFrame_
++            << ",\"first_home_threat_frame\":" << firstHomeThreatFrame_
++            << ",\"first_home_zealot_loss_frame\":" << firstHomeZealotLossFrame_
++            << ",\"max_local_completed_zealots_before_loss\":" << maxLocalCompletedZealotsBeforeLoss_
++            << ",\"accepted_structures_after_first_zealot\":" << acceptedStructuresAfterFirstZealot_
++            << ",\"zealot_loss_position_missing\":" << zealotLossPositionMissing_
+             << "}\n";
+         out.close();
+         if (out) {
+@@ -208,6 +225,7 @@
+         if (worker->isGatheringGas()) ++gasWorkerBuildAttempts_;
+         const bool accepted = issue(worker->build(type, tile), BuildCommand);
+         if (accepted) {
++            if (firstZealotTrainFrame_ >= 0) ++acceptedStructuresAfterFirstZealot_;
+             if (type == BWAPI::UnitTypes::Protoss_Pylon && firstPylonAcceptedFrame_ < 0) firstPylonAcceptedFrame_ = frame;
+             if (type == BWAPI::UnitTypes::Protoss_Gateway && firstGatewayAcceptedFrame_ < 0) firstGatewayAcceptedFrame_ = frame;
+             pendingBuildType_ = type;
+@@ -236,6 +254,7 @@
+         if (worker->isGatheringGas()) ++gasWorkerBuildAttempts_;
+         const bool accepted = issue(worker->build(BWAPI::UnitTypes::Protoss_Assimilator, best->getTilePosition()), BuildCommand);
+         if (accepted) {
++            if (firstZealotTrainFrame_ >= 0) ++acceptedStructuresAfterFirstZealot_;
+             pendingBuildType_ = BWAPI::UnitTypes::Protoss_Assimilator;
+             pendingBuildBaseline_ = count(pendingBuildType_);
+             pendingBuildFrame_ = frame;
+@@ -265,6 +284,7 @@
+                     issue(unit->train(BWAPI::UnitTypes::Protoss_Dragoon), TrainCommand);
+                 } else if (BWAPI::Broodwar->self()->minerals() >= 100 && unit->canTrain(BWAPI::UnitTypes::Protoss_Zealot)) {
+                     if (issue(unit->train(BWAPI::UnitTypes::Protoss_Zealot), TrainCommand)) {
++                        ++acceptedZealotTrains_;
+                         firstZealotQueued_ = true;
+                         if (firstZealotTrainFrame_ < 0) firstZealotTrainFrame_ = BWAPI::Broodwar->getFrameCount();
+                     }
+@@ -418,11 +438,34 @@
+         maxZealots_ = std::max(maxZealots_, count(BWAPI::UnitTypes::Protoss_Zealot));
+         maxDragoons_ = std::max(maxDragoons_, count(BWAPI::UnitTypes::Protoss_Dragoon));
+         const int frame = game.getFrameCount();
++        for (auto unit : game.self()->getUnits())
++            if (unit->exists() && unit->getType() == BWAPI::UnitTypes::Protoss_Zealot)
++                lastZealotPositions_[unit->getID()] = unit->getPosition();
+         if (count(BWAPI::UnitTypes::Protoss_Pylon) > 0 && firstPylonCurrentFrame_ < 0) firstPylonCurrentFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Pylon, true) > 0 && firstPylonCompletedFrame_ < 0) firstPylonCompletedFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Gateway) > 0 && firstGatewayCurrentFrame_ < 0) firstGatewayCurrentFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Gateway, true) > 0 && firstGatewayCompletedFrame_ < 0) firstGatewayCompletedFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Zealot, true) > 0 && firstZealotCompletedFrame_ < 0) firstZealotCompletedFrame_ = frame;
++        if (count(BWAPI::UnitTypes::Protoss_Gateway) >= 2 && secondGatewayCurrentFrame_ < 0) secondGatewayCurrentFrame_ = frame;
++        if (count(BWAPI::UnitTypes::Protoss_Gateway, true) >= 2 && secondGatewayCompletedFrame_ < 0) secondGatewayCompletedFrame_ = frame;
++        const BWAPI::TilePosition start = game.self()->getStartLocation();
++        const BWAPI::Position home(start.x * 32 + 64, start.y * 32 + 48);
++        if (firstHomeThreatFrame_ < 0) {
++            for (auto enemy : game.getAllUnits()) {
++                if (enemy->exists() && enemy->isVisible() && enemy->isDetected() && !enemy->isFlying() &&
++                    enemy->getType().canAttack() && game.self()->isEnemy(enemy->getPlayer()) && enemy->getDistance(home) < 12 * 32) {
++                    firstHomeThreatFrame_ = frame;
++                    break;
++                }
++            }
++        }
++        if (firstHomeThreatFrame_ >= 0 && firstHomeZealotLossFrame_ < 0) {
++            int local = 0;
++            for (auto unit : game.self()->getUnits())
++                if (unit->exists() && unit->isCompleted() && unit->getType() == BWAPI::UnitTypes::Protoss_Zealot &&
++                    unit->getDistance(home) < 12 * 32) ++local;
++            maxLocalCompletedZealotsBeforeLoss_ = std::max(maxLocalCompletedZealotsBeforeLoss_, local);
++        }
+         const int cadence = std::max(6, game.getLatencyFrames());
+         if (frame % cadence != 0) return;
+         assignEconomy();
+@@ -449,6 +492,21 @@
+     }
+ 
+     void onEnd(bool won) override { writeResult(true, won); }
++
++    void onUnitDestroy(BWAPI::Unit unit) override {
++        if (!unit || !BWAPI::Broodwar->self() || unit->getPlayer() != BWAPI::Broodwar->self() ||
++            unit->getType() != BWAPI::UnitTypes::Protoss_Zealot || firstHomeThreatFrame_ < 0 ||
++            firstHomeZealotLossFrame_ >= 0) return;
++        const auto observed = lastZealotPositions_.find(unit->getID());
++        if (observed == lastZealotPositions_.end() || !observed->second.isValid()) {
++            ++zealotLossPositionMissing_;
++            return;
++        }
++        const BWAPI::TilePosition start = BWAPI::Broodwar->self()->getStartLocation();
++        const BWAPI::Position home(start.x * 32 + 64, start.y * 32 + 48);
++        if (observed->second.getApproxDistance(home) < 12 * 32)
++            firstHomeZealotLossFrame_ = BWAPI::Broodwar->getFrameCount();
++    }
+ };
+ 
+ } // namespace

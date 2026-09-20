@@ -1,0 +1,32 @@
+--- a/Kestrel.cpp
++++ b/Kestrel.cpp
+@@ -268,6 +268,7 @@
+         int openingReserve = 0;
+         if (knownZerg_ && firstPylonAcceptedFrame_ >= 0) {
+             if (firstGatewayCurrentFrame_ < 0) openingReserve = 150;
++            else if (secondGatewayCurrentFrame_ < 0) openingReserve = 150;
+             else if (!firstZealotQueued_) openingReserve = 100;
+         }
+         for (auto unit : sorted(BWAPI::Broodwar->self()->getUnits())) {
+@@ -312,14 +313,18 @@
+         if (supplyUsed >= 18 && gateways < 1 && self->minerals() >= 150) {
+             if (build(BWAPI::UnitTypes::Protoss_Gateway, home)) return;
+         }
+-        if ((!knownZerg_ || firstZealotQueued_) && supplyUsed >= 26 && gateways < 2 && self->minerals() >= 150) {
++        if (knownZerg_ && firstGatewayCurrentFrame_ >= 0 && secondGatewayCurrentFrame_ < 0 &&
++            self->minerals() >= 150) {
+             if (build(BWAPI::UnitTypes::Protoss_Gateway, home)) return;
+         }
+-        if ((!knownZerg_ || firstZealotQueued_) && gateways > 0 &&
++        if (!knownZerg_ && supplyUsed >= 26 && gateways < 2 && self->minerals() >= 150) {
++            if (build(BWAPI::UnitTypes::Protoss_Gateway, home)) return;
++        }
++        if ((!knownZerg_ || acceptedZealotTrains_ >= 4) && gateways > 0 &&
+             count(BWAPI::UnitTypes::Protoss_Assimilator) < 1 && self->minerals() >= 100) {
+             if (buildAssimilator()) return;
+         }
+-        if (count(BWAPI::UnitTypes::Protoss_Assimilator, true) > 0 &&
++        if ((!knownZerg_ || acceptedZealotTrains_ >= 4) && count(BWAPI::UnitTypes::Protoss_Assimilator, true) > 0 &&
+             count(BWAPI::UnitTypes::Protoss_Cybernetics_Core) < 1 && self->minerals() >= 200) {
+             if (build(BWAPI::UnitTypes::Protoss_Cybernetics_Core, home)) return;
+         }

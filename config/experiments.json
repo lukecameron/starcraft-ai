@@ -866,6 +866,73 @@
         "20260920T074640-1953c3340374",
         "20260920T074720-7470c0479d0d"
       ]
+    },
+    {
+      "id": "kestrel-opening-v14",
+      "title": "Kestrel reserves minerals for its first Gateway and Zealot",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "A one-time opening mineral reserve will advance the first Gateway request and first Zealot training by at least 120 frames in both matched scenarios.",
+      "notes": "Four fresh control/candidate games passed the registered screen. Gateway requests advanced by 348 and 186 frames; Zealot training advanced by 432 and 228 frames. Candidate commands had zero rejection; all eight replays parsed.",
+      "conclusion": "The opening mechanism passed and may advance to broader confirmation. Both candidate games still lost; canonical Kestrel v13 is unchanged and no playing-strength gain is established.",
+      "evidence_run_ids": [
+        "20260920T075508-62f8e5d7a9a6",
+        "20260920T075521-695cfdaf1ba3",
+        "20260920T075538-ef6b94d73a4e",
+        "20260920T075550-558aa41220f5"
+      ]
+    },
+    {
+      "id": "local-anchor-calibration-v4",
+      "title": "Strengthen the local rating comparisons",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "ADOPT",
+      "hypothesis": "Direct games on a missing reference edge and a close matchup will improve the evidence supporting the existing local rating model.",
+      "notes": "Twelve registered games completed cleanly and all 24 replays passed full parsing and hash checks. UAlberta Protoss went 5\u20131 against Terran and 1\u20135 against ZZZK. Exact node and engine identities match the previous cohorts.",
+      "conclusion": "Accepted for rating display after independent manifest and replay-hash review. The unchanged model now uses 48 current-engine games. Conditional intervals narrowed, but remain wide; this is uncalibrated local evidence and does not promote a bot.",
+      "evidence_run_ids": [
+        "20260920T075647-f2c82022020e",
+        "20260920T075653-a1049ca15ccb",
+        "20260920T075658-e5ba6d8266a8",
+        "20260920T075659-7b7a72d97fa9",
+        "20260920T075701-aebb777dbdc6",
+        "20260920T075704-52527ee6e142",
+        "20260920T075712-ba1b23e678c4",
+        "20260920T075714-296415650f3f",
+        "20260920T075716-ae7d07b7eaaf",
+        "20260920T075719-db16ec49bde0",
+        "20260920T075728-de42d0d80d1b",
+        "20260920T075731-3b9832d9ec80"
+      ]
+    },
+    {
+      "id": "kestrel-v14-fight-diagnostic-v1",
+      "title": "Inspect Kestrel\u2019s earlier first defenders",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "Public fight traces can distinguish distant chasing or target switching from losing sequential fights near home.",
+      "notes": "One instrumented v14 game completed cleanly with both replays parsed. The first completed Zealot faced six visible Zerglings near home; the second arrived after the first had died and faced at least seven.",
+      "conclusion": "The trace supports a lack of overlapping defenders. It did not show distant chasing or harmful target switching. Test earlier second-Gateway production from the faster v14 opening; this single diagnostic does not establish a general cause or strength change.",
+      "evidence_run_ids": [
+        "20260920T075933-6d07d8618ace"
+      ]
+    },
+    {
+      "id": "kestrel-opening-v15",
+      "title": "Kestrel tests overlapping two-Gateway defense",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Adding earlier second-Gateway production to v14 and delaying gas until four Zealot trains will produce two completed local defenders before the first local loss.",
+      "notes": "Both candidate games built two Gateways and accepted four Zealot trains, but reached only one completed local defender before the first loss. Heartbreak also missed the registered later-construction guard. All four games were clean and all eight replays parsed.",
+      "conclusion": "Rejected. Earlier second-Gateway construction still did not create overlapping defenders in time. Both candidates lost; canonical Kestrel v13 is unchanged.",
+      "evidence_run_ids": [
+        "20260920T080538-e35c25c645dc",
+        "20260920T080551-1efd13ce87a9",
+        "20260920T080605-421e6f8cfebe",
+        "20260920T080618-93e99ecac705"
+      ]
     }
   ]
 }
