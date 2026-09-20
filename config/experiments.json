@@ -717,6 +717,20 @@
       "decision": "ADOPT"
     },
     {
+      "id": "mcrave-zvz-9pool-confirmation-v1",
+      "title": "McRave confirms the 9Pool opening against ZZZKBot",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "ADOPT",
+      "hypothesis": "The frozen McRave 9Pool treatment improves paired outcomes against the frozen ZZZKBot build across fresh seeds, four maps and both starting slots.",
+      "notes": "All 64 games and 128 replay copies were valid and hash/parse checked. Treatment won 29/64 versus control 24/64; five treatment-only discordant pairs and no control-only pairs gave net +5 with exact one-sided sign-test p=0.03125. Slowest treatment game was 514.33 durable fps and treatment candidate CPU/frame was 103.23% of control.",
+      "conclusion": "Adopt for the tested frozen ZZZKBot ZvZ lane only. Keep the canonical production build unchanged until a separately registered broader-opponent comparison; this is local Apple Silicon evidence, not a BASIL or tournament rating.",
+      "evidence_run_ids": [
+        "20260920T112254-27335caa7b98",
+        "20260920T114214-4765961f338f"
+      ]
+    },
+    {
       "id": "kestrel-zerg-zealot-v10",
       "title": "Kestrel delays gas for early Zealots",
       "date": "2026-09-20",

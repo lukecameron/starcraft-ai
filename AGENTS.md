@@ -15,7 +15,7 @@ Read `bwapi-autonomous-project-brief.md` and `docs/resume.md` first. The brief i
 
 ## Model policy
 
-- Use **Luna (`gpt-5.6-luna`)** for the lead task and all sub-agents.
-- This overrides the project brief's older Astra/Sol/Luna allocation. Do not escalate to another model unless the user changes this policy or explicitly authorizes an exception.
-- When continuing work started by another model, preserve its exact processes, artifacts and experiment gates. Transfer the checkpoint to Luna rather than rerunning active experiments.
+- Use **Sol (`gpt-5.6-sol`)** for the lead task.
+- Use **Luna (`gpt-5.6-luna`)** for delegated workers unless the user changes this policy or explicitly authorizes an exception.
+- When continuing work started by another model, preserve its exact processes, artifacts and experiment gates. Transfer the checkpoint to the current lead rather than rerunning active experiments.
 - Model choice does not relax source review, preregistration, replay retention, provenance or validation requirements.
