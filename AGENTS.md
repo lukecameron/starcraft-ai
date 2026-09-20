@@ -6,6 +6,7 @@ Read `bwapi-autonomous-project-brief.md` and `docs/resume.md` first. The brief i
 - Use native headless OpenBW for development; keep the official BWAPI 4.4.0 Win32 path credible and separately verified.
 - Only public legal BWAPI observations enter gameplay. Evaluator/replay access may be privileged but must remain separate.
 - Preserve every real match's replay, logs and manifest, including failures. Bulk artifacts/dependencies/game data stay local and ignored by Git.
+- Label our bots as Ours and identify Original, Port or Fork in every dashboard list. Keep original author and source links with ports/forks. Upstream BASIL observations belong to upstream builds, never automatically to our ports. Maintain `config/bot-identities.json` as builds are added.
 - Delegate ordinary implementation to Sol and bounded discovery to Luna as specified in the brief; the lead integrates and verifies.
 - Reproduce bugs through the actual CLI/game path before fixing them. Lifecycle tests supplement real-engine checks.
 - Record uncertainty and measurement scope. Diagnostic fixtures are not ladder anchors; Apple Silicon measurements are not tournament validation.

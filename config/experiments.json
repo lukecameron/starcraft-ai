@@ -122,6 +122,22 @@
         "20260920T025132-cb24a640d358",
         "20260920T030848-ac4ea9f6a371"
       ]
+    },
+    {
+      "id": "mcrave-seeded-goal-cache-v1",
+      "title": "Compare goal caching with seeded openings",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "INCONCLUSIVE",
+      "hypothesis": "With matching engine and bot seeds, the distance cache improves throughput while preserving compatible early commands.",
+      "notes": "Four games completed cleanly, and the openings matched within both pairs. The command-compatibility gate failed at frame 3: worker order and tied mineral targets differed. Source inspection traced this to containers ordered by object pointers.",
+      "conclusion": "Candidate throughput was 7.78% and 10.99% higher, but differing trajectories prevent a causal performance claim. No strength gain or baseline promotion. Next compare variants with stable worker and mineral traversal.",
+      "evidence_run_ids": [
+        "20260920T031834-6b2e6bccd324",
+        "20260920T032008-0612bbfdc30b",
+        "20260920T032211-8dc43b1938ab",
+        "20260920T032312-56ef416d36d2"
+      ]
     }
   ]
 }
