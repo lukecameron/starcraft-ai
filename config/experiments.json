@@ -995,6 +995,22 @@
         "20260920T084926-a4a4fdb19a67",
         "20260920T084927-08b14c1a56b2"
       ]
+    },
+    {
+      "id": "kestrel-opening-v19",
+      "title": "Kestrel holds a lone first Zealot",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Holding a lone first Zealot at home until a second exists will prevent the sequential local losses seen in the opening diagnostics.",
+      "notes": "The candidate reached two local completed Zealots before first loss on both maps, versus one for both controls. Heartbreak still accepted only three Zealot trains and no post-first-train structure. All four games were clean and all eight replays parsed.",
+      "conclusion": "Rejected for production-gate failure, while retaining the positive overlap signal. The hold policy is not adopted or advanced to held-out comparison; canonical Kestrel v13 remains unchanged.",
+      "evidence_run_ids": [
+        "20260920T085433-cbff9e0a7b4f",
+        "20260920T085436-52a12a1434c3",
+        "20260920T085438-f221c4eb11cc",
+        "20260920T085439-aaa7195953b6"
+      ]
     }
   ]
 }

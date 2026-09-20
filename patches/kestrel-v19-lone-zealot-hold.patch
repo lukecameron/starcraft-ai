@@ -1,0 +1,18 @@
+diff --git a/third_party/kestrel-opening-v19-control/Kestrel.cpp b/third_party/kestrel-opening-v19-candidate/Kestrel.cpp
+index 627bb4e..a8c4e90 100644
+--- a/third_party/kestrel-opening-v19-control/Kestrel.cpp
++++ b/third_party/kestrel-opening-v19-candidate/Kestrel.cpp
+@@ -412,6 +412,14 @@ class Kestrel final : public BWAPI::AIModule {
+             const bool combat = unit->getType() == BWAPI::UnitTypes::Protoss_Zealot || unit->getType() == BWAPI::UnitTypes::Protoss_Dragoon;
+             const bool scout = unit->getID() == scoutId_;
+             if (!combat && !scout) continue;
++            const BWAPI::TilePosition start = BWAPI::Broodwar->self()->getStartLocation();
++            const BWAPI::Position home(start.x * 32 + 64, start.y * 32 + 48);
++            if (knownZerg_ && combat && unit->getType() == BWAPI::UnitTypes::Protoss_Zealot &&
++                count(BWAPI::UnitTypes::Protoss_Zealot, true) < 2) {
++                if (unit->getDistance(home) > 4 * 32 && !unit->isMoving()) issue(unit->move(home), AttackCommand);
++                attackRequests_.erase(unit->getID());
++                continue;
++            }
+             if (unit->isAttacking() && unit->getOrderTarget()) continue;
+             BWAPI::Unit enemy = visibleEnemyTarget(unit);
