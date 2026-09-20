@@ -1,0 +1,17 @@
+.DS_Store
+.venv/
+.tools/
+build/
+third_party/
+artifacts/
+data/
+__pycache__/
+*.pyc
+# Game data and generated binaries must never enter the public source repository.
+*.mpq
+*.MPQ
+*.rep
+*.dll
+*.dylib
+*.so
+*.exe
