@@ -48,6 +48,83 @@ class KestrelScorecardTests(TestCase):
         }
         return metadata
 
+    @staticmethod
+    def v34_metadata() -> dict[str, object]:
+        return {
+            "schema_version": 1,
+            "known_zerg": True,
+            "emergency_trigger_frame": 90,
+            "emergency_trigger_events": 1,
+            "emergency_assignments": 2,
+            "emergency_assignment_batches": 1,
+            "emergency_first_assignment_frame": 100,
+            "emergency_first_assignment_size": 2,
+            "emergency_max_assignment_batch": 2,
+            "emergency_peak_defenders": 2,
+            "emergency_current_defenders": 0,
+            "emergency_accepted_attack_orders": 2,
+            "emergency_releases": 2,
+            "emergency_first_release_frame": 300,
+            "emergency_threat_clear_release_events": 0,
+            "emergency_threat_clear_released_defenders": 0,
+            "emergency_first_threat_clear_release_frame": -1,
+            "emergency_army_three_release_events": 1,
+            "emergency_army_three_released_defenders": 2,
+            "emergency_first_army_three_release_frame": 300,
+            "emergency_defender_deaths": 0,
+            "emergency_build_selection_exclusions": 1,
+            "emergency_economy_exclusions": 1,
+            "emergency_post_release_gather_orders": 1,
+            "emergency_post_release_build_orders": 0,
+            "emergency_army_at_trigger": 2,
+            "emergency_local_combat_at_trigger": 2,
+            "emergency_assigned_probe_ids": [101, 102],
+            "emergency_assignment_frames": [100],
+            "emergency_assignment_sizes": [2],
+            "emergency_release_frames": [300],
+            "emergency_release_sizes": [2],
+            "emergency_release_army_three_flags": [1],
+            "zerg_offense_stage_released": True,
+            "zerg_offense_stage_remote_target_events": 2,
+            "zerg_offense_stage_unique_units": 2,
+            "zerg_offense_stage_pre_release_remote_blocks": 2,
+            "zerg_offense_stage_pre_release_remote_orders": 0,
+            "zerg_offense_stage_pre_release_remote_attempts": 2,
+            "zerg_offense_stage_pre_release_remote_accepts": 0,
+            "zerg_offense_stage_post_release_remote_attempts": 1,
+            "zerg_offense_stage_post_release_remote_accepts": 1,
+            "zerg_offense_stage_local_defense_attack_orders": 1,
+            "zerg_offense_stage_home_move_attempts": 2,
+            "zerg_offense_stage_home_move_orders": 2,
+            "zerg_offense_stage_home_move_accepts": 2,
+            "zerg_offense_stage_home_move_cooldown_blocks": 1,
+            "zerg_offense_stage_home_move_repeat_orders": 1,
+            "zerg_offense_stage_min_accepted_repeat_interval": 96,
+            "zerg_offense_stage_home_target_orders": 2,
+            "zerg_offense_stage_release_events": 1,
+            "zerg_offense_stage_reset_events": 0,
+            "zerg_offense_stage_restage_events": 0,
+            "first_zerg_offense_stage_suppression_frame": 90,
+            "first_zerg_offense_stage_frame": 50,
+            "first_zerg_offense_stage_threshold_frame": 100,
+            "first_zerg_offense_stage_release_frame": 100,
+            "first_zerg_offense_stage_reset_frame": -1,
+            "zerg_offense_stage_release_army": 9,
+            "zerg_offense_stage_release_surplus": 6,
+            "zerg_offense_stage_latch_clear_frame": -1,
+            "zerg_offense_stage_latch_clear_cause": "none",
+            "zerg_offense_stage_first_zero_after_release_frame": -1,
+            "zerg_offense_stage_peak_surplus": 6,
+            "zerg_offense_stage_current_surplus": 5,
+            "zerg_offense_stage_release_unit_ids": [201, 202, 203, 204, 205, 206],
+            "zerg_offense_stage_state_frames": [0, 50, 100, 200],
+            "zerg_offense_stage_state_army": [3, 4, 9, 8],
+            "zerg_offense_stage_state_reserve": [3, 3, 3, 3],
+            "zerg_offense_stage_state_surplus": [0, 2, 6, 5],
+            "zerg_offense_stage_state_codes": [0, 0, 1, 1],
+            "zerg_offense_stage_state_cause_codes": [0, 0, 2, 0],
+        }
+
     def test_v33_emergency_bridge_exposes_batches_reasons_exclusions_and_recovery(self):
         summary = scorer._emergency_bridge_summary(self.v33_metadata(), "Zerg")
 
@@ -127,6 +204,89 @@ class KestrelScorecardTests(TestCase):
         self.assertEqual(summary["opportunity_notes"], ["trigger_without_assignment"])
         self.assertEqual(summary["review_flags"], [])
         self.assertEqual(summary["quantitative_grade"]["grade"], "untested")
+
+    def test_v34_extracts_army_three_release_and_staged_offense_trace(self):
+        metadata = self.v34_metadata()
+
+        bridge = scorer._emergency_bridge_summary(metadata, "Zerg")
+        self.assertEqual(bridge["generation"], "v34")
+        self.assertEqual(bridge["release_threshold"], 3)
+        self.assertEqual(bridge["releases"]["reason_counts"], {"threat_clear": 0, "army_three": 1, "unknown": 0})
+        self.assertEqual(bridge["releases"]["army_three_events"], 1)
+        self.assertEqual(bridge["quantitative_grade"]["grade"], "pass")
+        self.assertEqual(bridge["review_flags"], [])
+
+        stage = scorer._zerg_offense_stage_summary(metadata, "Zerg")
+        self.assertEqual(stage["generation"], "v34")
+        self.assertEqual(stage["state"]["codes"], [0, 0, 1, 1])
+        self.assertEqual(stage["state"]["cause_codes"], [0, 0, 2, 0])
+        self.assertEqual(stage["release"]["unit_ids"], [201, 202, 203, 204, 205, 206])
+        self.assertEqual(stage["remote_offense"]["pre_release_blocks"], 2)
+        self.assertEqual(stage["home_moves"]["min_accepted_repeat_interval"], 96)
+        self.assertEqual(stage["quantitative_grade"]["grade"], "pass")
+        self.assertEqual(stage["review_flags"], [])
+
+    def test_v34_unexercised_threshold_is_untested_without_review_flag(self):
+        metadata = self.v34_metadata()
+        for name in (
+            "zerg_offense_stage_released", "zerg_offense_stage_remote_target_events",
+            "zerg_offense_stage_unique_units", "zerg_offense_stage_pre_release_remote_blocks",
+            "zerg_offense_stage_pre_release_remote_attempts", "zerg_offense_stage_home_move_attempts",
+            "zerg_offense_stage_home_move_orders", "zerg_offense_stage_home_move_accepts",
+            "zerg_offense_stage_home_move_repeat_orders",
+            "zerg_offense_stage_home_target_orders", "zerg_offense_stage_release_events",
+            "zerg_offense_stage_reset_events", "zerg_offense_stage_restage_events",
+            "zerg_offense_stage_peak_surplus", "zerg_offense_stage_current_surplus",
+        ):
+            metadata[name] = False if name == "zerg_offense_stage_released" else 0
+        metadata.update({
+            "first_zerg_offense_stage_frame": 100,
+            "first_zerg_offense_stage_suppression_frame": -1,
+            "first_zerg_offense_stage_threshold_frame": -1,
+            "first_zerg_offense_stage_release_frame": -1,
+            "zerg_offense_stage_release_army": -1,
+            "zerg_offense_stage_release_surplus": -1,
+            "zerg_offense_stage_release_unit_ids": [],
+            "zerg_offense_stage_state_frames": [0, 100],
+            "zerg_offense_stage_state_army": [0, 3],
+            "zerg_offense_stage_state_reserve": [0, 3],
+            "zerg_offense_stage_state_surplus": [0, 2],
+            "zerg_offense_stage_state_codes": [0, 0],
+            "zerg_offense_stage_state_cause_codes": [0, 0],
+        })
+        metadata["zerg_offense_stage_current_surplus"] = 2
+        stage = scorer._zerg_offense_stage_summary(metadata, "Zerg")
+        self.assertEqual(stage["quantitative_grade"]["grade"], "untested")
+        self.assertIn("threshold_six_unobserved", stage["opportunity_notes"])
+        self.assertEqual(stage["review_flags"], [])
+
+    def test_v34_non_zerg_stage_fields_must_remain_inactive(self):
+        metadata = self.v34_metadata()
+        for name, value in list(metadata.items()):
+            if name.startswith("zerg_offense_stage_"):
+                if isinstance(value, bool):
+                    metadata[name] = False
+                elif isinstance(value, list):
+                    metadata[name] = []
+                elif isinstance(value, str):
+                    metadata[name] = "none"
+                elif "frame" in name or name.endswith(("army", "surplus", "interval")):
+                    metadata[name] = -1
+                else:
+                    metadata[name] = 0
+        for name in (
+            "first_zerg_offense_stage_suppression_frame", "first_zerg_offense_stage_frame",
+            "first_zerg_offense_stage_threshold_frame", "first_zerg_offense_stage_release_frame",
+            "first_zerg_offense_stage_reset_frame",
+        ):
+            metadata[name] = -1
+        metadata["zerg_offense_stage_current_surplus"] = 0
+        metadata["zerg_offense_stage_peak_surplus"] = 0
+        metadata["zerg_offense_stage_release_surplus"] = -1
+        stage = scorer._zerg_offense_stage_summary(metadata, "Terran")
+        self.assertTrue(stage["checks"]["non_zerg_sentinels"])
+        self.assertEqual(stage["quantitative_grade"]["grade"], "pass")
+        self.assertEqual(stage["review_flags"], [])
 
     def test_diagnostic_summary_collects_scalars_and_optional_events(self):
         with TemporaryDirectory() as directory:

@@ -1,0 +1,462 @@
+diff --git a/third_party/kestrel-opening-v33-candidate/Kestrel.cpp b/third_party/kestrel-opening-v34-candidate/Kestrel.cpp
+index cbf89d1..b88c421 100644
+--- a/third_party/kestrel-opening-v33-candidate/Kestrel.cpp
++++ b/third_party/kestrel-opening-v34-candidate/Kestrel.cpp
+@@ -69,19 +69,53 @@ class Kestrel final : public BWAPI::AIModule {
+     int acceptedStructuresAfterFirstZealot_ = 0;
+     int zealotLossPositionMissing_ = 0;
+     std::unordered_map<int, BWAPI::Position> lastZealotPositions_;
+-    std::unordered_map<int, int> earlyZergSuppressedTargets_;
+-    int earlyZergStageRemoteTargetEvents_ = 0;
+-    int firstEarlyZergStageSuppressionFrame_ = -1;
+-    int earlyZergStageHomeMoveAttempts_ = 0;
+-    int earlyZergStageHomeMoveOrders_ = 0;
+-    int earlyZergStageHomeTargetOrders_ = 0;
+-    int earlyZergStageRemoteAttackOrders_ = 0;
+-    int earlyZergStageReleaseAttackOrders_ = 0;
+-    int firstEarlyZergStageReleaseFrame_ = -1;
+-    int earlyZergStageMaxArmy_ = 0;
+-    int earlyZergStageReleaseArmy_ = -1;
+-    int earlyZergStageMaxLocalCombat_ = 0;
+-    int firstEarlyZergStageLocalTwoFrame_ = -1;
++    std::unordered_map<int, int> zergOffenseStageSuppressedTargets_;
++    std::unordered_map<int, int> zergOffenseStageHomeMoveLastFrame_;
++    std::unordered_map<int, int> zergOffenseStageHomeMoveLastAcceptedFrame_;
++    // Zerg-only non-reserve offense staging. A release is latched after the
++    // reserve surplus reaches six, then reset only when that surplus reaches
++    // zero. The latch prevents remote target churn between policy passes.
++    bool zergOffenseReleased_ = false;
++    int zergOffenseStageRemoteTargetEvents_ = 0;
++    int zergOffenseStageRemoteAttackBlocks_ = 0;
++    int zergOffenseStagePreReleaseRemoteOrders_ = 0;
++    int zergOffenseStagePreReleaseRemoteAttempts_ = 0;
++    int zergOffenseStagePreReleaseRemoteAccepts_ = 0;
++    int zergOffenseStagePostReleaseRemoteAttempts_ = 0;
++    int zergOffenseStagePostReleaseRemoteAccepts_ = 0;
++    int zergOffenseStageLocalDefenseAttackOrders_ = 0;
++    int zergOffenseStageHomeMoveAttempts_ = 0;
++    int zergOffenseStageHomeMoveOrders_ = 0;
++    int zergOffenseStageHomeMoveCooldownBlocks_ = 0;
++    int zergOffenseStageHomeMoveRepeatOrders_ = 0;
++    int zergOffenseStageMinAcceptedRepeatInterval_ = -1;
++    int zergOffenseStageHomeTargetOrders_ = 0;
++    int zergOffenseStageReleaseEvents_ = 0;
++    int zergOffenseStageResetEvents_ = 0;
++    int zergOffenseStageRestageEvents_ = 0;
++    int firstZergOffenseStageSuppressionFrame_ = -1;
++    int firstZergOffenseStageFrame_ = -1;
++    int firstZergOffenseStageThresholdFrame_ = -1;
++    int firstZergOffenseStageReleaseFrame_ = -1;
++    int firstZergOffenseStageResetFrame_ = -1;
++    int zergOffenseStageReleaseArmy_ = -1;
++    int zergOffenseStageReleaseSurplus_ = -1;
++    int zergOffenseStageLatchClearFrame_ = -1;
++    int zergOffenseStageFirstZeroAfterReleaseFrame_ = -1;
++    int zergOffenseStagePeakSurplus_ = 0;
++    int zergOffenseStageCurrentSurplus_ = 0;
++    std::vector<int> zergOffenseStageReleaseUnitIds_;
++    std::vector<int> zergOffenseStageStateFrames_;
++    std::vector<int> zergOffenseStageStateArmy_;
++    std::vector<int> zergOffenseStageStateReserve_;
++    std::vector<int> zergOffenseStageStateSurplus_;
++    std::vector<int> zergOffenseStageStateCodes_;
++    std::vector<int> zergOffenseStageStateCauseCodes_;
++    bool zergOffenseStageStateSeen_ = false;
++    int zergOffenseStageLastStateArmy_ = -1;
++    int zergOffenseStageLastStateReserve_ = -1;
++    int zergOffenseStageLastStateSurplus_ = -1;
++    int zergOffenseStageLastStateCode_ = -1;
+     int firstHomeArmyThreatFrame_ = -1;
+     int localCombatAtFirstHomeArmyThreat_ = -1;
+     int globalCombatAtFirstHomeArmyThreat_ = -1;
+@@ -116,7 +150,7 @@ class Kestrel final : public BWAPI::AIModule {
+     int zergReserveHomeMoveMaxAcceptedPerUnit_ = 0;
+     int zergReserveHomeMoveMinAcceptedRepeatInterval_ = -1;
+     // Zerg-only emergency worker bridge. Membership is held by persistent
+-    // probe ID until the local threat clears, two combat units complete, or
++    // probe ID until the local threat clears, three combat units complete, or
+     // the probe dies; it is never inferred from the current order/position.
+     std::vector<int> emergencyDefenderIds_;
+     std::vector<int> pendingEmergencyGatherIds_;
+@@ -125,7 +159,7 @@ class Kestrel final : public BWAPI::AIModule {
+     std::vector<int> emergencyAssignmentSizes_;
+     std::vector<int> emergencyReleaseFrames_;
+     std::vector<int> emergencyReleaseSizes_;
+-    std::vector<int> emergencyReleaseArmyTwoFlags_;
++    std::vector<int> emergencyReleaseArmyThreeFlags_;
+     bool emergencyThreatQualifiedLastPass_ = false;
+     int emergencyTriggerFrame_ = -1;
+     int emergencyTriggerEvents_ = 0;
+@@ -141,9 +175,9 @@ class Kestrel final : public BWAPI::AIModule {
+     int emergencyThreatClearReleaseEvents_ = 0;
+     int emergencyThreatClearReleasedDefenders_ = 0;
+     int emergencyFirstThreatClearReleaseFrame_ = -1;
+-    int emergencyArmyTwoReleaseEvents_ = 0;
+-    int emergencyArmyTwoReleasedDefenders_ = 0;
+-    int emergencyFirstArmyTwoReleaseFrame_ = -1;
++    int emergencyArmyThreeReleaseEvents_ = 0;
++    int emergencyArmyThreeReleasedDefenders_ = 0;
++    int emergencyFirstArmyThreeReleaseFrame_ = -1;
+     int emergencyDefenderDeaths_ = 0;
+     int emergencyBuildSelectionExclusions_ = 0;
+     int emergencyEconomyExclusions_ = 0;
+@@ -244,19 +278,75 @@ class Kestrel final : public BWAPI::AIModule {
+             << ",\"max_local_completed_zealots_before_loss\":" << maxLocalCompletedZealotsBeforeLoss_
+             << ",\"accepted_structures_after_first_zealot\":" << acceptedStructuresAfterFirstZealot_
+             << ",\"zealot_loss_position_missing\":" << zealotLossPositionMissing_
+-            << ",\"early_zerg_stage_remote_target_events\":" << earlyZergStageRemoteTargetEvents_
+-            << ",\"early_zerg_stage_unique_units\":" << earlyZergSuppressedTargets_.size()
+-            << ",\"first_early_zerg_stage_suppression_frame\":" << firstEarlyZergStageSuppressionFrame_
+-            << ",\"early_zerg_stage_home_move_attempts\":" << earlyZergStageHomeMoveAttempts_
+-            << ",\"early_zerg_stage_home_move_orders\":" << earlyZergStageHomeMoveOrders_
+-            << ",\"early_zerg_stage_home_target_orders\":" << earlyZergStageHomeTargetOrders_
+-            << ",\"early_zerg_stage_remote_attack_orders\":" << earlyZergStageRemoteAttackOrders_
+-            << ",\"early_zerg_stage_release_attack_orders\":" << earlyZergStageReleaseAttackOrders_
+-            << ",\"first_early_zerg_stage_release_frame\":" << firstEarlyZergStageReleaseFrame_
+-            << ",\"early_zerg_stage_max_army\":" << earlyZergStageMaxArmy_
+-            << ",\"early_zerg_stage_release_army\":" << earlyZergStageReleaseArmy_
+-            << ",\"early_zerg_stage_max_local_combat\":" << earlyZergStageMaxLocalCombat_
+-            << ",\"first_early_zerg_stage_local_two_frame\":" << firstEarlyZergStageLocalTwoFrame_
++            << ",\"zerg_offense_stage_released\":" << (zergOffenseReleased_ ? "true" : "false")
++            << ",\"zerg_offense_stage_remote_target_events\":" << zergOffenseStageRemoteTargetEvents_
++            << ",\"zerg_offense_stage_unique_units\":" << zergOffenseStageSuppressedTargets_.size()
++            << ",\"zerg_offense_stage_pre_release_remote_blocks\":" << zergOffenseStageRemoteAttackBlocks_
++            << ",\"zerg_offense_stage_pre_release_remote_orders\":" << zergOffenseStagePreReleaseRemoteOrders_
++            << ",\"zerg_offense_stage_pre_release_remote_attempts\":" << zergOffenseStagePreReleaseRemoteAttempts_
++            << ",\"zerg_offense_stage_pre_release_remote_accepts\":" << zergOffenseStagePreReleaseRemoteAccepts_
++            << ",\"zerg_offense_stage_post_release_remote_attempts\":" << zergOffenseStagePostReleaseRemoteAttempts_
++            << ",\"zerg_offense_stage_post_release_remote_accepts\":" << zergOffenseStagePostReleaseRemoteAccepts_
++            << ",\"zerg_offense_stage_local_defense_attack_orders\":" << zergOffenseStageLocalDefenseAttackOrders_
++            << ",\"first_zerg_offense_stage_suppression_frame\":" << firstZergOffenseStageSuppressionFrame_
++            << ",\"first_zerg_offense_stage_frame\":" << firstZergOffenseStageFrame_
++            << ",\"first_zerg_offense_stage_threshold_frame\":" << firstZergOffenseStageThresholdFrame_
++            << ",\"zerg_offense_stage_home_move_attempts\":" << zergOffenseStageHomeMoveAttempts_
++            << ",\"zerg_offense_stage_home_move_orders\":" << zergOffenseStageHomeMoveOrders_
++            << ",\"zerg_offense_stage_home_move_accepts\":" << zergOffenseStageHomeMoveOrders_
++            << ",\"zerg_offense_stage_home_move_cooldown_blocks\":" << zergOffenseStageHomeMoveCooldownBlocks_
++            << ",\"zerg_offense_stage_home_move_repeat_orders\":" << zergOffenseStageHomeMoveRepeatOrders_
++            << ",\"zerg_offense_stage_min_accepted_repeat_interval\":" << zergOffenseStageMinAcceptedRepeatInterval_
++            << ",\"zerg_offense_stage_home_target_orders\":" << zergOffenseStageHomeTargetOrders_
++            << ",\"zerg_offense_stage_release_events\":" << zergOffenseStageReleaseEvents_
++            << ",\"zerg_offense_stage_reset_events\":" << zergOffenseStageResetEvents_
++            << ",\"zerg_offense_stage_restage_events\":" << zergOffenseStageRestageEvents_
++            << ",\"first_zerg_offense_stage_release_frame\":" << firstZergOffenseStageReleaseFrame_
++            << ",\"first_zerg_offense_stage_reset_frame\":" << firstZergOffenseStageResetFrame_
++            << ",\"zerg_offense_stage_release_army\":" << zergOffenseStageReleaseArmy_
++            << ",\"zerg_offense_stage_release_surplus\":" << zergOffenseStageReleaseSurplus_
++            << ",\"zerg_offense_stage_latch_clear_frame\":" << zergOffenseStageLatchClearFrame_
++            << ",\"zerg_offense_stage_latch_clear_cause\":\""
++            << (zergOffenseStageLatchClearFrame_ >= 0 ? "surplus_zero" : "none") << "\""
++            << ",\"zerg_offense_stage_first_zero_after_release_frame\":" << zergOffenseStageFirstZeroAfterReleaseFrame_
++            << ",\"zerg_offense_stage_peak_surplus\":" << zergOffenseStagePeakSurplus_
++            << ",\"zerg_offense_stage_current_surplus\":" << zergOffenseStageCurrentSurplus_
++            << ",\"zerg_offense_stage_release_unit_ids\":[";
++        for (size_t index = 0; index < zergOffenseStageReleaseUnitIds_.size(); ++index) {
++            if (index) out << ',';
++            out << zergOffenseStageReleaseUnitIds_[index];
++        }
++        out << "],\"zerg_offense_stage_state_frames\":[";
++        for (size_t index = 0; index < zergOffenseStageStateFrames_.size(); ++index) {
++            if (index) out << ',';
++            out << zergOffenseStageStateFrames_[index];
++        }
++        out << "],\"zerg_offense_stage_state_army\":[";
++        for (size_t index = 0; index < zergOffenseStageStateArmy_.size(); ++index) {
++            if (index) out << ',';
++            out << zergOffenseStageStateArmy_[index];
++        }
++        out << "],\"zerg_offense_stage_state_reserve\":[";
++        for (size_t index = 0; index < zergOffenseStageStateReserve_.size(); ++index) {
++            if (index) out << ',';
++            out << zergOffenseStageStateReserve_[index];
++        }
++        out << "],\"zerg_offense_stage_state_surplus\":[";
++        for (size_t index = 0; index < zergOffenseStageStateSurplus_.size(); ++index) {
++            if (index) out << ',';
++            out << zergOffenseStageStateSurplus_[index];
++        }
++        out << "],\"zerg_offense_stage_state_codes\":[";
++        for (size_t index = 0; index < zergOffenseStageStateCodes_.size(); ++index) {
++            if (index) out << ',';
++            out << zergOffenseStageStateCodes_[index];
++        }
++        out << "],\"zerg_offense_stage_state_cause_codes\":[";
++        for (size_t index = 0; index < zergOffenseStageStateCauseCodes_.size(); ++index) {
++            if (index) out << ',';
++            out << zergOffenseStageStateCauseCodes_[index];
++        }
++        out << "]"
+             << ",\"first_home_army_threat_frame\":" << firstHomeArmyThreatFrame_
+             << ",\"local_combat_at_first_home_army_threat\":" << localCombatAtFirstHomeArmyThreat_
+             << ",\"global_combat_at_first_home_army_threat\":" << globalCombatAtFirstHomeArmyThreat_
+@@ -299,9 +389,9 @@ class Kestrel final : public BWAPI::AIModule {
+             << ",\"emergency_threat_clear_release_events\":" << emergencyThreatClearReleaseEvents_
+             << ",\"emergency_threat_clear_released_defenders\":" << emergencyThreatClearReleasedDefenders_
+             << ",\"emergency_first_threat_clear_release_frame\":" << emergencyFirstThreatClearReleaseFrame_
+-            << ",\"emergency_army_two_release_events\":" << emergencyArmyTwoReleaseEvents_
+-            << ",\"emergency_army_two_released_defenders\":" << emergencyArmyTwoReleasedDefenders_
+-            << ",\"emergency_first_army_two_release_frame\":" << emergencyFirstArmyTwoReleaseFrame_
++            << ",\"emergency_army_three_release_events\":" << emergencyArmyThreeReleaseEvents_
++            << ",\"emergency_army_three_released_defenders\":" << emergencyArmyThreeReleasedDefenders_
++            << ",\"emergency_first_army_three_release_frame\":" << emergencyFirstArmyThreeReleaseFrame_
+             << ",\"emergency_defender_deaths\":" << emergencyDefenderDeaths_
+             << ",\"emergency_build_selection_exclusions\":" << emergencyBuildSelectionExclusions_
+             << ",\"emergency_economy_exclusions\":" << emergencyEconomyExclusions_
+@@ -334,10 +424,10 @@ class Kestrel final : public BWAPI::AIModule {
+             if (index) out << ',';
+             out << emergencyReleaseSizes_[index];
+         }
+-        out << "],\"emergency_release_army_two_flags\":[";
+-        for (size_t index = 0; index < emergencyReleaseArmyTwoFlags_.size(); ++index) {
++        out << "],\"emergency_release_army_three_flags\":[";
++        for (size_t index = 0; index < emergencyReleaseArmyThreeFlags_.size(); ++index) {
+             if (index) out << ',';
+-            out << emergencyReleaseArmyTwoFlags_[index];
++            out << emergencyReleaseArmyThreeFlags_[index];
+         }
+         out << "]}\n";
+         out.close();
+@@ -404,11 +494,11 @@ class Kestrel final : public BWAPI::AIModule {
+         return threat;
+     }
+ 
+-    void releaseEmergencyDefenders(int frame, bool armyTwo) {
++    void releaseEmergencyDefenders(int frame, bool armyThree) {
+         const int released = static_cast<int>(emergencyDefenderIds_.size());
+         emergencyReleaseFrames_.push_back(frame);
+         emergencyReleaseSizes_.push_back(released);
+-        emergencyReleaseArmyTwoFlags_.push_back(armyTwo ? 1 : 0);
++        emergencyReleaseArmyThreeFlags_.push_back(armyThree ? 1 : 0);
+         for (int id : emergencyDefenderIds_) {
+             if (!wasEmergencyDefender(id)) pendingEmergencyGatherIds_.push_back(id);
+             ++emergencyReleases_;
+@@ -416,10 +506,10 @@ class Kestrel final : public BWAPI::AIModule {
+         }
+         if (!emergencyDefenderIds_.empty() && emergencyFirstReleaseFrame_ < 0)
+             emergencyFirstReleaseFrame_ = frame;
+-        if (armyTwo) {
+-            ++emergencyArmyTwoReleaseEvents_;
+-            emergencyArmyTwoReleasedDefenders_ += released;
+-            if (emergencyFirstArmyTwoReleaseFrame_ < 0) emergencyFirstArmyTwoReleaseFrame_ = frame;
++        if (armyThree) {
++            ++emergencyArmyThreeReleaseEvents_;
++            emergencyArmyThreeReleasedDefenders_ += released;
++            if (emergencyFirstArmyThreeReleaseFrame_ < 0) emergencyFirstArmyThreeReleaseFrame_ = frame;
+         } else {
+             ++emergencyThreatClearReleaseEvents_;
+             emergencyThreatClearReleasedDefenders_ += released;
+@@ -445,8 +535,8 @@ class Kestrel final : public BWAPI::AIModule {
+         const int army = count(BWAPI::UnitTypes::Protoss_Zealot, true) +
+                          count(BWAPI::UnitTypes::Protoss_Dragoon, true);
+         BWAPI::Unit threat = nearestEmergencyThreat(home);
+-        if (!threat || army >= 2) {
+-            if (!emergencyDefenderIds_.empty()) releaseEmergencyDefenders(frame, army >= 2);
++        if (!threat || army >= 3) {
++            if (!emergencyDefenderIds_.empty()) releaseEmergencyDefenders(frame, army >= 3);
+             emergencyThreatQualifiedLastPass_ = false;
+             return;
+         }
+@@ -591,6 +681,86 @@ class Kestrel final : public BWAPI::AIModule {
+         }
+     }
+ 
++    void issueZergOffenseStageHomeMove(BWAPI::Unit unit, const BWAPI::Position& home, int frame) {
++        if (unit->getTargetPosition() == home) return;
++        if (unit->getDistance(home) <= 4 * 32 && !unit->isMoving()) return;
++        const auto previous = zergOffenseStageHomeMoveLastFrame_.find(unit->getID());
++        const bool hadPrevious = previous != zergOffenseStageHomeMoveLastFrame_.end();
++        if (hadPrevious && frame - previous->second < 96) {
++            ++zergOffenseStageHomeMoveCooldownBlocks_;
++            return;
++        }
++        ++zergOffenseStageHomeMoveAttempts_;
++        zergOffenseStageHomeMoveLastFrame_[unit->getID()] = frame;
++        if (!issue(unit->move(home), AttackCommand)) return;
++        ++zergOffenseStageHomeMoveOrders_;
++        ++zergOffenseStageHomeTargetOrders_;
++        const auto previousAccepted = zergOffenseStageHomeMoveLastAcceptedFrame_.find(unit->getID());
++        if (previousAccepted != zergOffenseStageHomeMoveLastAcceptedFrame_.end()) {
++            const int interval = frame - previousAccepted->second;
++            if (zergOffenseStageMinAcceptedRepeatInterval_ < 0 ||
++                interval < zergOffenseStageMinAcceptedRepeatInterval_)
++                zergOffenseStageMinAcceptedRepeatInterval_ = interval;
++            ++zergOffenseStageHomeMoveRepeatOrders_;
++        }
++        zergOffenseStageHomeMoveLastAcceptedFrame_[unit->getID()] = frame;
++    }
++
++    void recordZergOffenseStageState(int frame, int army, int reserve, int surplus, int cause) {
++        const int state = zergOffenseReleased_ ? 1 : 0;
++        if (zergOffenseStageStateSeen_ && army == zergOffenseStageLastStateArmy_ &&
++            reserve == zergOffenseStageLastStateReserve_ && surplus == zergOffenseStageLastStateSurplus_ &&
++            state == zergOffenseStageLastStateCode_ && cause == 0)
++            return;
++        zergOffenseStageStateSeen_ = true;
++        zergOffenseStageLastStateArmy_ = army;
++        zergOffenseStageLastStateReserve_ = reserve;
++        zergOffenseStageLastStateSurplus_ = surplus;
++        zergOffenseStageLastStateCode_ = state;
++        zergOffenseStageStateFrames_.push_back(frame);
++        zergOffenseStageStateArmy_.push_back(army);
++        zergOffenseStageStateReserve_.push_back(reserve);
++        zergOffenseStageStateSurplus_.push_back(surplus);
++        zergOffenseStageStateCodes_.push_back(state);
++        zergOffenseStageStateCauseCodes_.push_back(cause);
++    }
++
++    void updateZergOffenseStage(int army, int frame) {
++        if (!knownZerg_) return;
++        zergOffenseStageCurrentSurplus_ = zergReserveCurrentSurplus_;
++        zergOffenseStagePeakSurplus_ = std::max(zergOffenseStagePeakSurplus_, zergOffenseStageCurrentSurplus_);
++        int cause = 0;
++        if (!zergOffenseReleased_ && zergOffenseStageCurrentSurplus_ > 0 && firstZergOffenseStageFrame_ < 0)
++            firstZergOffenseStageFrame_ = frame;
++        if (zergOffenseStageCurrentSurplus_ >= 6 && firstZergOffenseStageThresholdFrame_ < 0)
++            firstZergOffenseStageThresholdFrame_ = frame;
++        if (!zergOffenseReleased_ && zergOffenseStageCurrentSurplus_ >= 6) {
++            zergOffenseReleased_ = true;
++            ++zergOffenseStageReleaseEvents_;
++            if (firstZergOffenseStageReleaseFrame_ < 0) firstZergOffenseStageReleaseFrame_ = frame;
++            zergOffenseStageReleaseArmy_ = army;
++            zergOffenseStageReleaseSurplus_ = zergOffenseStageCurrentSurplus_;
++            zergOffenseStageReleaseUnitIds_.clear();
++            for (auto unit : BWAPI::Broodwar->self()->getUnits()) {
++                if (unit->exists() && unit->isCompleted() && isCombatUnit(unit) && !isZergReserve(unit->getID()))
++                    zergOffenseStageReleaseUnitIds_.push_back(unit->getID());
++            }
++            std::sort(zergOffenseStageReleaseUnitIds_.begin(), zergOffenseStageReleaseUnitIds_.end());
++            cause = 2;
++        } else if (zergOffenseReleased_ && zergOffenseStageCurrentSurplus_ == 0) {
++            zergOffenseReleased_ = false;
++            ++zergOffenseStageResetEvents_;
++            ++zergOffenseStageRestageEvents_;
++            if (firstZergOffenseStageResetFrame_ < 0) firstZergOffenseStageResetFrame_ = frame;
++            if (zergOffenseStageLatchClearFrame_ < 0) zergOffenseStageLatchClearFrame_ = frame;
++            if (zergOffenseStageFirstZeroAfterReleaseFrame_ < 0)
++                zergOffenseStageFirstZeroAfterReleaseFrame_ = frame;
++            cause = 4;
++        }
++        recordZergOffenseStageState(frame, army, static_cast<int>(zergReserveIds_.size()),
++                                    zergOffenseStageCurrentSurplus_, cause);
++    }
++
+     void recordGasWorkerGuard(BWAPI::Unit worker, const char* context) {
+         ++gasWorkerGuardEvents_;
+         std::ofstream out("bwapi-data/write/gas-worker-guard.jsonl", std::ios::app);
+@@ -876,21 +1046,13 @@ class Kestrel final : public BWAPI::AIModule {
+         const BWAPI::Position home(start.x * 32 + 64, start.y * 32 + 48);
+         const int homeRadius = 12 * 32;
+         int localCompletedZealots = 0;
+-        int localCompletedCombat = 0;
+         for (auto homeUnit : BWAPI::Broodwar->self()->getUnits()) {
+             if (!homeUnit->exists() || !homeUnit->isCompleted() || homeUnit->getDistance(home) >= homeRadius) continue;
+             if (homeUnit->getType() == BWAPI::UnitTypes::Protoss_Zealot) ++localCompletedZealots;
+-            if (homeUnit->getType() == BWAPI::UnitTypes::Protoss_Zealot ||
+-                homeUnit->getType() == BWAPI::UnitTypes::Protoss_Dragoon) ++localCompletedCombat;
+-        }
+-        if (knownZerg_ && army < 4) {
+-            earlyZergStageMaxArmy_ = std::max(earlyZergStageMaxArmy_, army);
+-            earlyZergStageMaxLocalCombat_ = std::max(earlyZergStageMaxLocalCombat_, localCompletedCombat);
+-            if (localCompletedCombat >= 2 && firstEarlyZergStageLocalTwoFrame_ < 0)
+-                firstEarlyZergStageLocalTwoFrame_ = BWAPI::Broodwar->getFrameCount();
+         }
+         const int frame = BWAPI::Broodwar->getFrameCount();
+         refreshZergReserve(home, frame);
++        updateZergOffenseStage(army, frame);
+         if (scoutId_ < 0 && count(BWAPI::UnitTypes::Protoss_Probe) >= 9) {
+             for (auto probe : sorted(BWAPI::Broodwar->self()->getUnits())) {
+                 if (probe->exists() && probe->isCompleted() && probe->getType() == BWAPI::UnitTypes::Protoss_Probe &&
+@@ -930,6 +1092,27 @@ class Kestrel final : public BWAPI::AIModule {
+                     continue;
+                 }
+             }
++            if (knownZerg_ && combat && !zergReserve && !zergOffenseReleased_) {
++                const bool remoteThreat = enemy && enemy->getDistance(home) >= homeRadius;
++                if (remoteThreat) {
++                    ++zergOffenseStagePreReleaseRemoteAttempts_;
++                    const auto previous = zergOffenseStageSuppressedTargets_.find(unit->getID());
++                    if (previous == zergOffenseStageSuppressedTargets_.end() || previous->second != enemy->getID()) {
++                        zergOffenseStageSuppressedTargets_[unit->getID()] = enemy->getID();
++                        ++zergOffenseStageRemoteTargetEvents_;
++                        if (firstZergOffenseStageSuppressionFrame_ < 0) firstZergOffenseStageSuppressionFrame_ = frame;
++                    }
++                    ++zergOffenseStageRemoteAttackBlocks_;
++                    attackRequests_.erase(unit->getID());
++                    issueZergOffenseStageHomeMove(unit, home, frame);
++                    continue;
++                }
++                if (!enemy) {
++                    attackRequests_.erase(unit->getID());
++                    issueZergOffenseStageHomeMove(unit, home, frame);
++                    continue;
++                }
++            }
+             if (!knownZerg_ && firstHomeThreatFrame_ >= 0 && combat &&
+                 unit->getType() == BWAPI::UnitTypes::Protoss_Zealot && localCompletedZealots < 2) {
+                 if (unit->getDistance(home) > 4 * 32 && !unit->isMoving()) issue(unit->move(home), AttackCommand);
+@@ -956,6 +1139,11 @@ class Kestrel final : public BWAPI::AIModule {
+                 const bool targetChanged = previous == attackRequests_.end() || previous->second.targetId != enemy->getID();
+                 const int retryFrames = 96;
+                 if (targetChanged || frame - previous->second.frame >= retryFrames) {
++                    const bool zergNonreserve = knownZerg_ && combat && !zergReserve;
++                    const bool localTarget = enemy->getDistance(home) < homeRadius;
++                    if (zergNonreserve && !localTarget) {
++                        if (zergOffenseReleased_) ++zergOffenseStagePostReleaseRemoteAttempts_;
++                    }
+                     const bool accepted = issue(unit->attack(enemy), AttackCommand);
+                     attackRequests_[unit->getID()] = {enemy->getID(), frame};
+                     if (accepted && knownZerg_ && combat) {
+@@ -965,12 +1153,18 @@ class Kestrel final : public BWAPI::AIModule {
+                             } else {
+                                 ++zergReserveRemoteAttackOrders_;
+                             }
++                        } else if (!zergOffenseReleased_ && enemy->getDistance(home) >= homeRadius) {
++                            ++zergOffenseStagePreReleaseRemoteOrders_;
++                            ++zergOffenseStagePreReleaseRemoteAccepts_;
+                         } else if (enemy->getDistance(home) >= homeRadius) {
++                            ++zergOffenseStagePostReleaseRemoteAccepts_;
+                             ++zergNonreserveRemoteAttackOrders_;
+                             if (army >= 4 && zergFirstAcceptedSurplusReleaseFrame_ < 0) {
+                                 zergFirstAcceptedSurplusReleaseFrame_ = frame;
+                                 zergFirstAcceptedSurplusReleaseArmy_ = army;
+                             }
++                        } else if (!zergReserve) {
++                            ++zergOffenseStageLocalDefenseAttackOrders_;
+                         }
+                     }
+                 }
+@@ -980,8 +1174,11 @@ class Kestrel final : public BWAPI::AIModule {
+             BWAPI::Position target = BWAPI::Positions::None;
+             if (scout || army >= 4) target = unexploredStart(unit);
+             if (target.isValid() && unit->getTargetPosition() != target) {
++                if (knownZerg_ && combat && !zergReserve && zergOffenseReleased_)
++                    ++zergOffenseStagePostReleaseRemoteAttempts_;
+                 const bool accepted = issue(unit->attack(target), AttackCommand);
+                 if (accepted && knownZerg_ && combat && !zergReserve && army >= 4) {
++                    if (zergOffenseReleased_) ++zergOffenseStagePostReleaseRemoteAccepts_;
+                     ++zergNonreserveRemoteAttackOrders_;
+                     if (zergFirstAcceptedSurplusReleaseFrame_ < 0) {
+                         zergFirstAcceptedSurplusReleaseFrame_ = frame;
+@@ -1082,7 +1279,21 @@ public:
+         if (BWAPI::Broodwar->getFrameCount() % 240 == 0) writeResult(false);
+     }
+ 
+-    void onEnd(bool won) override { writeResult(true, won); }
++    void onEnd(bool won) override {
++        // The terminal callback can arrive between normal cadence passes. Refresh
++        // only public self state so the final diagnostic row reflects the actual
++        // terminal reserve/surplus/latch state; this path issues no commands.
++        if (knownZerg_ && BWAPI::BroodwarPtr && BWAPI::BroodwarPtr->self()) {
++            const int frame = BWAPI::BroodwarPtr->getFrameCount();
++            const BWAPI::TilePosition start = BWAPI::BroodwarPtr->self()->getStartLocation();
++            const BWAPI::Position home(start.x * 32 + 64, start.y * 32 + 48);
++            const int army = count(BWAPI::UnitTypes::Protoss_Zealot, true) +
++                             count(BWAPI::UnitTypes::Protoss_Dragoon, true);
++            refreshZergReserve(home, frame);
++            updateZergOffenseStage(army, frame);
++        }
++        writeResult(true, won);
++    }
+ 
+     void onUnitDestroy(BWAPI::Unit unit) override {
+         if (!unit || !BWAPI::Broodwar->self() || unit->getPlayer() != BWAPI::Broodwar->self()) return;

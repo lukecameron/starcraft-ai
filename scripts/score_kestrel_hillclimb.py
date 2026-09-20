@@ -117,11 +117,32 @@ def _metadata_list(metadata: dict[str, object], name: str) -> list[object]:
     return value if isinstance(value, list) else []
 
 
+def _metadata_bool(metadata: dict[str, object], name: str, default: bool) -> bool:
+    value = metadata.get(name)
+    return value if isinstance(value, bool) else default
+
+
 def _normalise_race(race: object) -> str | None:
     if not isinstance(race, str):
         return None
     value = race.strip().lower()
     return value if value in {"zerg", "terran", "protoss", "random"} else None
+
+
+def _diagnostic_generation(metadata: dict[str, object]) -> str:
+    """Identify the Kestrel telemetry generation from additive field names."""
+    if any(name in metadata for name in (
+        "emergency_army_three_release_events",
+        "emergency_release_army_three_flags",
+        "zerg_offense_stage_state_frames",
+    )):
+        return "v34"
+    if any(name in metadata for name in (
+        "emergency_army_two_release_events",
+        "emergency_release_army_two_flags",
+    )):
+        return "v33"
+    return "legacy"
 
 
 def _emergency_batches(frames: list[object], sizes: list[object], ids: list[object]) -> tuple[list[dict[str, object]], list[str]]:
@@ -148,7 +169,13 @@ def _emergency_batches(frames: list[object], sizes: list[object], ids: list[obje
 
 
 def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | None = None) -> dict[str, object]:
-    """Normalize v33 emergency-worker telemetry while retaining v31/v32 absence."""
+    """Normalize v33/v34 emergency-worker telemetry and legacy absence."""
+    generation = _diagnostic_generation(metadata)
+    army_generation = "three" if generation == "v34" else "two"
+    army_event_key = f"emergency_army_{army_generation}_release_events"
+    army_defender_key = f"emergency_army_{army_generation}_released_defenders"
+    first_army_frame_key = f"emergency_first_army_{army_generation}_release_frame"
+    army_flag_key = f"emergency_release_army_{army_generation}_flags"
     scalar_defaults = {
         "emergency_trigger_frame": -1,
         "emergency_trigger_events": 0,
@@ -165,9 +192,6 @@ def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | 
         "emergency_threat_clear_release_events": 0,
         "emergency_threat_clear_released_defenders": 0,
         "emergency_first_threat_clear_release_frame": -1,
-        "emergency_army_two_release_events": 0,
-        "emergency_army_two_released_defenders": 0,
-        "emergency_first_army_two_release_frame": -1,
         "emergency_defender_deaths": 0,
         "emergency_build_selection_exclusions": 0,
         "emergency_economy_exclusions": 0,
@@ -176,9 +200,12 @@ def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | 
         "emergency_army_at_trigger": -1,
         "emergency_local_combat_at_trigger": -1,
     }
+    scalar_defaults[army_event_key] = 0
+    scalar_defaults[army_defender_key] = 0
+    scalar_defaults[first_army_frame_key] = -1
     required = tuple(scalar_defaults) + (
         "emergency_assigned_probe_ids", "emergency_assignment_frames", "emergency_assignment_sizes",
-        "emergency_release_frames", "emergency_release_sizes", "emergency_release_army_two_flags",
+        "emergency_release_frames", "emergency_release_sizes", army_flag_key,
     )
     present = [name for name in required if name in metadata]
     missing = [name for name in required if name not in metadata]
@@ -192,7 +219,7 @@ def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | 
     assignment_sizes = _metadata_list(metadata, "emergency_assignment_sizes")
     release_frames = _metadata_list(metadata, "emergency_release_frames")
     release_sizes = _metadata_list(metadata, "emergency_release_sizes")
-    release_flags = _metadata_list(metadata, "emergency_release_army_two_flags")
+    release_flags = _metadata_list(metadata, army_flag_key)
     assignment_batches, trace_flags = _emergency_batches(assignment_frames, assignment_sizes, assigned_ids)
 
     release_trace_flags: list[str] = []
@@ -201,11 +228,11 @@ def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | 
     release_trace: list[dict[str, object]] = []
     for index in range(min(len(release_frames), len(release_sizes), len(release_flags))):
         flag = release_flags[index]
-        reason = "army_two" if flag == 1 else "threat_clear" if flag == 0 else "unknown"
+        reason = f"army_{army_generation}" if flag == 1 else "threat_clear" if flag == 0 else "unknown"
         if flag not in (0, 1):
             release_trace_flags.append("release_trace_invalid_reason")
         release_trace.append({"index": index, "frame": release_frames[index], "size": release_sizes[index],
-                              "army_two": flag, "reason": reason})
+                              f"army_{army_generation}": flag, "reason": reason})
 
     race = _normalise_race(opponent_race)
     if race is None:
@@ -258,7 +285,7 @@ def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | 
 
     trace_reason_counts = {
         "threat_clear": sum(item["reason"] == "threat_clear" for item in release_trace),
-        "army_two": sum(item["reason"] == "army_two" for item in release_trace),
+        f"army_{army_generation}": sum(item["reason"] == f"army_{army_generation}" for item in release_trace),
         "unknown": sum(item["reason"] == "unknown" for item in release_trace),
     }
     if release_trace and values["emergency_releases"] != sum(
@@ -267,45 +294,45 @@ def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | 
         review_flags.append("release_defender_total_mismatch")
     if trace_reason_counts["threat_clear"] != values["emergency_threat_clear_release_events"]:
         review_flags.append("threat_clear_release_event_mismatch")
-    if trace_reason_counts["army_two"] != values["emergency_army_two_release_events"]:
-        review_flags.append("army_two_release_event_mismatch")
+    if trace_reason_counts[f"army_{army_generation}"] != values[army_event_key]:
+        review_flags.append(f"army_{army_generation}_release_event_mismatch")
     threat_clear_sizes = sum(
         size for size, item in zip(release_sizes, release_trace)
         if item["reason"] == "threat_clear" and isinstance(size, int) and not isinstance(size, bool)
     )
-    army_two_sizes = sum(
+    army_release_sizes = sum(
         size for size, item in zip(release_sizes, release_trace)
-        if item["reason"] == "army_two" and isinstance(size, int) and not isinstance(size, bool)
+        if item["reason"] == f"army_{army_generation}" and isinstance(size, int) and not isinstance(size, bool)
     )
     if threat_clear_sizes != values["emergency_threat_clear_released_defenders"]:
         review_flags.append("threat_clear_release_defender_mismatch")
-    if army_two_sizes != values["emergency_army_two_released_defenders"]:
-        review_flags.append("army_two_release_defender_mismatch")
+    if army_release_sizes != values[army_defender_key]:
+        review_flags.append(f"army_{army_generation}_release_defender_mismatch")
     if release_trace and values["emergency_first_release_frame"] != release_trace[0]["frame"]:
         review_flags.append("first_release_frame_mismatch")
     first_threat_clear = next((item["frame"] for item in release_trace if item["reason"] == "threat_clear"), None)
-    first_army_two = next((item["frame"] for item in release_trace if item["reason"] == "army_two"), None)
+    first_army_release = next((item["frame"] for item in release_trace if item["reason"] == f"army_{army_generation}"), None)
     if first_threat_clear is not None and values["emergency_first_threat_clear_release_frame"] != first_threat_clear:
         review_flags.append("first_threat_clear_frame_mismatch")
-    if first_army_two is not None and values["emergency_first_army_two_release_frame"] != first_army_two:
-        review_flags.append("first_army_two_frame_mismatch")
+    if first_army_release is not None and values[first_army_frame_key] != first_army_release:
+        review_flags.append(f"first_army_{army_generation}_frame_mismatch")
     if values["emergency_releases"] > 0 and not release_trace:
         review_flags.append("release_total_without_release_trace")
-    if values["emergency_threat_clear_release_events"] + values["emergency_army_two_release_events"] > 0 and not release_trace:
+    if values["emergency_threat_clear_release_events"] + values[army_event_key] > 0 and not release_trace:
         review_flags.append("release_reason_without_release_trace")
 
     if expected_inactive:
         inactive_values = [values[name] for name in scalar_defaults if name not in {
             "emergency_trigger_frame",
             "emergency_first_assignment_frame", "emergency_first_release_frame",
-            "emergency_first_threat_clear_release_frame", "emergency_first_army_two_release_frame",
+            "emergency_first_threat_clear_release_frame", first_army_frame_key,
             "emergency_army_at_trigger", "emergency_local_combat_at_trigger",
         }]
         if any(value != 0 for value in inactive_values):
             review_flags.append("non_zerg_emergency_activity")
         if any(values[name] != -1 for name in (
             "emergency_first_assignment_frame", "emergency_first_release_frame",
-            "emergency_first_threat_clear_release_frame", "emergency_first_army_two_release_frame",
+            "emergency_first_threat_clear_release_frame", first_army_frame_key,
             "emergency_army_at_trigger", "emergency_local_combat_at_trigger",
         )):
             review_flags.append("non_zerg_emergency_sentinel_mismatch")
@@ -322,7 +349,7 @@ def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | 
         "assignment_trace_consistent": not any(flag.startswith("assignment_") or flag.startswith("first_assignment") or flag.startswith("max_assignment") for flag in review_flags),
         "defender_cap": "emergency_defender_cap_exceeded" not in review_flags and "assignment_batch_cap_exceeded" not in review_flags,
         "accepted_attack_observed": values["emergency_accepted_attack_orders"] > 0 if assignments else None,
-        "release_trace_consistent": not any(flag.startswith("release_") or flag.startswith("threat_clear_release") or flag.startswith("army_two_release") for flag in review_flags),
+        "release_trace_consistent": not any(flag.startswith("release_") or flag.startswith("threat_clear_release") or flag.startswith(f"army_{army_generation}_release") for flag in review_flags),
         "non_zerg_sentinels": expected_inactive and not any(flag.startswith("non_zerg_") for flag in review_flags) if expected_inactive else None,
         "recovery": recovery_status,
     }
@@ -337,6 +364,8 @@ def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | 
     else:
         grade = "pass" if all(value is not False for value in checks.values() if isinstance(value, (bool, type(None)))) else "partial"
     return {
+        "generation": generation,
+        "release_threshold": 3 if army_generation == "three" else 2,
         "opponent_race": race,
         "expected_active": expected_active,
         "expected_inactive": expected_inactive,
@@ -361,17 +390,28 @@ def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | 
             "batch_trace": assignment_batches,
         },
         "releases": {
+            "threshold": 3 if army_generation == "three" else 2,
             "total_defenders": releases,
             "first_frame": values["emergency_first_release_frame"],
             "threat_clear_events": values["emergency_threat_clear_release_events"],
             "threat_clear_defenders": values["emergency_threat_clear_released_defenders"],
             "first_threat_clear_frame": values["emergency_first_threat_clear_release_frame"],
-            "army_two_events": values["emergency_army_two_release_events"],
-            "army_two_defenders": values["emergency_army_two_released_defenders"],
-            "first_army_two_frame": values["emergency_first_army_two_release_frame"],
+            f"army_{army_generation}_events": values[army_event_key],
+            f"army_{army_generation}_defenders": values[army_defender_key],
+            f"first_army_{army_generation}_frame": values[first_army_frame_key],
+            # Keep the v33 names available to callers that consume a stable
+            # scorecard shape while exposing the v34 vocabulary above.
+            "army_two_events": values["emergency_army_two_release_events"] if army_generation == "two" else 0,
+            "army_two_defenders": values["emergency_army_two_released_defenders"] if army_generation == "two" else 0,
+            "first_army_two_frame": values["emergency_first_army_two_release_frame"] if army_generation == "two" else -1,
+            "army_three_events": values["emergency_army_three_release_events"] if army_generation == "three" else 0,
+            "army_three_defenders": values["emergency_army_three_released_defenders"] if army_generation == "three" else 0,
+            "first_army_three_frame": values["emergency_first_army_three_release_frame"] if army_generation == "three" else -1,
             "frames": release_frames,
             "sizes": release_sizes,
-            "army_two_flags": release_flags,
+            f"army_{army_generation}_flags": release_flags,
+            "army_two_flags": release_flags if army_generation == "two" else [],
+            "army_three_flags": release_flags if army_generation == "three" else [],
             "reason_counts": trace_reason_counts,
             "trace": release_trace,
         },
@@ -390,7 +430,7 @@ def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | 
         "quantitative_grade": {"score": score, "max_score": 100, "grade": grade},
         "review_flags": sorted(set(review_flags)),
         "opportunity_notes": sorted(set(opportunity_notes)),
-        "note": "v33 emergency bridge counters are descriptive telemetry. Assignment totals count probe identities; release totals count released defenders; release reason counters count release events.",
+        "note": "v33/v34 emergency bridge counters are descriptive telemetry. Assignment totals count probe identities; release totals count released defenders; release reason counters count release events.",
     }
 
 
@@ -399,6 +439,326 @@ def _player_race(player: object) -> str | None:
         return None
     environment = player.get("environment") if isinstance(player.get("environment"), dict) else {}
     return _normalise_race(environment.get("BWAPI_CONFIG_AUTO_MENU__RACE"))
+
+
+def _zerg_offense_stage_summary(metadata: dict[str, object], opponent_race: str | None = None) -> dict[str, object]:
+    """Validate v34's staged-offense scalar and parallel state traces.
+
+    The v31-v33 diagnostics do not have these fields. Their absence is kept as
+    ``legacy_absent`` so old scorecards remain useful and comparable.
+    """
+    scalar_defaults: dict[str, object] = {
+        "zerg_offense_stage_released": False,
+        "zerg_offense_stage_remote_target_events": 0,
+        "zerg_offense_stage_unique_units": 0,
+        "zerg_offense_stage_pre_release_remote_blocks": 0,
+        "zerg_offense_stage_pre_release_remote_orders": 0,
+        "zerg_offense_stage_pre_release_remote_attempts": 0,
+        "zerg_offense_stage_pre_release_remote_accepts": 0,
+        "zerg_offense_stage_post_release_remote_attempts": 0,
+        "zerg_offense_stage_post_release_remote_accepts": 0,
+        "zerg_offense_stage_local_defense_attack_orders": 0,
+        "zerg_offense_stage_home_move_attempts": 0,
+        "zerg_offense_stage_home_move_orders": 0,
+        "zerg_offense_stage_home_move_accepts": 0,
+        "zerg_offense_stage_home_move_cooldown_blocks": 0,
+        "zerg_offense_stage_home_move_repeat_orders": 0,
+        "zerg_offense_stage_min_accepted_repeat_interval": -1,
+        "zerg_offense_stage_home_target_orders": 0,
+        "zerg_offense_stage_release_events": 0,
+        "zerg_offense_stage_reset_events": 0,
+        "zerg_offense_stage_restage_events": 0,
+        "first_zerg_offense_stage_suppression_frame": -1,
+        "first_zerg_offense_stage_frame": -1,
+        "first_zerg_offense_stage_threshold_frame": -1,
+        "first_zerg_offense_stage_release_frame": -1,
+        "first_zerg_offense_stage_reset_frame": -1,
+        "zerg_offense_stage_release_army": -1,
+        "zerg_offense_stage_release_surplus": -1,
+        "zerg_offense_stage_latch_clear_frame": -1,
+        "zerg_offense_stage_first_zero_after_release_frame": -1,
+        "zerg_offense_stage_peak_surplus": 0,
+        "zerg_offense_stage_current_surplus": 0,
+    }
+    list_names = (
+        "zerg_offense_stage_release_unit_ids",
+        "zerg_offense_stage_state_frames",
+        "zerg_offense_stage_state_army",
+        "zerg_offense_stage_state_reserve",
+        "zerg_offense_stage_state_surplus",
+        "zerg_offense_stage_state_codes",
+        "zerg_offense_stage_state_cause_codes",
+    )
+    required = tuple(scalar_defaults) + list_names + ("zerg_offense_stage_latch_clear_cause",)
+    present = [name for name in required if name in metadata]
+    feature_present = any(name in metadata for name in required)
+    missing = [name for name in required if name not in metadata] if feature_present else []
+    invalid_scalars = [name for name, default in scalar_defaults.items()
+                       if name in metadata and (
+                           (isinstance(default, bool) and not isinstance(metadata[name], bool)) or
+                           (isinstance(default, int) and not isinstance(default, bool) and
+                            (not isinstance(metadata[name], int) or isinstance(metadata[name], bool)))
+                       )]
+    invalid_lists = [name for name in list_names if name in metadata and not isinstance(metadata[name], list)]
+    if "zerg_offense_stage_latch_clear_cause" in metadata and not isinstance(metadata["zerg_offense_stage_latch_clear_cause"], str):
+        invalid_scalars.append("zerg_offense_stage_latch_clear_cause")
+    values = {}
+    for name, default in scalar_defaults.items():
+        raw = metadata.get(name, default)
+        if isinstance(default, bool):
+            values[name] = raw if isinstance(raw, bool) else default
+        else:
+            values[name] = raw if isinstance(raw, int) and not isinstance(raw, bool) else default
+    raw_cause = metadata.get("zerg_offense_stage_latch_clear_cause", "none")
+    values["zerg_offense_stage_latch_clear_cause"] = raw_cause if isinstance(raw_cause, str) else "none"
+    arrays = {name: _metadata_list(metadata, name) for name in list_names}
+    race = _normalise_race(opponent_race)
+    if race is None:
+        known_zerg = metadata.get("known_zerg")
+        if isinstance(known_zerg, bool):
+            race = "zerg" if known_zerg else "non-zerg"
+    expected_active = race == "zerg"
+    expected_inactive = race in {"terran", "protoss", "non-zerg"}
+    review_flags: list[str] = []
+    if feature_present and missing:
+        review_flags.append("zerg_offense_required_fields_missing")
+    opportunity_notes: list[str] = []
+    if invalid_scalars:
+        review_flags.append("zerg_offense_scalar_type_mismatch")
+    if invalid_lists:
+        review_flags.append("zerg_offense_trace_type_mismatch")
+
+    lengths = {name: len(value) for name, value in arrays.items()}
+    state_names = list_names[1:]
+    state_lengths = {lengths[name] for name in state_names}
+    if len(state_lengths) > 1:
+        review_flags.append("zerg_offense_state_trace_length_mismatch")
+    row_count = min((lengths[name] for name in state_names), default=0)
+    rows: list[dict[str, object]] = []
+    for index in range(row_count):
+        row = {
+            "index": index,
+            "frame": arrays["zerg_offense_stage_state_frames"][index],
+            "army": arrays["zerg_offense_stage_state_army"][index],
+            "reserve": arrays["zerg_offense_stage_state_reserve"][index],
+            "surplus": arrays["zerg_offense_stage_state_surplus"][index],
+            "state": arrays["zerg_offense_stage_state_codes"][index],
+            "cause": arrays["zerg_offense_stage_state_cause_codes"][index],
+        }
+        rows.append(row)
+        for key in ("frame", "army", "reserve", "surplus", "state", "cause"):
+            if not isinstance(row[key], int) or isinstance(row[key], bool):
+                review_flags.append("zerg_offense_state_value_type_mismatch")
+                row[key] = 0
+        if isinstance(row["state"], int) and row["state"] not in (0, 1):
+            review_flags.append("zerg_offense_unknown_state_code")
+        if isinstance(row["cause"], int) and row["cause"] not in (0, 2, 4):
+            review_flags.append("zerg_offense_unknown_cause_code")
+        for key in ("frame", "army", "reserve", "surplus"):
+            if isinstance(row[key], int) and row[key] < 0:
+                review_flags.append("zerg_offense_negative_state_value")
+
+    nonnegative_counter_names = (
+        "zerg_offense_stage_remote_target_events", "zerg_offense_stage_unique_units",
+        "zerg_offense_stage_pre_release_remote_blocks", "zerg_offense_stage_pre_release_remote_orders",
+        "zerg_offense_stage_pre_release_remote_attempts", "zerg_offense_stage_pre_release_remote_accepts",
+        "zerg_offense_stage_post_release_remote_attempts", "zerg_offense_stage_post_release_remote_accepts",
+        "zerg_offense_stage_local_defense_attack_orders", "zerg_offense_stage_home_move_attempts",
+        "zerg_offense_stage_home_move_orders", "zerg_offense_stage_home_move_accepts",
+        "zerg_offense_stage_home_move_cooldown_blocks", "zerg_offense_stage_home_move_repeat_orders",
+        "zerg_offense_stage_home_target_orders", "zerg_offense_stage_release_events",
+        "zerg_offense_stage_reset_events", "zerg_offense_stage_restage_events",
+        "zerg_offense_stage_peak_surplus", "zerg_offense_stage_current_surplus",
+    )
+    if any(values[name] < 0 for name in nonnegative_counter_names):
+        review_flags.append("zerg_offense_negative_counter")
+    if values["zerg_offense_stage_unique_units"] < 0:
+        review_flags.append("zerg_offense_negative_unique_units")
+    if values["zerg_offense_stage_home_move_orders"] > values["zerg_offense_stage_home_move_attempts"]:
+        review_flags.append("zerg_offense_home_moves_exceed_attempts")
+    if values["zerg_offense_stage_home_move_accepts"] != values["zerg_offense_stage_home_move_orders"]:
+        review_flags.append("zerg_offense_home_move_accept_mismatch")
+    if values["zerg_offense_stage_home_move_repeat_orders"] > values["zerg_offense_stage_home_move_orders"]:
+        review_flags.append("zerg_offense_home_move_repeats_exceed_orders")
+    interval = values["zerg_offense_stage_min_accepted_repeat_interval"]
+    if isinstance(interval, int) and interval >= 0 and interval < 96:
+        review_flags.append("zerg_offense_home_move_cadence_below_96")
+    if values["zerg_offense_stage_pre_release_remote_blocks"] != values["zerg_offense_stage_pre_release_remote_attempts"]:
+        review_flags.append("zerg_offense_remote_block_attempt_mismatch")
+    if values["zerg_offense_stage_pre_release_remote_orders"] != values["zerg_offense_stage_pre_release_remote_accepts"]:
+        review_flags.append("zerg_offense_pre_release_order_accept_mismatch")
+    if values["zerg_offense_stage_pre_release_remote_accepts"] > 0:
+        review_flags.append("zerg_offense_remote_attack_during_staging")
+    if values["zerg_offense_stage_post_release_remote_accepts"] > values["zerg_offense_stage_post_release_remote_attempts"]:
+        review_flags.append("zerg_offense_post_release_accepts_exceed_attempts")
+
+    cause_release = [row for row in rows if row["cause"] == 2]
+    cause_reset = [row for row in rows if row["cause"] == 4]
+    if values["zerg_offense_stage_release_events"] != len(cause_release):
+        review_flags.append("zerg_offense_release_event_count_mismatch")
+    if values["zerg_offense_stage_reset_events"] != len(cause_reset):
+        review_flags.append("zerg_offense_reset_event_count_mismatch")
+    if values["zerg_offense_stage_restage_events"] != values["zerg_offense_stage_reset_events"]:
+        review_flags.append("zerg_offense_restage_reset_count_mismatch")
+    for row in cause_release:
+        if row["state"] != 1 or row["surplus"] < 6:
+            review_flags.append("zerg_offense_release_without_threshold")
+    for row in cause_reset:
+        if row["state"] != 0 or row["surplus"] != 0:
+            review_flags.append("zerg_offense_reset_without_zero_surplus")
+    if rows:
+        first_positive = next((row for row in rows if row["surplus"] > 0), None)
+        if first_positive and first_positive["state"] != 0:
+            review_flags.append("zerg_offense_missing_initial_staging")
+        if first_positive and values["first_zerg_offense_stage_frame"] != first_positive["frame"]:
+            review_flags.append("zerg_offense_first_staging_frame_mismatch")
+        first_threshold = next((row for row in rows if row["surplus"] >= 6), None)
+        if first_threshold and values["first_zerg_offense_stage_threshold_frame"] != first_threshold["frame"]:
+            review_flags.append("zerg_offense_threshold_frame_mismatch")
+        if values["zerg_offense_stage_current_surplus"] != rows[-1]["surplus"]:
+            review_flags.append("zerg_offense_current_surplus_mismatch")
+        if _metadata_bool(metadata, "zerg_offense_stage_released", False) != (rows[-1]["state"] == 1):
+            review_flags.append("zerg_offense_latch_state_mismatch")
+        for previous, current in zip(rows, rows[1:]):
+            if previous["state"] == 1 and current["state"] == 0 and current["surplus"] != 0:
+                review_flags.append("zerg_offense_restage_with_positive_surplus")
+            if previous["state"] == 0 and current["state"] == 1 and current["surplus"] < 6:
+                review_flags.append("zerg_offense_release_below_threshold")
+    elif feature_present and expected_active:
+        opportunity_notes.append("state_trace_unobserved")
+
+    release_ids = arrays["zerg_offense_stage_release_unit_ids"]
+    if any(not isinstance(value, int) or isinstance(value, bool) for value in release_ids):
+        review_flags.append("zerg_offense_release_id_type_mismatch")
+    if len(set(release_ids)) != len(release_ids):
+        review_flags.append("zerg_offense_release_ids_duplicate")
+    if values["zerg_offense_stage_release_events"] > 0 and not release_ids:
+        review_flags.append("zerg_offense_release_ids_missing")
+    if cause_release:
+        first_release = cause_release[0]
+        if values["first_zerg_offense_stage_release_frame"] != first_release["frame"]:
+            review_flags.append("zerg_offense_release_frame_mismatch")
+        if values["zerg_offense_stage_release_army"] != first_release["army"]:
+            review_flags.append("zerg_offense_release_army_mismatch")
+        if values["zerg_offense_stage_release_surplus"] != first_release["surplus"]:
+            review_flags.append("zerg_offense_release_surplus_mismatch")
+    if values["zerg_offense_stage_reset_events"] > 0:
+        if values["zerg_offense_stage_latch_clear_frame"] < 0 or values["zerg_offense_stage_first_zero_after_release_frame"] < 0:
+            review_flags.append("zerg_offense_latch_clear_frame_missing")
+        if values["zerg_offense_stage_latch_clear_cause"] != "surplus_zero":
+            review_flags.append("zerg_offense_latch_clear_cause_mismatch")
+    elif values["zerg_offense_stage_latch_clear_frame"] != -1 or values["zerg_offense_stage_first_zero_after_release_frame"] != -1:
+        review_flags.append("zerg_offense_unexpected_latch_clear")
+    if values["zerg_offense_stage_reset_events"] == 0 and values["zerg_offense_stage_latch_clear_cause"] != "none":
+        review_flags.append("zerg_offense_unexpected_latch_clear_cause")
+
+    if expected_active and feature_present:
+        if values["zerg_offense_stage_peak_surplus"] < 6:
+            opportunity_notes.append("threshold_six_unobserved")
+        if values["zerg_offense_stage_remote_target_events"] == 0:
+            opportunity_notes.append("remote_staging_opportunity_unobserved")
+        if values["zerg_offense_stage_home_move_attempts"] == 0:
+            opportunity_notes.append("home_move_opportunity_unobserved")
+        if values["zerg_offense_stage_release_events"] > 0 and values["zerg_offense_stage_reset_events"] == 0:
+            opportunity_notes.append("latch_clear_unobserved")
+
+    inactive_values = []
+    if expected_inactive and feature_present:
+        for name, default in scalar_defaults.items():
+            value = values[name]
+            if value != default:
+                inactive_values.append(name)
+        if values["zerg_offense_stage_latch_clear_cause"] != "none":
+            inactive_values.append("zerg_offense_stage_latch_clear_cause")
+        if any(arrays[name] for name in list_names):
+            inactive_values.extend(name for name in list_names if arrays[name])
+        if inactive_values:
+            review_flags.append("non_zerg_zerg_offense_activity")
+
+    checks = {
+        "telemetry_complete": feature_present and not missing,
+        "state_trace_consistent": not any(flag.startswith("zerg_offense_state") or flag.startswith("zerg_offense_unknown") for flag in review_flags),
+        "threshold_latch_consistent": not any(flag.startswith("zerg_offense_release") or flag.startswith("zerg_offense_reset") or flag.startswith("zerg_offense_restage") or flag.startswith("zerg_offense_latch") for flag in review_flags),
+        "staging_blocks_remote": "zerg_offense_remote_attack_during_staging" not in review_flags,
+        "home_move_cadence": "zerg_offense_home_move_cadence_below_96" not in review_flags,
+        "non_zerg_sentinels": expected_inactive and not inactive_values if expected_inactive else None,
+    }
+    if not feature_present:
+        grade = "legacy_absent"
+        telemetry_status = "legacy_absent"
+    elif expected_inactive:
+        grade = "pass" if not review_flags else "review"
+        telemetry_status = "complete" if not missing else "partial"
+    elif expected_active and values["zerg_offense_stage_peak_surplus"] < 6 and not review_flags:
+        grade = "untested"
+        telemetry_status = "complete" if not missing else "partial"
+    else:
+        grade = "review" if review_flags else "pass"
+        telemetry_status = "complete" if not missing else "partial"
+    return {
+        "generation": "v34" if feature_present else "legacy",
+        "opponent_race": race,
+        "expected_active": expected_active,
+        "expected_inactive": expected_inactive,
+        "telemetry_status": telemetry_status,
+        "fields_present": present,
+        "missing_fields": missing,
+        "invalid_fields": sorted(set(invalid_scalars + invalid_lists)),
+        "state_codes": {"home_staging": 0, "released_latched": 1},
+        "cause_codes": {"steady": 0, "release_threshold": 2, "surplus_zero": 4},
+        "release_threshold": 6,
+        "state": {
+            "rows": rows,
+            "frames": arrays["zerg_offense_stage_state_frames"],
+            "army": arrays["zerg_offense_stage_state_army"],
+            "reserve": arrays["zerg_offense_stage_state_reserve"],
+            "surplus": arrays["zerg_offense_stage_state_surplus"],
+            "codes": arrays["zerg_offense_stage_state_codes"],
+            "cause_codes": arrays["zerg_offense_stage_state_cause_codes"],
+        },
+        "release": {
+            "events": values["zerg_offense_stage_release_events"],
+            "frame": values["first_zerg_offense_stage_release_frame"],
+            "army": values["zerg_offense_stage_release_army"],
+            "surplus": values["zerg_offense_stage_release_surplus"],
+            "unit_ids": release_ids,
+            "threshold_frame": values["first_zerg_offense_stage_threshold_frame"],
+        },
+        "latch": {
+            "released": values["zerg_offense_stage_released"],
+            "reset_events": values["zerg_offense_stage_reset_events"],
+            "restage_events": values["zerg_offense_stage_restage_events"],
+            "clear_frame": values["zerg_offense_stage_latch_clear_frame"],
+            "clear_cause": values["zerg_offense_stage_latch_clear_cause"],
+            "first_zero_after_release_frame": values["zerg_offense_stage_first_zero_after_release_frame"],
+        },
+        "remote_offense": {
+            "target_events": values["zerg_offense_stage_remote_target_events"],
+            "pre_release_blocks": values["zerg_offense_stage_pre_release_remote_blocks"],
+            "pre_release_attempts": values["zerg_offense_stage_pre_release_remote_attempts"],
+            "pre_release_accepts": values["zerg_offense_stage_pre_release_remote_accepts"],
+            "pre_release_orders": values["zerg_offense_stage_pre_release_remote_orders"],
+            "post_release_attempts": values["zerg_offense_stage_post_release_remote_attempts"],
+            "post_release_accepts": values["zerg_offense_stage_post_release_remote_accepts"],
+            "local_defense_attack_orders": values["zerg_offense_stage_local_defense_attack_orders"],
+        },
+        "home_moves": {
+            "attempts": values["zerg_offense_stage_home_move_attempts"],
+            "orders": values["zerg_offense_stage_home_move_orders"],
+            "accepts": values["zerg_offense_stage_home_move_accepts"],
+            "cooldown_blocks": values["zerg_offense_stage_home_move_cooldown_blocks"],
+            "repeat_orders": values["zerg_offense_stage_home_move_repeat_orders"],
+            "min_accepted_repeat_interval": values["zerg_offense_stage_min_accepted_repeat_interval"],
+            "home_target_orders": values["zerg_offense_stage_home_target_orders"],
+        },
+        "peak_surplus": values["zerg_offense_stage_peak_surplus"],
+        "current_surplus": values["zerg_offense_stage_current_surplus"],
+        "checks": checks,
+        "quantitative_grade": {"grade": grade, "score": round(100 * sum(value for value in checks.values() if isinstance(value, bool)) / max(1, sum(isinstance(value, bool) for value in checks.values()))), "max_score": 100},
+        "review_flags": sorted(set(review_flags)),
+        "opportunity_notes": sorted(set(opportunity_notes)),
+        "note": "v34 staged-offense counters and state rows are descriptive telemetry; unobserved registered opportunities are untested unless the evaluation cohort gate explicitly requires exercise.",
+    }
 
 
 def read_diagnostic_events(metadata: dict[str, object], root: Path) -> dict[str, object]:
@@ -557,6 +917,8 @@ def _diagnostic_summary(metadata: dict[str, object], root: Path, opponent_race: 
     }
     result["events"] = read_diagnostic_events(metadata, root)
     result["emergency_bridge"] = _emergency_bridge_summary(metadata, opponent_race)
+    result["telemetry_generation"] = _diagnostic_generation(metadata)
+    result["zerg_offense_stage"] = _zerg_offense_stage_summary(metadata, opponent_race)
     return result
 
 
@@ -635,6 +997,7 @@ def score_kestrel_match(manifest: dict[str, object], manifest_path: Path, screp:
         "short_game": isinstance(manifest.get("elapsed_seconds"), (int, float)) and manifest["elapsed_seconds"] <= 300,
         "diagnostic": diagnostic,
         "emergency_bridge": diagnostic["emergency_bridge"],
+        "zerg_offense_stage": diagnostic["zerg_offense_stage"],
         "outcome_performance": outcome_performance(diagnostic_metadata),
     })
     parsed_replays: list[dict[str, object]] = []
@@ -671,6 +1034,7 @@ def score_kestrel_match(manifest: dict[str, object], manifest_path: Path, screp:
     if diagnostic.get("metadata_exists") and diagnostic.get("metadata_file_parse_ok") is not True: integrity_reasons.append("diagnostic_parse")
     if diagnostic.get("metadata_file_mismatches"): integrity_reasons.append("diagnostic_mismatch")
     if (diagnostic.get("emergency_bridge") or {}).get("review_flags"): integrity_reasons.append("emergency_mechanism_review")
+    if (diagnostic.get("zerg_offense_stage") or {}).get("review_flags"): integrity_reasons.append("zerg_offense_stage_review")
     if not candidate_parsed: integrity_reasons.append("candidate_replay_missing")
     if candidate_parsed and not candidate_parsed.get("manifest_hash_matches"): integrity_reasons.append("candidate_replay_hash")
     if any(not item["fidelity"].get("hash_matches") for item in game["replays"]): integrity_reasons.append("replay_hash")
@@ -856,7 +1220,7 @@ def main() -> int:
     bridge_games = [g.get("emergency_bridge") for g in games if isinstance(g.get("emergency_bridge"), dict)]
     bridge_review_flags: dict[str, int] = {}
     bridge_opportunity_notes: dict[str, int] = {}
-    bridge_reason_counts = {"threat_clear": 0, "army_two": 0, "unknown": 0}
+    bridge_reason_counts = {"threat_clear": 0, "army_two": 0, "army_three": 0, "unknown": 0}
     for bridge in bridge_games:
         for flag in bridge.get("review_flags", []):
             bridge_review_flags[flag] = bridge_review_flags.get(flag, 0) + 1
@@ -883,6 +1247,35 @@ def main() -> int:
         "opportunity_notes": dict(sorted(bridge_opportunity_notes.items())),
         "review_flags": dict(sorted(bridge_review_flags.items())),
     }
+    stage_games = [g.get("zerg_offense_stage") for g in games if isinstance(g.get("zerg_offense_stage"), dict)]
+    stage_review_flags: dict[str, int] = {}
+    stage_opportunity_notes: dict[str, int] = {}
+    aggregate["zerg_offense_stage"] = {
+        "games": len(stage_games),
+        "generations": {generation: sum(stage.get("generation") == generation for stage in stage_games)
+                         for generation in ("v34", "legacy")},
+        "grades": {grade: sum((stage.get("quantitative_grade") or {}).get("grade") == grade for stage in stage_games)
+                   for grade in ("pass", "untested", "review", "legacy_absent")},
+        "threshold_observed": sum((stage.get("peak_surplus") or 0) >= 6 for stage in stage_games),
+        "release_events": sum((stage.get("release") or {}).get("events", 0) for stage in stage_games),
+        "pre_release_remote_blocks": sum((stage.get("remote_offense") or {}).get("pre_release_blocks", 0) for stage in stage_games),
+        "pre_release_remote_attempts": sum((stage.get("remote_offense") or {}).get("pre_release_attempts", 0) for stage in stage_games),
+        "pre_release_remote_accepts": sum((stage.get("remote_offense") or {}).get("pre_release_accepts", 0) for stage in stage_games),
+        "post_release_remote_attempts": sum((stage.get("remote_offense") or {}).get("post_release_attempts", 0) for stage in stage_games),
+        "post_release_remote_accepts": sum((stage.get("remote_offense") or {}).get("post_release_accepts", 0) for stage in stage_games),
+        "home_move_attempts": sum((stage.get("home_moves") or {}).get("attempts", 0) for stage in stage_games),
+        "home_move_accepts": sum((stage.get("home_moves") or {}).get("accepts", 0) for stage in stage_games),
+        "non_zerg_sentinel_passes": sum((stage.get("checks") or {}).get("non_zerg_sentinels") is True for stage in stage_games),
+        "opportunity_notes": dict(sorted(stage_opportunity_notes.items())),
+        "review_flags": dict(sorted(stage_review_flags.items())),
+    }
+    for stage in stage_games:
+        for flag in stage.get("review_flags", []):
+            stage_review_flags[flag] = stage_review_flags.get(flag, 0) + 1
+        for note in stage.get("opportunity_notes", []):
+            stage_opportunity_notes[note] = stage_opportunity_notes.get(note, 0) + 1
+    aggregate["zerg_offense_stage"]["opportunity_notes"] = dict(sorted(stage_opportunity_notes.items()))
+    aggregate["zerg_offense_stage"]["review_flags"] = dict(sorted(stage_review_flags.items()))
     output = Path(args.output).resolve() if args.output else experiment_dir / "hillclimb-scorecard.json"
     scorecard = {"schema_version": 1, "experiment_id": args.experiment_id,
                  "candidate_name": candidate_name, "ledger_path": str(ledger_path),

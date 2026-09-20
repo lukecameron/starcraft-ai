@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "experiment_id": "kestrel-hillclimb-v13",
+  "registered_at": "2026-09-21",
+  "eval_plan_sha256": "16c62d893a1e84232bda0d2f647d1862165063434d4680c5e36cc695fb60aac1",
+  "purpose": "Exploratory five-way Kestrel v34 screen: v33 two-Probe bridge through army two plus nonreserve offense staged until surplus six and latched until surplus zero",
+  "hypothesis": "The v33 bridge threshold extension and surplus-six offense latch will improve short verified completion without violating reserve, commandability, provenance, or non-Zerg inactivity gates.",
+  "stop_condition": "Run exactly five fresh attempts concurrently; retain every result and stop after two consecutive infrastructure-invalid attempts, a 900-second cohort cap, or completion. Do not retry, reseed, or replace attempts. Any timeout or missing terminal result is INCONCLUSIVE.",
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "wall_timeout_seconds": 300,
+  "cohort_wall_cap_seconds": 900,
+  "concurrency": 5,
+  "stop_after_consecutive_invalid": 2,
+  "candidate": {
+    "name": "Kestrel-v34-two-Probe-threshold-and-staged-offense-latch",
+    "path": "artifacts/builds/f71a1dc353a89c1770a05c59b21ae4907aebb7650d87cbb3af9239137a4b763a/kestrel-opening-v34-candidate/Kestrel.dylib",
+    "race": "Protoss",
+    "sha256": "f71a1dc353a89c1770a05c59b21ae4907aebb7650d87cbb3af9239137a4b763a",
+    "ownership": "Ours",
+    "origin": "Original",
+    "author": "Luke Cameron",
+    "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel",
+    "source_files": [
+      "third_party/kestrel-opening-v34-candidate/Kestrel.cpp",
+      "third_party/kestrel-opening-v34-candidate/CMakeLists.txt",
+      "third_party/kestrel-opening-v34-candidate/LICENSE"
+    ],
+    "source_sha256": "947b64fb0c6510bfbf32024850e9e517842f22349d8ac27a59f61d63897cf8bd",
+    "source_sha256_scope": "Kestrel.cpp",
+    "source_combo_sha256": "9d182a0f6db463bb5a6cf9ee16cd4b157988edd1626ce3d48e5b1630efaa9815",
+    "build_sidecar": "artifacts/builds/f71a1dc353a89c1770a05c59b21ae4907aebb7650d87cbb3af9239137a4b763a/kestrel-opening-v34-candidate/Kestrel.dylib.build.json",
+    "source_patch": "patches/kestrel-v33-to-v34-two-probe-threshold-and-offense-latch.patch",
+    "source_patch_sha256": "0e0c21d9957c1e9d5d506355a5af357e0b887406de14399e91f8310ab941dca1"
+  },
+  "base_candidate": {
+    "experiment_id": "kestrel-hillclimb-v12",
+    "name": "Kestrel-v33-two-Probe-emergency-Zerg-bridge",
+    "binary_path": "artifacts/builds/1d77b4483ea0fa21db1df9d8b45e15364986b793a2745b2c570f0db2fb55b632/kestrel-opening-v33-candidate/Kestrel.dylib",
+    "binary_sha256": "1d77b4483ea0fa21db1df9d8b45e15364986b793a2745b2c570f0db2fb55b632",
+    "source_sha256": "d3c09bc2cd94eaccabefffe0fe76ed542f0e063a2a400a1428fc4b51d79d887a",
+    "source_combo_sha256": "562dc539d1171c5958ce80cbaebef4e53b336c908dc51e7385e75cb0d656cb66",
+    "source_patch": "patches/kestrel-v32-to-v33-two-probe-emergency-zerg-bridge.patch",
+    "source_patch_sha256": "e1765155cff50b27e306b16f6b9c6d562ea9d1aae5746ed1d74854228b3d7276",
+    "policy": "Exact v33 base; only the registered bridge-threshold and staged-offense changes are added."
+  },
+  "opponents": {
+    "zzzk": {
+      "name": "ZZZKBot",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "race": "Zerg",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748",
+      "ownership": "Ours",
+      "origin": "Port",
+      "author": "Chris Coxe",
+      "source_url": "https://github.com/chriscoxe/ZZZKBot"
+    },
+    "uab-t": {
+      "name": "UAlbertaBot-Terran",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "race": "Terran",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9",
+      "ownership": "Ours",
+      "origin": "Port",
+      "author": "David Churchill",
+      "source_url": "https://github.com/davechurchill/ualbertabot"
+    },
+    "uab-p": {
+      "name": "UAlbertaBot-Protoss",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "race": "Protoss",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9",
+      "ownership": "Ours",
+      "origin": "Port",
+      "author": "David Churchill",
+      "source_url": "https://github.com/davechurchill/ualbertabot"
+    },
+    "mcrave": {
+      "name": "McRave-9Pool-treatment",
+      "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+      "race": "Zerg",
+      "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e",
+      "ownership": "Ours",
+      "origin": "Fork",
+      "author": "Christian McCrave",
+      "source_url": "https://github.com/Cmccrave/McRave"
+    },
+    "stardust": {
+      "name": "Stardust-repaired",
+      "path": "artifacts/builds/1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa/stardust-emptytimer-repair/Stardust.dylib",
+      "race": "Protoss",
+      "sha256": "1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa",
+      "ownership": "Ours",
+      "origin": "Fork",
+      "author": "Bruce Mackenzie Nielsen",
+      "source_url": "https://github.com/bmnielsen/Stardust"
+    }
+  },
+  "games": [
+    {
+      "opponent": "zzzk",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9931,
+      "candidate_player": 1
+    },
+    {
+      "opponent": "uab-t",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9932,
+      "candidate_player": 2
+    },
+    {
+      "opponent": "uab-p",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9933,
+      "candidate_player": 1
+    },
+    {
+      "opponent": "mcrave",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9934,
+      "candidate_player": 2
+    },
+    {
+      "opponent": "stardust",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9935,
+      "candidate_player": 1
+    }
+  ],
+  "required_files": [
+    {
+      "path": "docs/evaluations/kestrel-hillclimb-v13/EVAL_PLAN.md",
+      "sha256": "16c62d893a1e84232bda0d2f647d1862165063434d4680c5e36cc695fb60aac1"
+    },
+    {
+      "path": "patches/kestrel-v33-to-v34-two-probe-threshold-and-offense-latch.patch",
+      "sha256": "0e0c21d9957c1e9d5d506355a5af357e0b887406de14399e91f8310ab941dca1"
+    }
+  ],
+  "policy_base_experiment_id": "kestrel-hillclimb-v12",
+  "diagnostic_motivation_experiment_id": "kestrel-first-engagement-diagnostic-v1",
+  "replaces_candidate": "Kestrel-v33-two-Probe-emergency-Zerg-bridge",
+  "notes": [
+    "The v34 candidate must compile against native OpenBW and official BWAPI 4.4 headers before launch.",
+    "The bridge keeps the v33 public-observation rules and two-Probe cap, is active through completed combat army two, and releases at army three or threat clear.",
+    "Nonreserve offense stages at home until nonreserve_surplus is at least six, then remains latched released until surplus is zero; no remote offense is allowed during staging.",
+    "All v33 bridge, v32 reserve, production, commandability, regression, provenance, and non-Zerg inactivity gates remain mandatory.",
+    "Every decision game must be a short verified terminal game before the 300-second wall cap. Timeout or missing terminal result is INCONCLUSIVE.",
+    "This exploratory screen cannot update Elo; advancement requires every gate plus at least one verified win."
+  ],
+  "diagnostic_schema": {
+    "bridge_release_prefix": "emergency_army_three",
+    "bridge_release_flag_array": "emergency_release_army_three_flags",
+    "offense_stage_prefix": "zerg_offense_stage",
+    "state_codes": {
+      "0": "home_staging",
+      "1": "released_latched"
+    },
+    "cause_codes": {
+      "0": "observation",
+      "2": "release_surplus_ge_6",
+      "4": "latch_clear_surplus_zero"
+    },
+    "legacy_compatibility": "Scorer retains v33 and earlier field extraction for archived diagnostics."
+  },
+  "provenance_registry": "config/bot-identities.json"
+}
