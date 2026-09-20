@@ -1742,6 +1742,44 @@
         "author": "Luke Cameron",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
       }
+    },
+    {
+      "id": "kestrel-hillclimb-v22",
+      "title": "Kestrel v42 five-Probe Pylon diagnostic",
+      "date": "2026-09-21",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "A known-Zerg five-Probe Pylon opening skips the second queued Probe, advances the first Pylon by at least 180 frames in all four Zerg lanes, and yields two local defenders on both failed P2 ZZZK lanes without treatment leakage or retained-policy regression.",
+      "notes": "Four fixed rows completed as losses and the UAlbertaBot-Terran row timed out. The five-Probe treatment executed in every Zerg row and three of four Pylon timing gates passed, but both primary P2 lanes still had one defender and Benzene regressed from a two-defender win to a one-defender loss.",
+      "conclusion": "Rejected because the Destination mechanism threshold, both primary two-defender gates, the Benzene retained-policy gate, the win gate, and the complete-terminal gate failed. V42 does not advance; no promotion or Elo update.",
+      "evidence_run_ids": [
+        "20260920T211709-3cac45da16f9",
+        "20260920T211709-32e13ddc3cfc",
+        "20260920T211709-e3b8432d5601",
+        "20260920T211709-c7ca11b9d488",
+        "20260920T211709-aadbbf559d96"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v22",
+      "candidate_binary_sha256": "a212db989667f9abc5ed88c82ea474af03a9a0e353924422e131feacaec139f7",
+      "candidate_source_sha256": "33bfc50879539f84ed886ed3430f813ad0fbc7d9ad7c12b380ed308ffea8a950",
+      "candidate_source_combo_sha256": "114de3d7522e9936fa30f918f1ba368dcd4e4799f958c4bd66bfc1ac0560356a",
+      "candidate_patch_sha256": "0f50c3c1106a00ed5cf9852ac34e227ff15d4e4ac7925db072442710c4df11ec",
+      "candidate_build_sidecar_sha256": "4e544ecf50c752abdddc8018898f58933ccf06bb6f9230d236a9ccd6c5462a7a",
+      "plan_sha256": "2cfcbf9c7f1870c5e90579a452b0dbd4e74639c2554485a24897133e115ff3a0",
+      "registered_schedule_sha256": "4ac796e5ae2da62c8bcab418717858dea081b73cb3999bdf9417b37bfeae56a4",
+      "schedule_sha256": "d399b2123d72516e59eb0fc4520819f0100e7364c5425fe45ebda71b83a55c78",
+      "ledger_sha256": "1c7c845177aca82b286b960abc692b03da8c5412623cf19ac51e4d850f14de2b",
+      "scorecard_sha256": "07cb2478cd9a88476302f16d088c0ab7c623dad2afae85c23bc422f3bea04107",
+      "integrity_audit_sha256": "91c5dc9853e3d4b7e8d0bc4b72388c7f260155a002d4ee0d5d85512e2e9e233b",
+      "result_sha256": "c5ae9e359dd5c08a5e57e48c45ba30f8bbde32c137bb9faa890eff7015334063",
+      "result_path": "docs/evaluations/kestrel-hillclimb-v22/RESULT.md",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "author": "Luke Cameron",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      },
+      "matched_parent_experiment": "kestrel-hillclimb-v21"
     }
   ]
 }
