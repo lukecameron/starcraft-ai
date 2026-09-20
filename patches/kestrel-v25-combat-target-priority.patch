@@ -1,0 +1,23 @@
+--- third_party/kestrel-opening-v22-candidate/Kestrel.cpp	2026-09-20 21:54:52
++++ third_party/kestrel-opening-v25-candidate/Kestrel.cpp	2026-09-20 22:12:41
+@@ -373,12 +373,18 @@
+             }
+         }
+         BWAPI::Unit target = nullptr;
+-        int best = std::numeric_limits<int>::max();
++        int bestPriority = std::numeric_limits<int>::max();
++        int bestDistance = std::numeric_limits<int>::max();
+         for (auto enemy : BWAPI::Broodwar->getAllUnits()) {
+             if (!enemy->exists() || !enemy->isVisible() || !BWAPI::Broodwar->self()->isEnemy(enemy->getPlayer())) continue;
+             if (enemy->isFlying() || !enemy->isDetected()) continue;
++            const int priority = enemy->getType().canAttack() ? 0 : 1;
+             const int distance = from->getDistance(enemy);
+-            if (distance < best) { best = distance; target = enemy; }
++            if (priority < bestPriority || (priority == bestPriority && distance < bestDistance)) {
++                bestPriority = priority;
++                bestDistance = distance;
++                target = enemy;
++            }
+         }
+         return target;
+     }
