@@ -1,0 +1,13 @@
+diff --git a/Source/McRave/Map/Grids/Grids.cpp b/Source/McRave/Map/Grids/Grids.cpp
+index 969efb3..49177bb 100644
+--- a/Source/McRave/Map/Grids/Grids.cpp
++++ b/Source/McRave/Map/Grids/Grids.cpp
+@@ -151,7 +151,7 @@ namespace McRave::Grids {
+                 radius += 2;
+                 for (auto &w : Util::getWalkCircle(radius)) {
+                     auto walk = center + w;
+-                    if (!walk.isValid())
++                    if (walk.x < 0 || walk.y < 0 || walk.x >= mapWalkWidth || walk.y >= mapWalkHeight)
+                         continue;
+ 
+                     auto &index     = grid[gridWalkScale * walk.y + walk.x];

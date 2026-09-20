@@ -755,6 +755,97 @@
         "20260920T071134-0c1c99b3cdfb",
         "20260920T071137-c12df661de50"
       ]
+    },
+    {
+      "id": "mcrave-ualberta-zerg-compat-v1",
+      "title": "Check UAlberta Zerg as a second opponent",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "INCONCLUSIVE",
+      "hypothesis": "Frozen UAlbertaBot can complete its configured Zerg production and full games against the McRave candidate at the required 384 frames per second.",
+      "notes": "Two fixed games completed cleanly with four fully parsed and hashed replays. UAlberta produced Drones, a Spawning Pool and Zerglings in both. Zero terminal unit counters describe survivors after defeat, not cumulative production.",
+      "conclusion": "Gameplay compatibility passed, but Destination ran at 314.6 fps, below the fixed 384-fps requirement; Benzene ran at 418.8 fps. The McRave-side process is the first profiling target. No retry or strength promotion.",
+      "evidence_run_ids": [
+        "20260920T071352-783c238a4157",
+        "20260920T071429-e83ebd600032"
+      ]
+    },
+    {
+      "id": "kestrel-pylon-reservation-v12",
+      "title": "Kestrel reserves minerals for its first Pylon",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Protecting the pending first Pylon\u2019s mineral cost will let a single accepted build order start construction within 120 frames while preserving normal production.",
+      "notes": "Both fixed games issued only one first-Pylon build order. Benzene took 289 frames to start construction; Heartbreak took 115. Both games completed with parsed replay pairs. The once-only guard was corrected before either trial.",
+      "conclusion": "The registered screen failed: Benzene exceeded the 120-frame limit, and Heartbreak rejected 11 of 68 commands, all build Unit_Busy errors. Both games lost. Keep v7; distinguish builder travel and command conflicts before another opening change.",
+      "evidence_run_ids": [
+        "20260920T072208-a970044c0407",
+        "20260920T072210-f1bde9483beb"
+      ]
+    },
+    {
+      "id": "mcrave-uabz-destination-profile-v1",
+      "title": "McRave profiling launch failed before initialization",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "INCONCLUSIVE",
+      "hypothesis": "A complete ten-second sample after frame 15000 will identify a McRave subsystem accounting for at least 20% of main-thread samples.",
+      "notes": "The single allowed launch used the default sandbox and failed local socket setup before gameplay. Both clients printed connect errors; no telemetry, samples or replay was produced. The failed attempt remains preserved.",
+      "conclusion": "No profiling evidence. This evaluation is closed without a retry. A separately registered v2 corrects the execution environment while retaining the same measurement and decision rules.",
+      "evidence_run_ids": [
+        "20260920T072243-b14c5982eca5"
+      ]
+    },
+    {
+      "id": "mcrave-uabz-destination-profile-v2",
+      "title": "Profile McRave\u2019s slower Zerg matchup",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "A complete ten-second sample after frame 15000 will identify a McRave subsystem accounting for at least 20% of main-thread samples.",
+      "notes": "One diagnostic game with a verified live ten-second sample and 8,032 main-thread observations. The archived trigger snapshot is frame 18,720. The game completed cleanly; its instrumented outcome and runtime are excluded from strength and throughput comparisons.",
+      "conclusion": "Grid updates accounted for 1,611 samples (20.06%), meeting the diagnostic threshold. Repeated walk-position validity checks accounted for 641 samples (7.98%). Compare cached public map bounds with the existing predicate on identical inputs before any production change.",
+      "evidence_run_ids": [
+        "20260920T072421-86abc73ea7da"
+      ]
+    },
+    {
+      "id": "kestrel-build-worker-diagnostic-v1",
+      "title": "Kestrel traces rejected building commands",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "Worker-level traces will distinguish command ownership conflicts from travel delays in rejected construction requests.",
+      "notes": "One fixed Heartbreak game produced 265 trace records, nine build attempts and two rejected attempts. Both replays were preserved and the game completed cleanly.",
+      "conclusion": "Both rejected requests reused a Probe while it was harvesting gas; no gather command had been issued in either cadence. The same Probe could build after leaving the refinery. Test excluding gas workers from construction selection, including cached-builder reuse.",
+      "evidence_run_ids": [
+        "20260920T072826-04f5da60f197"
+      ]
+    },
+    {
+      "id": "mcrave-grids-bounds-shadow-v1",
+      "title": "Check cached map bounds against the existing predicate",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "Cached public map dimensions will produce exactly the same walk-position validity result as the current API call.",
+      "notes": "One full Destination game compared 1,757,500,992 real inputs and eight negative, boundary and invalid-sentinel cases. Existing API results remained authoritative for gameplay. Native and 114 official-header translation units compiled.",
+      "conclusion": "Zero disagreements; the game completed cleanly with both replays retained. The result supports a narrowly scoped replacement and a separate performance test. Frequent diagnostic writes prevent timing or strength claims from this run.",
+      "evidence_run_ids": [
+        "20260920T073257-1a4397fbfe6b"
+      ]
+    },
+    {
+      "id": "kestrel-worker-selection-v13",
+      "title": "Kestrel avoids gas workers when choosing builders",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "ADOPT",
+      "hypothesis": "Excluding gas-gathering Probes from construction selection will remove the reproduced build Unit_Busy failure while preserving economy and army production.",
+      "notes": "Both registered games exercised the guard: one event against ZZZK and seven against UAlberta Terran. Gas-worker build attempts and build Unit_Busy errors were zero. Total rejected commands stayed below 5%; all four replay copies parsed and throughput exceeded 384 fps.",
+      "conclusion": "Adopted as Kestrel\u2019s development baseline after source and evidence review. Both games were losses, so this is a narrow construction-reliability improvement and does not establish stronger play.",
+      "evidence_run_ids": [
+        "20260920T073627-856dcb721664",
+        "20260920T073629-a6ad5ae88993"
+      ]
     }
   ]
 }

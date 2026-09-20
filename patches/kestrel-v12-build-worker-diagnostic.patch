@@ -1,0 +1,120 @@
+--- a/Kestrel.cpp
++++ b/Kestrel.cpp
+@@ -35,6 +35,7 @@
+     int pendingBuildBaseline_ = 0;
+     int pendingBuildFrame_ = -10000;
+     int pendingBuildFirstFrame_ = -10000;
++    BWAPI::TilePosition pendingBuildTile_ = BWAPI::TilePositions::None;
+     int maxProbes_ = 0;
+     int maxPylons_ = 0;
+     int maxGateways_ = 0;
+@@ -57,9 +58,31 @@
+         int frame;
+     };
+     std::unordered_map<int, AttackRequest> attackRequests_;
++    std::unordered_map<int, int> successfulGatherFrame_;
+     double callbackCpuSeconds_ = 0.0;
+     std::vector<double> callbackMs_;
+ 
++    void traceBuild(const char* event, int frame, BWAPI::UnitType type, BWAPI::Unit worker,
++                    BWAPI::TilePosition tile, bool accepted, int error, int preOrder) const {
++        std::ofstream out("bwapi-data/write/build-attempts.jsonl", std::ios::app);
++        const BWAPI::Position position = worker ? worker->getPosition() : BWAPI::Positions::None;
++        const BWAPI::Position target(tile.x * 32, tile.y * 32);
++        const auto gathered = worker ? successfulGatherFrame_.find(worker->getID()) : successfulGatherFrame_.end();
++        out << "{\"event\":\"" << event << "\",\"frame\":" << frame
++            << ",\"type_id\":" << type.getID()
++            << ",\"worker_id\":" << (worker ? worker->getID() : -1)
++            << ",\"worker_x\":" << position.x << ",\"worker_y\":" << position.y
++            << ",\"pre_order_id\":" << preOrder
++            << ",\"post_order_id\":" << (worker ? worker->getOrder().getID() : -1)
++            << ",\"target_x\":" << tile.x << ",\"target_y\":" << tile.y
++            << ",\"target_distance\":" << (worker ? worker->getDistance(target) : -1)
++            << ",\"minerals\":" << BWAPI::Broodwar->self()->minerals()
++            << ",\"gather_same_cadence\":"
++            << (gathered != successfulGatherFrame_.end() && gathered->second == frame ? "true" : "false")
++            << ",\"accepted\":" << (accepted ? "true" : "false")
++            << ",\"error_id\":" << error << "}\n";
++    }
++
+     static std::vector<BWAPI::Unit> sorted(const BWAPI::Unitset& units) {
+         std::vector<BWAPI::Unit> result(units.begin(), units.end());
+         std::sort(result.begin(), result.end(), [](BWAPI::Unit a, BWAPI::Unit b) {
+@@ -187,7 +210,12 @@
+         const BWAPI::TilePosition tile = BWAPI::Broodwar->getBuildLocation(type, near, 32, false);
+         if (!tile.isValid()) return false;
+         builderId_ = worker->getID();
+-        const bool accepted = issue(worker->build(type, tile), BuildCommand);
++        const int preOrder = worker->getOrder().getID();
++        traceBuild("pre", frame, type, worker, tile, false, -1, preOrder);
++        const bool buildAccepted = worker->build(type, tile);
++        const int buildError = buildAccepted ? -1 : BWAPI::Broodwar->getLastError().getID();
++        const bool accepted = issue(buildAccepted, BuildCommand);
++        traceBuild("post", frame, type, worker, tile, accepted, buildError, preOrder);
+         if (accepted) {
+             if (type == BWAPI::UnitTypes::Protoss_Pylon && firstPylonCurrentFrame_ < 0) {
+                 if (firstPylonAcceptedFrame_ < 0) firstPylonAcceptedFrame_ = frame;
+@@ -197,6 +225,7 @@
+             pendingBuildBaseline_ = count(type);
+             pendingBuildFrame_ = frame;
+             pendingBuildFirstFrame_ = frame;
++            pendingBuildTile_ = tile;
+         }
+         return accepted;
+     }
+@@ -216,12 +245,19 @@
+         }
+         if (!best || bestDistance > 400) return false;
+         builderId_ = worker->getID();
+-        const bool accepted = issue(worker->build(BWAPI::UnitTypes::Protoss_Assimilator, best->getTilePosition()), BuildCommand);
++        const BWAPI::TilePosition tile = best->getTilePosition();
++        const int preOrder = worker->getOrder().getID();
++        traceBuild("pre", frame, BWAPI::UnitTypes::Protoss_Assimilator, worker, tile, false, -1, preOrder);
++        const bool buildAccepted = worker->build(BWAPI::UnitTypes::Protoss_Assimilator, tile);
++        const int buildError = buildAccepted ? -1 : BWAPI::Broodwar->getLastError().getID();
++        const bool accepted = issue(buildAccepted, BuildCommand);
++        traceBuild("post", frame, BWAPI::UnitTypes::Protoss_Assimilator, worker, tile, accepted, buildError, preOrder);
+         if (accepted) {
+             pendingBuildType_ = BWAPI::UnitTypes::Protoss_Assimilator;
+             pendingBuildBaseline_ = count(pendingBuildType_);
+             pendingBuildFrame_ = frame;
+             pendingBuildFirstFrame_ = frame;
++            pendingBuildTile_ = tile;
+         }
+         return accepted;
+     }
+@@ -300,7 +336,13 @@
+                 const int distance = worker->getDistance(resource);
+                 if (distance < best) { best = distance; target = resource; }
+             }
+-            if (target && issue(worker->gather(target), GatherCommand) && wantGas) ++gasWorkers;
++            if (target) {
++                const bool accepted = issue(worker->gather(target), GatherCommand);
++                if (accepted) {
++                    successfulGatherFrame_[worker->getID()] = BWAPI::Broodwar->getFrameCount();
++                    if (wantGas) ++gasWorkers;
++                }
++            }
+         }
+     }
+ 
+@@ -417,6 +459,11 @@
+         }
+         const int cadence = std::max(6, game.getLatencyFrames());
+         if (frame % cadence != 0) return;
++        if (pendingBuildType_ != BWAPI::UnitTypes::None && frame - pendingBuildFirstFrame_ <= 480) {
++            BWAPI::Unit builder = unitById(builderId_);
++            traceBuild("pending", frame, pendingBuildType_, builder, pendingBuildTile_,
++                       true, -1, builder ? builder->getOrder().getID() : -1);
++        }
+         assignEconomy();
+         trainUnits();
+         constructOpening();
+@@ -426,6 +473,7 @@
+ public:
+     void onStart() override {
+         latency_ = BWAPI::Broodwar->getLatencyFrames();
++        std::remove("bwapi-data/write/build-attempts.jsonl");
+         writeResult(false);
+     }
+ 

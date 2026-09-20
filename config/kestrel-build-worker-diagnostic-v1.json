@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "experiment_id": "kestrel-build-worker-diagnostic-v1",
+  "title": "Kestrel v12 build-worker diagnostic",
+  "registered_at": "2026-09-20T07:26:55+00:00",
+  "build_identity_recorded_at": "2026-09-20T07:27:47+00:00",
+  "hypothesis": "Heartbreak build Unit_Busy rejections are caused by a successful same-worker gather earlier in the same policy cadence.",
+  "stop_condition": "Exactly one fixed diagnostic game, no retry.",
+  "purpose": "Diagnostic-only worker command-state trace; no policy or strength claim",
+  "wall_timeout_seconds": 120,
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "candidate": {
+    "name": "Kestrel build worker diagnostic",
+    "race": "Protoss",
+    "sha256": "a91296e864dc712e51440127280f07cf944ae28f23b28906f8949eb01933e78a"
+  },
+  "opponents": {
+    "zzzk-z": {
+      "name": "ZZZKBot",
+      "race": "Zerg",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+    }
+  },
+  "games": [
+    {
+      "opponent": "zzzk-z",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "candidate_player": 1,
+      "scenario_seed": 6104
+    }
+  ],
+  "execution": {
+    "concurrency": 1,
+    "learning_state": "empty isolated per-player read/write directories",
+    "bot_seeds": "none"
+  }
+}

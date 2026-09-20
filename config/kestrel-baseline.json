@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
   "status": "accepted development baseline",
-  "name": "Kestrel v7",
+  "name": "Kestrel v13",
   "ownership": "project",
   "origin": "original",
   "race": "Protoss",
-  "binary": "artifacts/builds/2facbf970d4a4fd131564d3d02cd3966bcadc50e13e08256a1a92d3886013d3e/kestrel-v7/Kestrel.dylib",
-  "binary_sha256": "2facbf970d4a4fd131564d3d02cd3966bcadc50e13e08256a1a92d3886013d3e",
-  "source_sha256": "34f43843f762ed32c7052eda64e324db8fe6b4204dd48f94692d84df5d2b18f1",
-  "source_snapshot": "artifacts/builds/2facbf970d4a4fd131564d3d02cd3966bcadc50e13e08256a1a92d3886013d3e/kestrel-v7",
-  "evaluation": "docs/evaluations/kestrel-train-legality-v7/RESULT.md",
-  "notes": "V7 passed its registered lifecycle and command-legality gate. Later candidates remain separate until accepted."
+  "binary": "artifacts/builds/622bca47b47f78f3e9d1971d1e340f991b54ced7f3bfdfd932d3062e125cbd98/kestrel-v13-gas-worker-guard/Kestrel.dylib",
+  "binary_sha256": "622bca47b47f78f3e9d1971d1e340f991b54ced7f3bfdfd932d3062e125cbd98",
+  "source_sha256": "12cecdb5039569711c318bab5bb6781b4f1e86e22c87e453f9d85c295fa13df0",
+  "source_snapshot": "artifacts/builds/622bca47b47f78f3e9d1971d1e340f991b54ced7f3bfdfd932d3062e125cbd98/kestrel-v13-gas-worker-guard",
+  "evaluation": "docs/evaluations/kestrel-worker-selection-v13/RESULT.md",
+  "notes": "V13 passed registered gas-worker exclusion, command-quality and lifecycle checks in two fixed full games. Adopted as the development baseline; both games were losses and no playing-strength improvement is claimed."
 }

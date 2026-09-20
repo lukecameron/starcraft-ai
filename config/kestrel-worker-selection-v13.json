@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "experiment_id": "kestrel-worker-selection-v13",
+  "title": "Kestrel v13 gas-worker construction guard",
+  "registered_at": "2026-09-20T07:31:43.646449+00:00",
+  "build_identity_recorded_at": "2026-09-20T07:35:46+00:00",
+  "hypothesis": "Excluding public gas-gathering Probes from construction selection prevents gas-worker build attempts and build Unit_Busy errors while preserving production.",
+  "stop_condition": "Exactly two fixed serial games, no retry or replacement.",
+  "purpose": "Preregistered Kestrel v13 construction-worker correctness probe; no strength claim",
+  "wall_timeout_seconds": 120,
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "candidate": {
+    "name": "Kestrel v13 gas worker guard",
+    "race": "Protoss",
+    "sha256": "622bca47b47f78f3e9d1971d1e340f991b54ced7f3bfdfd932d3062e125cbd98"
+  },
+  "opponents": {
+    "zzzk-z": {
+      "name": "ZZZKBot",
+      "race": "Zerg",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+    },
+    "uab-t": {
+      "name": "UAlbertaBot-T",
+      "race": "Terran",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+    }
+  },
+  "games": [
+    {
+      "opponent": "zzzk-z",
+      "map": "sscai/(2)Benzene.scx",
+      "candidate_player": 1,
+      "scenario_seed": 6103
+    },
+    {
+      "opponent": "uab-t",
+      "map": "sscai/(2)Destination.scx",
+      "candidate_player": 1,
+      "scenario_seed": 6104
+    }
+  ],
+  "execution": {
+    "concurrency": 1,
+    "learning_state": "empty isolated per-player read/write directories",
+    "bot_seeds": "none"
+  }
+}

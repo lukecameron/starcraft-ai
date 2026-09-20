@@ -26,15 +26,15 @@ scripts/build_kestrel.sh
 
 The script pins the shared OpenBW BWAPI checkout at `48124ba8ed1b4d52b3dfd52acbaf34afb9a37fe2`, rejects tracked changes to it, uses `/usr/bin/clang++`, Release mode, C++14, Ninja, and at most four compile jobs. The module exports `gameInit` and `newAIModule` and writes tournament-directory telemetry to `bwapi-data/write/diagnostic.json`.
 
-The tracked source and `scripts/build_kestrel.sh` build the accepted v7 development baseline. Its frozen module is `artifacts/builds/2facbf970d4a4fd131564d3d02cd3966bcadc50e13e08256a1a92d3886013d3e/kestrel-v7/Kestrel.dylib`; its binary SHA-256 is `2facbf970d4a4fd131564d3d02cd3966bcadc50e13e08256a1a92d3886013d3e` and its combined source identity is `34f43843f762ed32c7052eda64e324db8fe6b4204dd48f94692d84df5d2b18f1`. `config/kestrel-baseline.json` records the same immutable reference.
+The tracked source and `scripts/build_kestrel.sh` build the accepted v13 development baseline. Its frozen module is `artifacts/builds/622bca47b47f78f3e9d1971d1e340f991b54ced7f3bfdfd932d3062e125cbd98/kestrel-v13-gas-worker-guard/Kestrel.dylib`; its binary SHA-256 is `622bca47b47f78f3e9d1971d1e340f991b54ced7f3bfdfd932d3062e125cbd98` and combined source identity is `12cecdb5039569711c318bab5bb6781b4f1e86e22c87e453f9d85c295fa13df0`. `config/kestrel-baseline.json` records the same immutable reference. The source matches the evaluated package byte-for-byte.
 
-Rejected v8, v9, v10 and v11 remain frozen under their binary hashes. The default source stays on v7; none of these failed experiments replaces it.
+V13 excludes gas workers from construction selection, including cached-builder reuse. Both full validation games exercised this guard, produced no build `Unit_Busy` errors, and retained economy and army production. Both were losses: this is a correctness baseline, not demonstrated playing-strength improvement. Rejected v8 through v12 remain separate and frozen.
 
 Native OpenBW and official BWAPI 4.4 headers compile successfully with Apple Clang 21.0.0. Official-game runtime behavior remains unverified until the module is built as the required Windows DLL and run under StarCraft 1.16.1/BWAPI.
 
 ### Reconstructing historical source
 
-The current tracked source is v7. Apply `patches/kestrel-v7-to-v6b.patch`, then `patches/kestrel-v6-to-v5.patch` to recover v5 (expected combined source SHA-256 `3e8167c8d2bbbb4c200faf923fa4205593c83eca19a0eee1a36f754e64be9272`). The forward patch `patches/kestrel-v7-to-v8.patch` reconstructs rejected v8, while `patches/kestrel-v7-to-v9.patch` reconstructs the isolated worker-defense candidate. Three further reverse patches reconstruct the source used by earlier durable evidence without relying on ignored build artifacts:
+The current tracked source is v13. First apply `patches/kestrel-v13-to-v7.patch` to recover the former v7 baseline. Then apply `patches/kestrel-v7-to-v6b.patch`, then `patches/kestrel-v6-to-v5.patch` to recover v5 (expected combined source SHA-256 `3e8167c8d2bbbb4c200faf923fa4205593c83eca19a0eee1a36f754e64be9272`). The forward patch `patches/kestrel-v7-to-v8.patch` reconstructs rejected v8, while `patches/kestrel-v7-to-v9.patch` reconstructs the isolated worker-defense candidate. Three further reverse patches reconstruct the source used by earlier durable evidence without relying on ignored build artifacts:
 
 | Version | Apply independently to v5 | Expected combined source SHA-256 | Historical binary SHA-256 |
 | --- | --- | --- | --- |
@@ -42,9 +42,10 @@ The current tracked source is v7. Apply `patches/kestrel-v7-to-v6b.patch`, then 
 | v2 first lifecycle pass | `patches/kestrel-v5-to-v2.patch` | `8ad1044064ab9b8f8bf2511ed5e7f5c97bd63f8c595cfab35559c0263ac68a92` | `144d01bc11e64dfdb37113f0e8f79d397846c09373331244ca6563ca8e6d4495` |
 | v4 two-opponent probe | `patches/kestrel-v5-to-v4.patch` | `482e8c3f66f2be0256fbe8cfba379475f2bc6bfa6969f27e553b37d53f9ee5d8` | `e93b84a0392d67a6fcf48f4349bc13c701ae38a68d34823a137ae9afd8ff3865` |
 
-Apply the v7-to-v6b and v6-to-v5 patches, then one historical patch in a separate checkout and use the normal build command:
+Apply the v13-to-v7, v7-to-v6b and v6-to-v5 patches, then one historical patch in a separate checkout and use the normal build command:
 
 ```sh
+git apply patches/kestrel-v13-to-v7.patch
 git apply patches/kestrel-v7-to-v6b.patch
 git apply patches/kestrel-v6-to-v5.patch
 git apply patches/kestrel-v5-to-v2.patch
@@ -55,8 +56,12 @@ Each reverse patch changes only `bots/kestrel/Kestrel.cpp`; CMake and the licens
 
 ## Evaluation status
 
-The [initial native smoke](evaluations/kestrel-smoke-v0/RESULT.md) completed cleanly but failed its behavior gate. V4 and V5 exposed excessive command rejection. Telemetry-complete v6b reduced attack-request rejection but found busy and supply-invalid training attempts. V7's [fixed probe](evaluations/kestrel-train-legality-v7/RESULT.md) passed: all train and attack requests were accepted, both full opponent games retained production and combat, and total rejection remained below 5%. V8's [first-zealot experiment](evaluations/kestrel-first-zealot-v8/RESULT.md) advanced the first train by 396 frames but failed lifecycle and survival gates. V9's [worker-defense experiment](evaluations/kestrel-worker-defense-v9/RESULT.md) executed a legal six-probe response but ended earlier than the matched v7 row and reduced combat production. V10's [Zerg-defense production experiment](evaluations/kestrel-zerg-zealot-v10/RESULT.md) advanced three Zealot trains without gas spending, but failed its third-train threshold and never queued a fourth unit. V7 remains the command-clean baseline and is not a strength anchor.
+The [initial native smoke](evaluations/kestrel-smoke-v0/RESULT.md) completed cleanly but failed its behavior gate. V4 and V5 exposed excessive command rejection. Telemetry-complete v6b reduced attack-request rejection but found busy and supply-invalid training attempts. V7's [fixed probe](evaluations/kestrel-train-legality-v7/RESULT.md) passed: all train and attack requests were accepted, both full opponent games retained production and combat, and total rejection remained below 5%. V8's [first-zealot experiment](evaluations/kestrel-first-zealot-v8/RESULT.md) advanced the first train by 396 frames but failed lifecycle and survival gates. V9's [worker-defense experiment](evaluations/kestrel-worker-defense-v9/RESULT.md) executed a legal six-probe response but ended earlier than the matched v7 row and reduced combat production. V10's [Zerg-defense production experiment](evaluations/kestrel-zerg-zealot-v10/RESULT.md) advanced three Zealot trains without gas spending, but failed its third-train threshold and never queued a fourth unit. V13 subsequently passed its construction-worker correctness checks and is the current development baseline; neither version is a strength anchor.
 
 The [first-home-fight diagnostic](evaluations/kestrel-fight-diagnostic-v1/RESULT.md) observed v7’s first two Zealots engaging locally but separately against larger Zergling groups. The second Gateway started too late to support the first fight despite banked minerals. This supports testing earlier production capacity; one instrumented loss does not prove a general cause. Apply `patches/kestrel-v7-fight-diagnostic.patch` to reconstruct the diagnostic source.
 
-The [earlier-second-Gateway screen](evaluations/kestrel-early-second-gateway-v11/RESULT.md) also failed. Both second Gateways completed after home pressure arrived, and both games had at most one completed Zealot in the home-fight window. V11 remains isolated and reconstructible through `patches/kestrel-v7-to-v11.patch`; canonical v7 is unchanged.
+The [earlier-second-Gateway screen](evaluations/kestrel-early-second-gateway-v11/RESULT.md) also failed. Both second Gateways completed after home pressure arrived, and both games had at most one completed Zealot in the home-fight window. V11 remains isolated and reconstructible through `patches/kestrel-v7-to-v11.patch`; those experimental changes remain outside the current baseline.
+
+V12’s [first-Pylon reservation screen](evaluations/kestrel-pylon-reservation-v12/RESULT.md) produced a single accepted first-Pylon order in both games, but failed the fixed timing and command-quality guards. Its 289-frame Benzene delay is not proof of continued mineral starvation; accepted replay commands show no gather interruption, and the retained data cannot separate travel from pathing. The next diagnostic records worker state around rejected build attempts.
+
+The [v13 result](evaluations/kestrel-worker-selection-v13/RESULT.md) records the current baseline-adoption decision, exact replay evidence and limits. The known five-Pylon supply ceiling and fragile opening strategy remain separate work.

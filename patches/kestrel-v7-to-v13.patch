@@ -1,0 +1,88 @@
+--- a/bots/kestrel/Kestrel.cpp
++++ b/bots/kestrel/Kestrel.cpp
+@@ -40,6 +40,9 @@
+     int maxGateways_ = 0;
+     int maxZealots_ = 0;
+     int maxDragoons_ = 0;
++    int gasWorkerGuardEvents_ = 0;
++    int gasWorkerBuildAttempts_ = 0;
++    int buildUnitBusyRejections_ = 0;
+     struct AttackRequest {
+         int targetId;
+         int frame;
+@@ -64,6 +67,7 @@
+             ++rejectedByCategory_[category];
+             const int error = BWAPI::Broodwar->getLastError().getID();
+             if (error >= 0 && error < BWAPI::Errors::Enum::MAX) ++errors_[static_cast<size_t>(error)];
++            if (category == BuildCommand && error == BWAPI::Errors::Enum::Unit_Busy) ++buildUnitBusyRejections_;
+         }
+         return accepted;
+     }
+@@ -106,6 +110,9 @@
+             << ",\"max_gateways\":" << maxGateways_
+             << ",\"max_zealots\":" << maxZealots_
+             << ",\"max_dragoons\":" << maxDragoons_
++            << ",\"gas_worker_guard_events\":" << gasWorkerGuardEvents_
++            << ",\"gas_worker_build_attempts\":" << gasWorkerBuildAttempts_
++            << ",\"build_unit_busy_rejections\":" << buildUnitBusyRejections_
+             << "}\n";
+         out.close();
+         if (out) {
+@@ -122,10 +129,23 @@
+         return nullptr;
+     }
+ 
+-    BWAPI::Unit availableProbe(bool allowScout = false) const {
++    void recordGasWorkerGuard(BWAPI::Unit worker, const char* context) {
++        ++gasWorkerGuardEvents_;
++        std::ofstream out("bwapi-data/write/gas-worker-guard.jsonl", std::ios::app);
++        out << "{\"frame\":" << BWAPI::Broodwar->getFrameCount()
++            << ",\"worker_id\":" << worker->getID()
++            << ",\"order_id\":" << worker->getOrder().getID()
++            << ",\"context\":\"" << context << "\"}\n";
++    }
++
++    BWAPI::Unit availableProbe(bool allowScout = false) {
+         for (auto unit : sorted(BWAPI::Broodwar->self()->getUnits())) {
+             if (!unit->exists() || !unit->isCompleted() || unit->getType() != BWAPI::UnitTypes::Protoss_Probe) continue;
+             if (!allowScout && unit->getID() == scoutId_) continue;
++            if (unit->isGatheringGas()) {
++                recordGasWorkerGuard(unit, "available_probe");
++                continue;
++            }
+             if (!unit->isConstructing()) return unit;
+         }
+         return nullptr;
+@@ -158,11 +178,16 @@
+         const int frame = BWAPI::Broodwar->getFrameCount();
+         if (constructionPending()) return false;
+         BWAPI::Unit worker = unitById(builderId_);
++        if (worker && worker->isGatheringGas()) {
++            recordGasWorkerGuard(worker, "reuse_builder");
++            worker = nullptr;
++        }
+         if (!worker || worker->isConstructing() || worker->getID() == scoutId_) worker = availableProbe();
+         if (!worker) return false;
+         const BWAPI::TilePosition tile = BWAPI::Broodwar->getBuildLocation(type, near, 32, false);
+         if (!tile.isValid()) return false;
+         builderId_ = worker->getID();
++        if (worker->isGatheringGas()) ++gasWorkerBuildAttempts_;
+         const bool accepted = issue(worker->build(type, tile), BuildCommand);
+         if (accepted) {
+             pendingBuildType_ = type;
+@@ -188,6 +213,7 @@
+         }
+         if (!best || bestDistance > 400) return false;
+         builderId_ = worker->getID();
++        if (worker->isGatheringGas()) ++gasWorkerBuildAttempts_;
+         const bool accepted = issue(worker->build(BWAPI::UnitTypes::Protoss_Assimilator, best->getTilePosition()), BuildCommand);
+         if (accepted) {
+             pendingBuildType_ = BWAPI::UnitTypes::Protoss_Assimilator;
+@@ -369,6 +395,7 @@
+ public:
+     void onStart() override {
+         latency_ = BWAPI::Broodwar->getLatencyFrames();
++        std::remove("bwapi-data/write/gas-worker-guard.jsonl");
+         writeResult(false);
+     }
+ 

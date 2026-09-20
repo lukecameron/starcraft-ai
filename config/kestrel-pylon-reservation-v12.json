@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "experiment_id": "kestrel-pylon-reservation-v12",
+  "title": "Kestrel pending-first-Pylon reservation screen",
+  "registered_at": "2026-09-20T07:18:59.327194+00:00",
+  "final_source_recorded_at": "2026-09-20T07:21:24+00:00",
+  "build_identity_recorded_at": "2026-09-20T07:21:24+00:00",
+  "hypothesis": "Reserving the first pending Pylon cost from Probe training makes that Pylon current within 120 frames of its only accepted request in both fixed games.",
+  "stop_condition": "Exactly two candidate games, serial and without retries or replacement seeds. Preserve every attempt and stop after an infrastructure-invalid attempt.",
+  "purpose": "Preregistered Kestrel v12 pending-first-Pylon reservation mechanism screen; no rating or strength-promotion claim",
+  "wall_timeout_seconds": 120,
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "candidate": {
+    "name": "Kestrel v12 Pylon reservation",
+    "race": "Protoss",
+    "sha256": "cb91e9217c99099e2683603ab4220e1b2154d162df3ff8b62cb61a78deac3b8b"
+  },
+  "opponents": {
+    "zzzk-z": {
+      "name": "ZZZKBot",
+      "race": "Zerg",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+    }
+  },
+  "games": [
+    {
+      "opponent": "zzzk-z",
+      "map": "sscai/(2)Benzene.scx",
+      "candidate_player": 1,
+      "scenario_seed": 6103
+    },
+    {
+      "opponent": "zzzk-z",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "candidate_player": 1,
+      "scenario_seed": 6104
+    }
+  ],
+  "execution": {
+    "concurrency": 1,
+    "learning_state": "empty isolated per-player read/write directories",
+    "bot_seeds": "none"
+  }
+}

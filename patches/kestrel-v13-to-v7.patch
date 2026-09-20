@@ -1,0 +1,90 @@
+diff --git b/bots/kestrel/Kestrel.cpp a/bots/kestrel/Kestrel.cpp
+index 44e0102..b4cf880 100644
+--- b/bots/kestrel/Kestrel.cpp
++++ a/bots/kestrel/Kestrel.cpp
+@@ -40,9 +40,6 @@ class Kestrel final : public BWAPI::AIModule {
+     int maxGateways_ = 0;
+     int maxZealots_ = 0;
+     int maxDragoons_ = 0;
+-    int gasWorkerGuardEvents_ = 0;
+-    int gasWorkerBuildAttempts_ = 0;
+-    int buildUnitBusyRejections_ = 0;
+     struct AttackRequest {
+         int targetId;
+         int frame;
+@@ -67,7 +64,6 @@ class Kestrel final : public BWAPI::AIModule {
+             ++rejectedByCategory_[category];
+             const int error = BWAPI::Broodwar->getLastError().getID();
+             if (error >= 0 && error < BWAPI::Errors::Enum::MAX) ++errors_[static_cast<size_t>(error)];
+-            if (category == BuildCommand && error == BWAPI::Errors::Enum::Unit_Busy) ++buildUnitBusyRejections_;
+         }
+         return accepted;
+     }
+@@ -110,9 +106,6 @@ class Kestrel final : public BWAPI::AIModule {
+             << ",\"max_gateways\":" << maxGateways_
+             << ",\"max_zealots\":" << maxZealots_
+             << ",\"max_dragoons\":" << maxDragoons_
+-            << ",\"gas_worker_guard_events\":" << gasWorkerGuardEvents_
+-            << ",\"gas_worker_build_attempts\":" << gasWorkerBuildAttempts_
+-            << ",\"build_unit_busy_rejections\":" << buildUnitBusyRejections_
+             << "}\n";
+         out.close();
+         if (out) {
+@@ -129,23 +122,10 @@ class Kestrel final : public BWAPI::AIModule {
+         return nullptr;
+     }
+ 
+-    void recordGasWorkerGuard(BWAPI::Unit worker, const char* context) {
+-        ++gasWorkerGuardEvents_;
+-        std::ofstream out("bwapi-data/write/gas-worker-guard.jsonl", std::ios::app);
+-        out << "{\"frame\":" << BWAPI::Broodwar->getFrameCount()
+-            << ",\"worker_id\":" << worker->getID()
+-            << ",\"order_id\":" << worker->getOrder().getID()
+-            << ",\"context\":\"" << context << "\"}\n";
+-    }
+-
+-    BWAPI::Unit availableProbe(bool allowScout = false) {
++    BWAPI::Unit availableProbe(bool allowScout = false) const {
+         for (auto unit : sorted(BWAPI::Broodwar->self()->getUnits())) {
+             if (!unit->exists() || !unit->isCompleted() || unit->getType() != BWAPI::UnitTypes::Protoss_Probe) continue;
+             if (!allowScout && unit->getID() == scoutId_) continue;
+-            if (unit->isGatheringGas()) {
+-                recordGasWorkerGuard(unit, "available_probe");
+-                continue;
+-            }
+             if (!unit->isConstructing()) return unit;
+         }
+         return nullptr;
+@@ -178,16 +158,11 @@ class Kestrel final : public BWAPI::AIModule {
+         const int frame = BWAPI::Broodwar->getFrameCount();
+         if (constructionPending()) return false;
+         BWAPI::Unit worker = unitById(builderId_);
+-        if (worker && worker->isGatheringGas()) {
+-            recordGasWorkerGuard(worker, "reuse_builder");
+-            worker = nullptr;
+-        }
+         if (!worker || worker->isConstructing() || worker->getID() == scoutId_) worker = availableProbe();
+         if (!worker) return false;
+         const BWAPI::TilePosition tile = BWAPI::Broodwar->getBuildLocation(type, near, 32, false);
+         if (!tile.isValid()) return false;
+         builderId_ = worker->getID();
+-        if (worker->isGatheringGas()) ++gasWorkerBuildAttempts_;
+         const bool accepted = issue(worker->build(type, tile), BuildCommand);
+         if (accepted) {
+             pendingBuildType_ = type;
+@@ -213,7 +188,6 @@ class Kestrel final : public BWAPI::AIModule {
+         }
+         if (!best || bestDistance > 400) return false;
+         builderId_ = worker->getID();
+-        if (worker->isGatheringGas()) ++gasWorkerBuildAttempts_;
+         const bool accepted = issue(worker->build(BWAPI::UnitTypes::Protoss_Assimilator, best->getTilePosition()), BuildCommand);
+         if (accepted) {
+             pendingBuildType_ = BWAPI::UnitTypes::Protoss_Assimilator;
+@@ -395,7 +369,6 @@ class Kestrel final : public BWAPI::AIModule {
+ public:
+     void onStart() override {
+         latency_ = BWAPI::Broodwar->getLatencyFrames();
+-        std::remove("bwapi-data/write/gas-worker-guard.jsonl");
+         writeResult(false);
+     }
+ 

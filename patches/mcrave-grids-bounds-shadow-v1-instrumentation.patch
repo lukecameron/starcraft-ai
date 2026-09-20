@@ -1,0 +1,121 @@
+diff --git a/Source/McRave/Main/McRave.cpp b/Source/McRave/Main/McRave.cpp
+index 984ccdb..488dce1 100644
+--- a/Source/McRave/Main/McRave.cpp
++++ b/Source/McRave/Main/McRave.cpp
+@@ -118,6 +118,7 @@ void McRaveModule::onStart()
+ 
+ void McRaveModule::onEnd(bool isWinner)
+ {
++    Grids::writeBoundsShadow(true);
+     writeDiagnostics(true, isWinner);
+     // @McRave ☑ has taken "drop all your weapons at the end of a csgo match" to the ai scene
+     for (auto &unit : Units::getUnits(PlayerState::Self))
+diff --git a/Source/McRave/Map/Grids/Grids.cpp b/Source/McRave/Map/Grids/Grids.cpp
+index 969efb3..387fc01 100644
+--- a/Source/McRave/Map/Grids/Grids.cpp
++++ b/Source/McRave/Map/Grids/Grids.cpp
+@@ -45,6 +45,27 @@ namespace McRave::Grids {
+         int mapWalkWidth  = 0;
+         int mapWalkHeight = 0;
+ 
++        uint64_t boundsShadowChecks = 0;
++        uint64_t boundsShadowMismatches = 0;
++        uint64_t boundsShadowSentinelChecks = 0;
++        uint64_t boundsShadowSentinelMismatches = 0;
++        uint64_t boundsShadowNextWrite = 100000;
++        WalkPosition boundsShadowFirstMismatch = WalkPositions::Invalid;
++
++        bool directWalkValid(const WalkPosition &walk)
++        {
++            return walk.x >= 0 && walk.y >= 0 && walk.x < mapWalkWidth && walk.y < mapWalkHeight;
++        }
++
++        void compareSentinel(const WalkPosition &walk)
++        {
++            const auto authoritative = walk.isValid();
++            const auto shadow = directWalkValid(walk);
++            boundsShadowSentinelChecks++;
++            if (authoritative != shadow)
++                boundsShadowSentinelMismatches++;
++        }
++
+         void addThreat(UnitInfo &unit) {}
+ 
+         void addCluster(UnitInfo &unit, WalkPosition) {}
+@@ -151,7 +172,21 @@ namespace McRave::Grids {
+                 radius += 2;
+                 for (auto &w : Util::getWalkCircle(radius)) {
+                     auto walk = center + w;
+-                    if (!walk.isValid())
++                    const auto authoritativeValid = walk.isValid();
++                    const auto shadowValid = directWalkValid(walk);
++                    const auto firstMismatchThisCall = authoritativeValid != shadowValid && boundsShadowMismatches == 0;
++                    boundsShadowChecks++;
++                    if (authoritativeValid != shadowValid) {
++                        boundsShadowMismatches++;
++                        if (boundsShadowFirstMismatch == WalkPositions::Invalid)
++                            boundsShadowFirstMismatch = walk;
++                    }
++                    if (boundsShadowChecks >= boundsShadowNextWrite || firstMismatchThisCall) {
++                        writeBoundsShadow(false);
++                        while (boundsShadowChecks >= boundsShadowNextWrite)
++                            boundsShadowNextWrite += 100000;
++                    }
++                    if (!authoritativeValid)
+                         continue;
+ 
+                     auto &index     = grid[gridWalkScale * walk.y + walk.x];
+@@ -385,10 +420,34 @@ namespace McRave::Grids {
+     void onStart()
+     {
+         initializeLogTable();
++        const vector<WalkPosition> sentinels = {
++            WalkPosition(-1, 0), WalkPosition(0, -1), WalkPosition(0, 0),
++            WalkPosition(mapWalkWidth - 1, mapWalkHeight - 1),
++            WalkPosition(mapWalkWidth, 0), WalkPosition(0, mapWalkHeight),
++            WalkPosition(mapWalkWidth, mapWalkHeight), WalkPositions::Invalid};
++        for (const auto &walk : sentinels)
++            compareSentinel(walk);
+         initializeMobility();
+         updateVisibility();
+     }
+ 
++    void writeBoundsShadow(bool ended)
++    {
++        ofstream output("bwapi-data/write/grids-bounds-shadow.json.tmp", ios::trunc);
++        output << "{\"frame_count\":" << Broodwar->getFrameCount()
++               << ",\"ended\":" << (ended ? "true" : "false")
++               << ",\"map_walk_width\":" << mapWalkWidth
++               << ",\"map_walk_height\":" << mapWalkHeight
++               << ",\"gameplay_checks\":" << boundsShadowChecks
++               << ",\"gameplay_mismatches\":" << boundsShadowMismatches
++               << ",\"sentinel_checks\":" << boundsShadowSentinelChecks
++               << ",\"sentinel_mismatches\":" << boundsShadowSentinelMismatches
++               << ",\"first_mismatch_x\":" << boundsShadowFirstMismatch.x
++               << ",\"first_mismatch_y\":" << boundsShadowFirstMismatch.y << "}\n";
++        output.close();
++        rename("bwapi-data/write/grids-bounds-shadow.json.tmp", "bwapi-data/write/grids-bounds-shadow.json");
++    }
++
+     template <typename T> //
+     T getGridValue(const Grid *gridArray, int x, int y, T Grid::*member)
+     {
+diff --git a/Source/McRave/Map/Grids/Grids.h b/Source/McRave/Map/Grids/Grids.h
+index e804e65..0537ed1 100644
+--- a/Source/McRave/Map/Grids/Grids.h
++++ b/Source/McRave/Map/Grids/Grids.h
+@@ -5,6 +5,7 @@ namespace McRave::Grids
+ {
+     void onFrame();
+     void onStart();
++    void writeBoundsShadow(bool ended = false);
+ 
+     float getGroundThreat(BWAPI::Position, PlayerState);
+     float getGroundThreat(BWAPI::WalkPosition, PlayerState);
+@@ -23,4 +24,4 @@ namespace McRave::Grids
+     int getMobility(BWAPI::Position);
+     int getLastVisibleFrame(BWAPI::Position);
+     int getLastVisibleFrame(BWAPI::TilePosition);
+-}
+\ No newline at end of file
++}

@@ -4,7 +4,7 @@ Native OpenBW development and evaluation for a competitive Brood War bot. The [p
 
 ## Current state
 
-Native ARM64 OpenBW runs unattended games with our ports/forks of McRave, ZZZKBot, UAlbertaBot and Stardust, plus **Kestrel**, our independently written Protoss bot. Kestrel builds an economy and army and beats a worker-rush diagnostic, but has not yet beaten the real benchmark opponents. Version 7 passed its registered command-quality checks; early-defense strategy remains under evaluation.
+Native ARM64 OpenBW runs unattended games with our ports/forks of McRave, ZZZKBot, UAlbertaBot and Stardust, plus **Kestrel**, our independently written Protoss bot. Kestrel builds an economy and army and beats a worker-rush diagnostic, but has not yet beaten the real benchmark opponents. Version 13 passed its registered construction-worker and command-quality checks; early-defense strategy remains under evaluation.
 
 The [current engine](config/engine.json) fixes a reproduced terminal disconnect race that could report both players as winners. All six registered regression/control games passed, with twelve parsed replays and matching shared command histories. Use the [current-engine build instructions](docs/engine-terminal-drain.md) for new experiments; historical schedules retain their original binaries.
 
