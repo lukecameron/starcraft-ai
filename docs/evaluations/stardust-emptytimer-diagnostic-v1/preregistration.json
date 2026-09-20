@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "experiment_id": "stardust-emptytimer-diagnostic-v1",
+  "created_at": "2026-09-20T04:34:26.147264+00:00",
+  "question": "Does the frozen crash scenario exhaust possibleOrderProcessTimerValues before PatchOccupiedForecast dereferences rbegin?",
+  "treatment": "Logging-only isolated Stardust build. Log producer prior values and public order state then abort explicitly on exhaustion; independently log and abort on empty consumer input. No recovery or policy change.",
+  "trial": {
+    "map": "sscai/(2)Benzene.scx",
+    "scenario_seed": 5202,
+    "player1": "Stardust Protoss",
+    "player2": "ZZZKBot Zerg",
+    "wall_timeout_seconds": 120
+  },
+  "stopping_rule": "Exactly one attempt. Preserve completion, explicit abort, crash, timeout, diagnostics, and replay. No retry or seed sweep.",
+  "confirmation": "Confirmed only if stderr records producer_exhausted or consumer_empty before process termination. Otherwise the empty-set cause remains unconfirmed."
+}

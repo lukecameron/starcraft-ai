@@ -359,7 +359,7 @@
         "Protoss"
       ],
       "style": "strong tournament-style Protoss",
-      "role": "benchmark_only_pending_consent",
+      "role": "provisional_local_benchmark",
       "source_url": "https://github.com/bmnielsen/Stardust",
       "author": "Bruce Mackenzie Nielsen",
       "author_url": "https://github.com/bmnielsen",
@@ -393,10 +393,38 @@
         "basil_last_updated": "2026-08-22"
       },
       "bucket": "q5_strong",
-      "openbw_status": "native_arm64_completed_smoke; calibration_pending",
+      "openbw_status": "repaired_native_fork_passed_four_game_compatibility; calibration_pending",
       "native_openbw": "verified_local",
-      "local_evidence_runs": ["20260920T040347-2c639d48312b"],
-      "notes": "One native compatibility smoke only; no ladder calibration or strength claim. Do not submit a fork without written consent. Benchmark use is separate from derivative submission permission."
+      "local_evidence_runs": [
+        "20260920T040347-2c639d48312b",
+        "20260920T044353-8b83e0831afe",
+        "20260920T044554-bab0b9ef80f8",
+        "20260920T044600-7f7a5db65bbc",
+        "20260920T044607-4cf98f929260",
+        "20260920T044615-b257db5fec1a"
+      ],
+      "notes": "Our native fork repairs an empty mining-timer prediction. The original port failed the four-game compatibility cohort; the repaired frozen fork passed all four games at 2059.4 aggregate durable fps. This is bounded local compatibility evidence, not upstream BASIL calibration. Written consent is still required before derivative tournament submission.",
+      "local_build": {
+        "ownership": "project",
+        "origin": "fork",
+        "binary_sha256": "1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa",
+        "artifact_path": "artifacts/builds/1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa/stardust-emptytimer-repair/Stardust.dylib",
+        "source_patch": "patches/stardust-emptytimer-repair.patch",
+        "source_patch_sha256": "cd3a3555459c481f5bf4b3455a8604cb4443d10ba2c68b31118f475f0d187325",
+        "compatibility_experiment": "stardust-repaired-cohort-v1",
+        "calibrated_rating": null
+      },
+      "local_settings": {
+        "race": "Protoss",
+        "command_latency_frames": 3,
+        "learning_state": "fresh isolated read/write per game",
+        "seeds": "controlled engine seed; bot RNG not controlled",
+        "maps": [
+          "Benzene",
+          "Destination"
+        ],
+        "ladder_binary_match": "not the upstream binary"
+      }
     }
   ],
   "low_quintile_research_leads": [

@@ -23,3 +23,11 @@ The [controlled quick batch](evaluations/quick-baseline-v1/RESULT.md) supersedes
 The candidate-plus-engine process consumed roughly 115 user CPU seconds per timeout, versus roughly 14 for its opponent. Its peak RSS stayed below 467 MiB during this cohort. The process is the profiling priority; these figures do not isolate policy CPU or guarantee a deployment memory budget. The 16× requirement is not satisfied by this broader cohort.
 
 Next measurement: callback/startup profiling and sampled stacks on those preserved scenarios, with a separately identified instrumentation build and the production module retained in `artifacts/builds/`. No throughput or memory promotion gate is satisfied yet.
+
+## Latest fixed throughput gate
+
+The [A* bounds candidate](evaluations/quick-as-bounds-v1/RESULT.md), frozen `ddc0415a…`, completed all ten registered games cleanly on the diagnostic engine `27ea649c…`, with no hash mismatch. It still failed the absolute performance gate: aggregate 373.9 durable frames/s, minimum 235.3, and six games below 384. Candidate-plus-engine peak RSS was 469.5 MiB. This supersedes the initial smoke impression; no competitive McRave build has passed the required per-game floor.
+
+The preceding [profile](evaluations/mcrave-post-cache-profile-v1/RESULT.md) placed path generation on at least 22.08% of main-thread samples. A [same-input shadow](evaluations/mcrave-as-bounds-shadow-v1/RESULT.md) preserved every observed path while counting extensive repeated callback work. The next isolated diagnostic tests per-search callback memoization; its instrumentation timing will not be used as a production speed measurement.
+
+The separately repaired [Stardust opponent fork](evaluations/stardust-repaired-cohort-v1/RESULT.md) passed its four-game compatibility gate at 2,059.4 aggregate durable frames/s. That result concerns a different bot and does not establish McRave's performance or an upstream-equivalent rating.

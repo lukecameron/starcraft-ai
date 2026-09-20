@@ -1,0 +1,332 @@
+--- a/Source/BWEB/PathFind.cpp
++++ b/Source/BWEB/PathFind.cpp
+@@ -2,6 +2,11 @@
+ 
+ #include "BWEB.h"
+ #include "JPS.h"
++#ifdef MCRAVE_AS_MEMO_SHADOW
++#include <cstdio>
++#include <cstring>
++#include <fstream>
++#endif
+ 
+ using namespace std;
+ using namespace BWAPI;
+@@ -33,6 +38,38 @@
+ 
+         int currentId = 0;
+         TileData tileData[65536];
++#ifdef MCRAVE_AS_MEMO_SHADOW
++        TileData memoTileData[65536];
++        int memoCurrentId = 0;
++        struct ASMemoShadowSummary {
++            unsigned long long calls = 0, flying = 0, ground = 0, validFlying = 0, validGround = 0;
++            unsigned long long reachable = 0, failed = 0, invalid = 0, cacheShortCircuit = 0;
++            unsigned long long mismatches = 0, invalidProbes = 0;
++            unsigned long long productionHeuristicCalls = 0, memoHeuristicCalls = 0;
++            unsigned long long productionWalkableCalls = 0, memoWalkableCalls = 0;
++            string firstMismatch;
++        } memoShadow;
++        bool expectReachableReadOnly(TilePosition source, TilePosition target) {
++            const auto frame = notReachable.find(Broodwar->getFrameCount());
++            return frame == notReachable.end() || frame->second.find(source) == frame->second.end() || frame->second.find(target) == frame->second.end();
++        }
++        void writeASMemoShadowSummaryImpl() {
++            const char *path = "bwapi-data/write/as-memo-shadow-summary.json";
++            const char *temporary = "bwapi-data/write/as-memo-shadow-summary.json.tmp";
++            ofstream out(temporary, ios::trunc);
++            out << "{\"schema_version\":1"
++                << ",\"calls\":" << memoShadow.calls << ",\"flying_calls\":" << memoShadow.flying << ",\"ground_calls\":" << memoShadow.ground
++                << ",\"valid_flying_calls\":" << memoShadow.validFlying << ",\"valid_ground_calls\":" << memoShadow.validGround
++                << ",\"reachable_calls\":" << memoShadow.reachable << ",\"failed_calls\":" << memoShadow.failed
++                << ",\"invalid_calls\":" << memoShadow.invalid << ",\"cache_short_circuit_calls\":" << memoShadow.cacheShortCircuit
++                << ",\"invalid_probes\":" << memoShadow.invalidProbes << ",\"mismatches\":" << memoShadow.mismatches
++                << ",\"production_heuristic_calls\":" << memoShadow.productionHeuristicCalls << ",\"memo_heuristic_calls\":" << memoShadow.memoHeuristicCalls
++                << ",\"production_walkable_calls\":" << memoShadow.productionWalkableCalls << ",\"memo_walkable_calls\":" << memoShadow.memoWalkableCalls
++                << ",\"first_mismatch\":\"" << memoShadow.firstMismatch << "\"}\n";
++            out.close();
++            if (out) std::rename(temporary, path);
++        }
++#endif
+     } // namespace
+ 
+     void Path::generateJPS(function<bool(const TilePosition &)> passedWalkable)
+@@ -79,94 +116,164 @@
+ 
+     void Path::generateAS(function<double(const TilePosition &)> passedHeuristic, function<bool(const TilePosition &)> isWalkable)
+     {
+-        if (!source.isValid() || !target.isValid() || !expectReachable(source, target))
+-            return;
++#ifdef MCRAVE_AS_MEMO_SHADOW
++        memoShadow.calls++;
++        type.isFlyer() ? memoShadow.flying++ : memoShadow.ground++;
++        const bool validEndpoints = source.isValid() && target.isValid();
++        const bool expectedReachable = validEndpoints && expectReachableReadOnly(source, target);
++        if (!validEndpoints) memoShadow.invalid++;
++        else type.isFlyer() ? memoShadow.validFlying++ : memoShadow.validGround++;
++        if (validEndpoints && !expectedReachable) memoShadow.cacheShortCircuit++;
+ 
+-        const int width = Broodwar->mapWidth();
+-        const int height = Broodwar->mapHeight();
+-        const auto indexOf = [width](const TilePosition &tile) { return (tile.y * width) + tile.x; };
+-
+-        // Reset IDs
+-        currentId++;
+-        if (currentId == INT_MAX) {
+-            currentId = 1;
+-            memset(tileData, 0, sizeof(tileData));
+-        }
+-
+-        priority_queue<Node, vector<Node>, greater<Node>> openQueue;
+-
+-        // Clear in case path was re-used for some reason
+-        dist      = 0.0;
+-        reachable = false;
+-        tiles.clear();
+-
+-        // Start at the target
+-        int startIdx                     = indexOf(target);
+-        tileData[startIdx].g             = 0;
+-        tileData[startIdx].lastVisitedId = currentId;
+-        tileData[startIdx].isClosed      = false;
+-        tileData[startIdx].parent        = target;
+-
+-        auto h = double(source.getApproxDistance(target));
+-        openQueue.push({target, h});
+-
+-        while (!openQueue.empty()) {
+-            Node current = openQueue.top();
+-            openQueue.pop();
+-
+-            int currIdx = indexOf(current.tile);
+-
+-            // Check if visited already
+-            if (tileData[currIdx].isClosed && tileData[currIdx].lastVisitedId == currentId)
+-                continue;
+-
+-            // Create a path if at source
+-            if (current.tile == source) {
+-                reachable         = true;
+-                TilePosition step = current.tile;
+-                while (step != target) {
+-                    tiles.push_back(step);
+-                    step = tileData[indexOf(step)].parent;
++        vector<TilePosition> memoTiles = tiles;
++        double memoDist = dist;
++        bool memoReachable = reachable;
++        unsigned long long memoHCalls = 0, memoWCalls = 0;
++        if (expectedReachable) {
++            const int memoWidth = Broodwar->mapWidth();
++            const int memoHeight = Broodwar->mapHeight();
++            const int memoSize = memoWidth * memoHeight;
++            const auto memoIndex = [memoWidth](const TilePosition &tile) { return tile.y * memoWidth + tile.x; };
++            vector<double> heuristicValues(memoSize);
++            vector<unsigned char> heuristicReady(memoSize, 0);
++            vector<unsigned char> walkableValues(memoSize);
++            vector<unsigned char> walkableReady(memoSize, 0);
++            const auto memoHeuristic = [&](const TilePosition &tile) {
++                const int index = memoIndex(tile);
++                if (!heuristicReady[index]) {
++                    heuristicValues[index] = passedHeuristic(tile);
++                    heuristicReady[index] = 1;
++                    memoHCalls++;
+                 }
+-                tiles.push_back(target);
+-                if (reverse)
+-                    std::reverse(tiles.begin(), tiles.end());
+-                return;
++                return heuristicValues[index];
++            };
++            const auto memoWalkable = [&](const TilePosition &tile) {
++                const int index = memoIndex(tile);
++                if (!walkableReady[index]) {
++                    walkableValues[index] = isWalkable(tile) ? 1 : 0;
++                    walkableReady[index] = 1;
++                    memoWCalls++;
++                }
++                return walkableValues[index] != 0;
++            };
++            if (++memoCurrentId == INT_MAX) { memoCurrentId = 1; memset(memoTileData, 0, sizeof(memoTileData)); }
++            priority_queue<Node, vector<Node>, greater<Node>> memoQueue;
++            memoDist = 0.0; memoReachable = false; memoTiles.clear();
++            const int memoStart = memoIndex(target);
++            memoTileData[memoStart] = {target, 0.0, memoCurrentId, false};
++            memoQueue.push({target, double(source.getApproxDistance(target))});
++            while (!memoQueue.empty()) {
++                Node current = memoQueue.top(); memoQueue.pop();
++                const int currIdx = memoIndex(current.tile);
++                if (memoTileData[currIdx].isClosed && memoTileData[currIdx].lastVisitedId == memoCurrentId) continue;
++                if (current.tile == source) {
++                    memoReachable = true;
++                    TilePosition step = current.tile;
++                    while (step != target) { memoTiles.push_back(step); step = memoTileData[memoIndex(step)].parent; }
++                    memoTiles.push_back(target);
++                    if (reverse) std::reverse(memoTiles.begin(), memoTiles.end());
++                    break;
++                }
++                memoTileData[currIdx].isClosed = true;
++                for (const auto &d : eightDir) {
++                    TilePosition next = current.tile + d;
++                    if (next.x < 0 || next.y < 0 || next.x >= memoWidth || next.y >= memoHeight) continue;
++                    const double moveCost = ((d.x != 0 && d.y != 0) ? 45.248 : 32.0) + memoHeuristic(next);
++                    const double currG = memoTileData[currIdx].g + moveCost;
++                    auto &nextData = memoTileData[memoIndex(next)];
++                    if (!memoWalkable(next)) continue;
++                    if (d.x != 0 && d.y != 0) {
++                        if (!memoWalkable({current.tile.x + d.x, current.tile.y}) || !memoWalkable({current.tile.x, current.tile.y + d.y})) continue;
++                    }
++                    if (nextData.lastVisitedId != memoCurrentId || currG < nextData.g) {
++                        nextData = {current.tile, currG, memoCurrentId, false};
++                        memoQueue.push({next, currG + double(source.getApproxDistance(next))});
++                    }
++                }
+             }
+-
+-            tileData[currIdx].isClosed = true;
+-
+-            for (const auto &d : eightDir) {
+-                TilePosition next = current.tile + d;
+-                if (next.x < 0 || next.y < 0 || next.x >= width || next.y >= height)
+-                    continue;
+-
+-                // Costs calcs
+-                double moveCost = ((d.x != 0 && d.y != 0) ? 45.248 : 32.0) + passedHeuristic(next);
+-                double currG    = tileData[currIdx].g + moveCost;
+-                auto &nextData = tileData[indexOf(next)];
+-
+-                // Walkability checks
+-                if (!isWalkable(next))
+-                    continue;
+-                if (d.x != 0 && d.y != 0) {
+-                    if (!isWalkable({current.tile.x + d.x, current.tile.y}) || !isWalkable({current.tile.x, current.tile.y + d.y}))
+-                        continue;
++        }
++        unsigned long long productionHCalls = 0, productionWCalls = 0;
++        const auto countedHeuristic = [&](const TilePosition &tile) { productionHCalls++; return passedHeuristic(tile); };
++        const auto countedWalkable = [&](const TilePosition &tile) { productionWCalls++; return isWalkable(tile); };
++#else
++        const auto &countedHeuristic = passedHeuristic;
++        const auto &countedWalkable = isWalkable;
++#endif
++        const auto runProduction = [&]() {
++            if (!source.isValid() || !target.isValid() || !expectReachable(source, target)) return;
++            currentId++;
++            if (currentId == INT_MAX) { currentId = 1; memset(tileData, 0, sizeof(tileData)); }
++            priority_queue<Node, vector<Node>, greater<Node>> openQueue;
++            dist = 0.0; reachable = false; tiles.clear();
++            const int width = Broodwar->mapWidth();
++            const int height = Broodwar->mapHeight();
++            const auto indexOf = [width](const TilePosition &tile) { return tile.y * width + tile.x; };
++            const int startIdx = indexOf(target);
++            tileData[startIdx] = {target, 0.0, currentId, false};
++            openQueue.push({target, double(source.getApproxDistance(target))});
++            while (!openQueue.empty()) {
++                Node current = openQueue.top(); openQueue.pop();
++                const int currIdx = indexOf(current.tile);
++                if (tileData[currIdx].isClosed && tileData[currIdx].lastVisitedId == currentId) continue;
++                if (current.tile == source) {
++                    reachable = true;
++                    TilePosition step = current.tile;
++                    while (step != target) { tiles.push_back(step); step = tileData[indexOf(step)].parent; }
++                    tiles.push_back(target);
++                    if (reverse) std::reverse(tiles.begin(), tiles.end());
++                    return;
+                 }
+-
+-                // Check if visited or lower score
+-                if (nextData.lastVisitedId != currentId || currG < nextData.g) {
+-                    nextData  = {current.tile, currG, currentId, false};
+-                    auto nextH = double(source.getApproxDistance(next));
+-                    openQueue.push({next, currG + nextH});
++                tileData[currIdx].isClosed = true;
++                for (const auto &d : eightDir) {
++                    TilePosition next = current.tile + d;
++                    if (next.x < 0 || next.y < 0 || next.x >= width || next.y >= height) continue;
++                    const double moveCost = ((d.x != 0 && d.y != 0) ? 45.248 : 32.0) + countedHeuristic(next);
++                    const double currG = tileData[currIdx].g + moveCost;
++                    auto &nextData = tileData[indexOf(next)];
++                    if (!countedWalkable(next)) continue;
++                    if (d.x != 0 && d.y != 0) {
++                        if (!countedWalkable({current.tile.x + d.x, current.tile.y}) || !countedWalkable({current.tile.x, current.tile.y + d.y})) continue;
++                    }
++                    if (nextData.lastVisitedId != currentId || currG < nextData.g) {
++                        nextData = {current.tile, currG, currentId, false};
++                        openQueue.push({next, currG + double(source.getApproxDistance(next))});
++                    }
+                 }
+             }
++            notReachable[Broodwar->getFrameCount()].insert(source);
++            notReachable[Broodwar->getFrameCount()].insert(target);
++        };
++        runProduction();
++#ifdef MCRAVE_AS_MEMO_SHADOW
++        memoShadow.productionHeuristicCalls += productionHCalls;
++        memoShadow.productionWalkableCalls += productionWCalls;
++        memoShadow.memoHeuristicCalls += memoHCalls;
++        memoShadow.memoWalkableCalls += memoWCalls;
++        if (reachable) memoShadow.reachable++;
++        else if (validEndpoints && expectedReachable) memoShadow.failed++;
++        const bool distanceEqual = memcmp(&dist, &memoDist, sizeof(double)) == 0;
++        const bool mismatchThisCall = reachable != memoReachable || !distanceEqual || tiles != memoTiles;
++        if (mismatchThisCall) {
++            memoShadow.mismatches++;
++            if (memoShadow.firstMismatch.empty())
++                memoShadow.firstMismatch = "frame=" + to_string(Broodwar->getFrameCount()) + ",source=" + to_string(source.x) + ":" + to_string(source.y) + ",target=" + to_string(target.x) + ":" + to_string(target.y);
+         }
++        if (memoShadow.calls % 100 == 0 || (mismatchThisCall && memoShadow.mismatches == 1)) writeASMemoShadowSummaryImpl();
++#endif
++    }
+ 
+-        // Must not be reachable if we are here
+-        notReachable[Broodwar->getFrameCount()].insert(source);
+-        notReachable[Broodwar->getFrameCount()].insert(target);
++#ifdef MCRAVE_AS_MEMO_SHADOW
++    void runASMemoShadowInvalidEndpointChecks() {
++        Path invalidSource(TilePositions::Invalid, TilePosition(0, 0), UnitTypes::Zerg_Mutalisk);
++        invalidSource.generateAS_h([](const TilePosition &) { return 0.0; });
++        memoShadow.invalidProbes++;
++        Path invalidTarget(TilePosition(0, 0), TilePositions::Invalid, UnitTypes::Zerg_Drone);
++        invalidTarget.generateAS_h([](const TilePosition &) { return 0.0; });
++        memoShadow.invalidProbes++;
++        writeASMemoShadowSummaryImpl();
+     }
++    void writeASMemoShadowSummary() { writeASMemoShadowSummaryImpl(); }
++#endif
+ 
+     bool Path::terrainWalkable(const TilePosition &tile)
+     {
+--- a/Source/BWEB/PathFind.h
++++ b/Source/BWEB/PathFind.h
+@@ -2,6 +2,10 @@
+ #include <BWAPI.h>
+ 
+ namespace BWEB {
++#ifdef MCRAVE_AS_MEMO_SHADOW
++    void runASMemoShadowInvalidEndpointChecks();
++    void writeASMemoShadowSummary();
++#endif
+     class Wall;
+ 
+     class Path {
+--- a/Source/McRave/Main/McRave.cpp
++++ b/Source/McRave/Main/McRave.cpp
+@@ -92,6 +92,9 @@
+ 
+ void McRaveModule::onStart()
+ {
++#ifdef MCRAVE_AS_MEMO_SHADOW
++    BWEB::runASMemoShadowInvalidEndpointChecks();
++#endif
+     applyEvaluationSeed();
+     writeDiagnostics(false, false);
+     Visuals::onStart();
+@@ -118,6 +121,9 @@
+ 
+ void McRaveModule::onEnd(bool isWinner)
+ {
++#ifdef MCRAVE_AS_MEMO_SHADOW
++    BWEB::writeASMemoShadowSummary();
++#endif
+     writeDiagnostics(true, isWinner);
+     // @McRave ☑ has taken "drop all your weapons at the end of a csgo match" to the ai scene
+     for (auto &unit : Units::getUnits(PlayerState::Self))

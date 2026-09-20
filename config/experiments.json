@@ -321,6 +321,40 @@
       "run_ids": [
         "20260920T044040-2281fd96a9f4"
       ]
+    },
+    {
+      "id": "stardust-emptytimer-repair-v1",
+      "title": "Repair Stardust mining timer exhaustion",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "Restoring the possible nonzero timer values after a contradictory prediction prevents the confirmed empty-set failure while keeping the mining optimizer active.",
+      "notes": "The single registered probe completed with opposing results, no state-hash mismatch and replay evidence of worker, building and combat production. Recovery occurred at least eight times; the defensive forecast fallback was not used.",
+      "conclusion": "The focused repair probe passed. Evaluate the frozen fork in the four-game compatibility cohort before accepting it as an opponent.",
+      "run_ids": [
+        "20260920T044353-8b83e0831afe"
+      ]
+    },
+    {
+      "id": "stardust-repaired-cohort-v1",
+      "title": "Validate the repaired Stardust fork",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "ADOPT",
+      "hypothesis": "The frozen mining-timer repair completes all four cross-race scenarios cleanly with plausible gameplay and at least 384 durable fps in every game and in aggregate.",
+      "notes": "Four wins from four clean games. Every game exceeded 1,999 fps; aggregate throughput was 2,059.4 fps. No state-hash mismatch or defensive forecast fallback occurred. Replay commands show worker, building and combat production in every game.",
+      "conclusion": "Accept this frozen fork as a provisional local opponent. The original port remains rejected; this compatibility check does not establish a local Elo or transfer the upstream BASIL rating."
+    },
+    {
+      "id": "mcrave-as-memo-shadow-v1",
+      "title": "Compare cached pathfinding queries on identical inputs",
+      "date": "2026-09-20",
+      "status": "completed",
+      "hypothesis": "Caching heuristic and walkability results within one search preserves each path while reducing repeated queries.",
+      "notes": "The one registered game completed normally. All 13,611 valid searches and two invalid-endpoint probes matched reachability, distance bits and ordered tiles; combined callback evaluations fell 91.02%. There was no state-hash mismatch.",
+      "conclusion": "The observed equivalence check passed. Build a separate production candidate and measure it against the unchanged throughput gate; this diagnostic ran both algorithms and does not measure production speed.",
+      "run_ids": [
+        "20260920T044920-ce26d75af106"
+      ]
     }
   ]
 }

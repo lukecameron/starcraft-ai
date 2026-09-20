@@ -1,0 +1,133 @@
+diff --git a/src/StardustAIModule.cpp b/src/StardustAIModule.cpp
+index 039f7b99..af0515de 100644
+--- a/src/StardustAIModule.cpp
++++ b/src/StardustAIModule.cpp
+@@ -17,6 +17,7 @@
+ #include "Bullets.h"
+ #include "Players.h"
+ #include "Geo.h"
++#include <fstream>
+ 
+ int currentFrame;
+ 
+@@ -53,6 +54,15 @@ namespace
+ {
+     bool gameFinished;
+ 
++    void writeResult(bool ended, bool winner)
++    {
++        std::ofstream out("bwapi-data/write/diagnostic.json", std::ios::trunc);
++        out << "{\"frame_count\":" << BWAPI::Broodwar->getFrameCount()
++            << ",\"winner\":" << (ended ? (winner ? "true" : "false") : "null")
++            << ",\"ended\":" << (ended ? "true" : "false")
++            << ",\"latency_frames\":" << BWAPI::Broodwar->getLatencyFrames() << "}\n";
++    }
++
+     void handleUnitDiscover(BWAPI::Unit unit)
+     {
+         Map::onUnitDiscover(unit);
+@@ -69,6 +79,7 @@ void StardustAIModule::onStart()
+ {
+     gameFinished = false;
+     currentFrame = 0;
++    writeResult(false, false);
+ 
+     // Initialize globals that just need to make sure their global data is reset
+     Log::initialize();
+@@ -143,6 +154,7 @@ void StardustAIModule::onStart()
+ 
+ void StardustAIModule::onEnd(bool isWinner)
+ {
++    writeResult(true, isWinner);
+     if (testOnEnd) testOnEnd(isWinner);
+ 
+ #if LOGGING_ENABLED
+@@ -156,6 +168,8 @@ void StardustAIModule::onEnd(bool isWinner)
+ 
+ void StardustAIModule::onFrame()
+ {
++    if (BWAPI::Broodwar->getFrameCount() % 240 == 0) writeResult(false, false);
++
+     if (currentFrame < frameSkip)
+     {
+         currentFrame++;
+diff --git a/src/Units/MyUnit/MyWorker.cpp b/src/Units/MyUnit/MyWorker.cpp
+index 52c1a2a2..19c28e15 100644
+--- a/src/Units/MyUnit/MyWorker.cpp
++++ b/src/Units/MyUnit/MyWorker.cpp
+@@ -8,6 +8,8 @@
+ 
+ #include "DebugFlag_UnitOrders.h"
+ 
++#include <cstdio>
++
+ #if INSTRUMENTATION_ENABLED_VERBOSE
+ #define DEBUG_ORDERPROCESSTIMER false
+ #define VALIDATE_ORDERPROCESSTIMER false
+@@ -213,6 +215,22 @@ void MyWorkerImpl::update(BWAPI::Unit unit)
+         if (possibleOrderProcessTimerValues.contains(0) && bwapiUnit->getOrder() == BWAPI::Orders::MiningMinerals && bwapiUnit->getOrderTimer() == 0)
+         {
+             possibleOrderProcessTimerValues.erase(0);
++            if (possibleOrderProcessTimerValues.empty())
++            {
++                // The observation excludes zero, but a singleton zero prediction leaves no model state.
++                // Recover the complete nonzero pre-cycle domain; the cycle below advances it to 0-7.
++                possibleOrderProcessTimerValues = {1, 2, 3, 4, 5, 6, 7, 8};
++                static unsigned int exhaustionRecoveryCount = 0;
++                ++exhaustionRecoveryCount;
++                if (exhaustionRecoveryCount <= 8)
++                {
++                    std::fprintf(stderr,
++                                 "{\"stardust_emptytimer_repair\":1,\"event\":\"producer_recovered\",\"count\":%u,\"frame\":%d,\"worker_id\":%d,\"order_id\":%d,\"order_timer\":%d}\n",
++                                 exhaustionRecoveryCount, currentFrame, id,
++                                 bwapiUnit->getOrder().getID(), bwapiUnit->getOrderTimer());
++                    std::fflush(stderr);
++                }
++            }
+         }
+ 
+         // Run the order process timer cycle on each value
+diff --git a/src/Workers/MiningOptimizationV2/Takeover/PatchOccupiedForecast.cpp b/src/Workers/MiningOptimizationV2/Takeover/PatchOccupiedForecast.cpp
+index 5f98c3b4..c05e70f8 100644
+--- a/src/Workers/MiningOptimizationV2/Takeover/PatchOccupiedForecast.cpp
++++ b/src/Workers/MiningOptimizationV2/Takeover/PatchOccupiedForecast.cpp
+@@ -4,6 +4,8 @@
+ #include "OrderProcessTimer.h"
+ #include "Workers.h"
+ 
++#include <cstdio>
++
+ namespace MiningOptimization
+ {
+     namespace
+@@ -139,6 +141,20 @@ namespace MiningOptimization
+                     earliestMiningEndFrame - currentFrame - 1);
+ 
+                 // Refine the latest end frame based on the possible order process timer values (this might shift it one frame earlier)
++                if (orderProcessTimerValues.empty())
++                {
++                    static unsigned int emptyForecastCount = 0;
++                    ++emptyForecastCount;
++                    if (emptyForecastCount <= 8)
++                    {
++                        std::fprintf(stderr,
++                                     "{\"stardust_emptytimer_repair\":1,\"event\":\"consumer_fail_closed\",\"count\":%u,\"frame\":%d,\"worker_id\":%d}\n",
++                                     emptyForecastCount, currentFrame, miningWorker->id);
++                        std::fflush(stderr);
++                    }
++                    fullySaturated = true;
++                    return;
++                }
+                 miningWorkerLatestEndFrame = earliestMiningEndFrame + *orderProcessTimerValues.rbegin();
+ 
+                 // Generate the decaying probability of mining ending at each frame using the possible order process timer values
+@@ -189,6 +205,9 @@ namespace MiningOptimization
+             {
+                 initializeMiningWorker.operator()<WorkerOrdering::Other>();
+             }
++
++            // The defensive empty-input path returns from the lambda; leave the constructor before using the partial forecast.
++            if (fullySaturated) return;
+         }
+ 
+         // Handle the next mining worker transitioning to mining or patch lock

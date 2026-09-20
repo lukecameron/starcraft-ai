@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "experiment_id": "stardust-repaired-cohort-v1",
+  "title": "Stardust empty-timer repair cohort compatibility check",
+  "registered_at": "2026-09-20T04:45:44.592395+00:00",
+  "hypothesis": "The frozen Stardust empty-timer repair completes the same four representative cross-race games cleanly, with no in-sync hash mismatch, plausible Protoss worker/building/combat production, and at least 384 durable logical frames per wall second in every game and in aggregate.",
+  "stop_condition": "Exactly four registered games, run serially, unless interrupted or two consecutive infrastructure failures trigger the existing batch stop. Preserve all attempts. No retries, replacement games, or adaptive seeds.",
+  "purpose": "Bounded compatibility check of the frozen Stardust empty-timer repair; no rating, performance-causality, or strength-promotion claim",
+  "wall_timeout_seconds": 120,
+  "launcher": "artifacts/builds/27ea649cb3def9a724df077adaae3e62f16c9de8fbfbc9850ee485af5fbd88cb/openbw-kill-path-diagnostic/BWAPILauncher",
+  "library_path": "artifacts/builds/27ea649cb3def9a724df077adaae3e62f16c9de8fbfbc9850ee485af5fbd88cb/openbw-kill-path-diagnostic",
+  "game_data_dir": "third_party/game-data/runtime",
+  "candidate": {
+    "name": "Stardust empty-timer repair",
+    "race": "Protoss",
+    "sha256": "1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa"
+  },
+  "opponents": {
+    "zzzk-z": {
+      "name": "ZZZKBot",
+      "race": "Zerg",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+    },
+    "ualberta-t": {
+      "name": "UAlbertaBot-T",
+      "race": "Terran",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+    }
+  },
+  "games": [
+    {
+      "opponent": "zzzk-z",
+      "map": "sscai/(2)Benzene.scx",
+      "candidate_player": 1,
+      "scenario_seed": 5202
+    },
+    {
+      "opponent": "zzzk-z",
+      "map": "sscai/(2)Benzene.scx",
+      "candidate_player": 2,
+      "scenario_seed": 5202
+    },
+    {
+      "opponent": "ualberta-t",
+      "map": "sscai/(2)Destination.scx",
+      "candidate_player": 1,
+      "scenario_seed": 5301
+    },
+    {
+      "opponent": "ualberta-t",
+      "map": "sscai/(2)Destination.scx",
+      "candidate_player": 2,
+      "scenario_seed": 5301
+    }
+  ],
+  "execution": {
+    "concurrency": 1,
+    "learning_state": "empty isolated per-player read/write directories",
+    "bot_seeds": "none; no tested module declares a supported explicit bot RNG control for this schedule"
+  },
+  "engineering_acceptance": {
+    "clean_completions": 4,
+    "candidate_crashes": 0,
+    "timeouts": 0,
+    "durable_aggregate_fps_minimum": 384,
+    "durable_each_match_fps_minimum": 384,
+    "plausible_gameplay": "Each completed Stardust replay must contain identifiable worker-production, building-production, and combat-unit command evidence. Record each category and any idle or wrong-race anomaly; absence or an ambiguous client view makes compatibility inconclusive.",
+    "definition": "logical frame count divided by durable_completion_seconds, including both bots, engine, initialization, logging instrumentation and archive capture; aggregate uses sum(frames)/sum(durable seconds)",
+    "clean_result": "Opposing winner callbacks, both launcher return codes zero, and no insync_hash_mismatch event in either client diagnostic stderr."
+  },
+  "entry_condition": "Launch only with the frozen repair artifact after the confirmed empty-timer diagnostic and one-shot correctness probe passed."
+}
