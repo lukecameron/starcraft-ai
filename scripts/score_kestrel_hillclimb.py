@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Score archived hill-climb games from manifests and screp replay commands.
+"""Score archived Kestrel games from manifests, diagnostics, and screp replays.
 
 This is an exploratory instrument, not an Elo estimator or promotion gate. It
-only reads an experiment ledger, match manifests, and archived replays. Every
-input path, hash check, parser result, and heuristic is retained in the output
-scorecard so a later decision can review the raw evidence.
+reads an experiment ledger, match manifests, Kestrel scalar/JSONL diagnostics,
+and archived replays. Every input path, hash check, parser result, and
+heuristic is retained in the output scorecard so a later decision can review
+the raw evidence.
 """
 
 from __future__ import annotations
@@ -90,11 +91,324 @@ def outcome_performance(candidate_result: dict[str, object]) -> dict[str, object
     }
 
 
+def _counter(categories: object, name: str, index: int = 0) -> int:
+    if not isinstance(categories, dict):
+        return 0
+    value = categories.get(name)
+    if isinstance(value, list) and len(value) > index and isinstance(value[index], int):
+        return value[index]
+    return 0
+
+
+def _resolve_path(path: object, root: Path) -> Path | None:
+    if not isinstance(path, str) or not path:
+        return None
+    candidate = Path(path)
+    return candidate if candidate.is_absolute() else (root / candidate).resolve()
+
+
+def read_diagnostic_events(metadata: dict[str, object], root: Path) -> dict[str, object]:
+    """Read an optional Kestrel JSONL trace beside its scalar diagnostic."""
+    metadata_path = _resolve_path(metadata.get("metadata_path"), root)
+    search_dir = metadata_path.parent if metadata_path else None
+    candidates = sorted(search_dir.glob("*.jsonl")) if search_dir and search_dir.is_dir() else []
+    path = next((item for item in candidates if "kestrel" in item.name.lower() or "diagnostic" in item.name.lower()), None)
+    result: dict[str, object] = {
+        "path": str(path) if path else None,
+        "exists": bool(path and path.is_file()),
+        "parse_ok": None,
+        "line_count": 0,
+        "malformed_lines": 0,
+        "event_counts": {},
+        "first_frames": {},
+    }
+    if not path:
+        return result
+    event_counts: dict[str, int] = {}
+    first_frames: dict[str, int] = {}
+    try:
+        with path.open() as source:
+            for line in source:
+                if not line.strip():
+                    continue
+                result["line_count"] = int(result["line_count"]) + 1
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError:
+                    result["malformed_lines"] = int(result["malformed_lines"]) + 1
+                    continue
+                if not isinstance(row, dict):
+                    result["malformed_lines"] = int(result["malformed_lines"]) + 1
+                    continue
+                event = row.get("event") if row.get("record") == "event" else None
+                if isinstance(event, str):
+                    event_counts[event] = event_counts.get(event, 0) + 1
+                    frame = row.get("frame")
+                    if isinstance(frame, int) and event not in first_frames:
+                        first_frames[event] = frame
+    except OSError as error:
+        result["error"] = f"{type(error).__name__}: {error}"
+    result["event_counts"] = dict(sorted(event_counts.items()))
+    result["first_frames"] = dict(sorted(first_frames.items()))
+    result["parse_ok"] = result.get("malformed_lines") == 0 and "error" not in result
+    return result
+
+
+def _diagnostic_summary(metadata: dict[str, object], root: Path) -> dict[str, object]:
+    categories = metadata.get("command_categories")
+    errors = metadata.get("command_error_counts")
+    metadata_path = _resolve_path(metadata.get("metadata_path"), root)
+    metadata_file: dict[str, object] | None = None
+    metadata_file_error: str | None = None
+    if metadata_path and metadata_path.is_file():
+        try:
+            loaded = json.loads(metadata_path.read_text())
+            metadata_file = loaded if isinstance(loaded, dict) else None
+            if metadata_file is None:
+                metadata_file_error = "diagnostic_not_object"
+        except (OSError, json.JSONDecodeError) as error:
+            metadata_file_error = f"{type(error).__name__}: {error}"
+    comparable_keys = ("schema_version", "frame_count", "ended", "winner", "rejected_commands", "command_count")
+    metadata_mismatches = [key for key in comparable_keys if metadata_file is not None and key in metadata_file and metadata_file.get(key) != metadata.get(key)]
+    attempted = sum(_counter(categories, name, 0) for name in ("build", "train", "gather", "attack"))
+    rejected_by_category = sum(_counter(categories, name, 1) for name in ("build", "train", "gather", "attack"))
+    rejected = metadata.get("rejected_commands")
+    rejected = rejected if isinstance(rejected, int) else rejected_by_category
+    command_count = metadata.get("command_count")
+    command_count = command_count if isinstance(command_count, int) else attempted
+    result: dict[str, object] = {
+        "schema_version": metadata.get("schema_version"),
+        "metadata_path": metadata.get("metadata_path"),
+        "metadata_exists": bool(metadata_path and metadata_path.is_file()),
+        "metadata_file_parse_ok": metadata_file is not None and metadata_file_error is None,
+        "metadata_file_mismatches": metadata_mismatches,
+        "metadata_file_error": metadata_file_error,
+        "ended": metadata.get("ended"),
+        "winner": metadata.get("winner"),
+        "frame_count": metadata.get("frame_count"),
+        "latency_frames": metadata.get("latency_frames"),
+        "command_count": command_count,
+        "attempted_commands": attempted,
+        "rejected_commands": rejected,
+        "rejection_rate": (rejected / attempted) if attempted else None,
+        "command_categories": categories if isinstance(categories, dict) else {},
+        "command_error_counts": errors if isinstance(errors, dict) else {},
+        "economy": {
+            "max_probes": metadata.get("max_probes"),
+            "max_pylons": metadata.get("max_pylons"),
+            "gas_worker_guard_events": metadata.get("gas_worker_guard_events"),
+            "gas_worker_build_attempts": metadata.get("gas_worker_build_attempts"),
+        },
+        "production": {
+            "max_gateways": metadata.get("max_gateways"),
+            "max_zealots": metadata.get("max_zealots"),
+            "max_dragoons": metadata.get("max_dragoons"),
+            "accepted_zealot_trains": metadata.get("accepted_zealot_trains"),
+            "accepted_structures_after_first_zealot": metadata.get("accepted_structures_after_first_zealot"),
+            "first_pylon_accepted_frame": metadata.get("first_pylon_accepted_frame"),
+            "first_gateway_accepted_frame": metadata.get("first_gateway_accepted_frame"),
+            "first_gateway_completed_frame": metadata.get("first_gateway_completed_frame"),
+            "first_zealot_train_frame": metadata.get("first_zealot_train_frame"),
+            "first_zealot_completed_frame": metadata.get("first_zealot_completed_frame"),
+        },
+    }
+    result["defense"] = {
+        "first_home_threat_frame": metadata.get("first_home_threat_frame"),
+        "first_home_army_threat_frame": metadata.get("first_home_army_threat_frame"),
+        "first_local_engagement_frame": metadata.get("first_local_engagement_frame"),
+        "first_home_combat_loss_frame": metadata.get("first_home_combat_loss_frame", metadata.get("first_home_zealot_loss_frame")),
+        "local_combat_at_first_home_army_threat": metadata.get("local_combat_at_first_home_army_threat"),
+        "global_combat_at_first_home_army_threat": metadata.get("global_combat_at_first_home_army_threat"),
+        "max_local_completed_zealots_before_loss": metadata.get("max_local_completed_zealots_before_loss"),
+        "max_completed_combat_units": metadata.get("max_completed_combat_units"),
+    }
+    result["reserve_offense"] = {
+        "suppression_frame": metadata.get("first_early_zerg_stage_suppression_frame"),
+        "home_move_attempts": metadata.get("early_zerg_stage_home_move_attempts", 0),
+        "home_move_orders": metadata.get("early_zerg_stage_home_move_orders", 0),
+        "home_target_orders": metadata.get("early_zerg_stage_home_target_orders", 0),
+        "remote_target_events": metadata.get("early_zerg_stage_remote_target_events", 0),
+        "remote_attack_orders": metadata.get("early_zerg_stage_remote_attack_orders", 0),
+        "release_attack_orders": metadata.get("early_zerg_stage_release_attack_orders", 0),
+        "release_frame": metadata.get("first_early_zerg_stage_release_frame"),
+        "release_army": metadata.get("early_zerg_stage_release_army"),
+        "max_army": metadata.get("early_zerg_stage_max_army"),
+        "local_two_frame": metadata.get("first_early_zerg_stage_local_two_frame"),
+        # v32's explicit reserve telemetry; retain the v31 stage counters above
+        # so scorecards remain comparable across the policy generations.
+        "zerg_reserve_current": metadata.get("zerg_reserve_current"),
+        "zerg_reserve_recruit_events": metadata.get("zerg_reserve_recruit_events"),
+        "zerg_reserve_death_events": metadata.get("zerg_reserve_death_events"),
+        "zerg_reserve_peak": metadata.get("zerg_reserve_peak"),
+        "zerg_reserve_size_at_first_home_threat": metadata.get("zerg_reserve_size_at_first_home_threat"),
+        "zerg_reserve_current_surplus": metadata.get("zerg_reserve_current_surplus"),
+        "zerg_reserve_max_surplus": metadata.get("zerg_reserve_max_surplus"),
+        "zerg_reserve_local_threat_events": metadata.get("zerg_reserve_local_threat_events"),
+        "zerg_reserve_remote_threat_events": metadata.get("zerg_reserve_remote_threat_events"),
+        "zerg_reserve_remote_order_blocks": metadata.get("zerg_reserve_remote_order_blocks"),
+        "zerg_reserve_local_attack_orders": metadata.get("zerg_reserve_local_attack_orders"),
+        "zerg_reserve_remote_attack_orders": metadata.get("zerg_reserve_remote_attack_orders"),
+        "zerg_reserve_home_move_attempts": metadata.get("zerg_reserve_home_move_attempts"),
+        "zerg_reserve_home_move_orders": metadata.get("zerg_reserve_home_move_orders"),
+        "zerg_reserve_home_move_cooldown_blocks": metadata.get("zerg_reserve_home_move_cooldown_blocks"),
+        "zerg_reserve_home_move_repeat_orders": metadata.get("zerg_reserve_home_move_repeat_orders"),
+        "zerg_reserve_home_move_repeat_units": metadata.get("zerg_reserve_home_move_repeat_units"),
+        "zerg_reserve_home_move_max_accepted_per_unit": metadata.get("zerg_reserve_home_move_max_accepted_per_unit"),
+        "zerg_reserve_home_move_min_accepted_repeat_interval": metadata.get("zerg_reserve_home_move_min_accepted_repeat_interval"),
+        "zerg_first_reserve_three_frame": metadata.get("zerg_first_reserve_three_frame"),
+        "zerg_reserved_local_at_first_home_threat": metadata.get("zerg_reserved_local_at_first_home_threat"),
+        "zerg_first_accepted_surplus_release_frame": metadata.get("zerg_first_accepted_surplus_release_frame"),
+        "zerg_first_accepted_surplus_release_army": metadata.get("zerg_first_accepted_surplus_release_army"),
+        "zerg_nonreserve_remote_attack_orders": metadata.get("zerg_nonreserve_remote_attack_orders"),
+    }
+    result["events"] = read_diagnostic_events(metadata, root)
+    return result
+
+
+def _replay_fidelity(parsed: dict[str, object], replay: dict[str, object], diagnostic: dict[str, object]) -> dict[str, object]:
+    recorded_hash = replay.get("sha256")
+    actual_hash = parsed.get("sha256")
+    recorded_size = replay.get("size_bytes")
+    actual_size = parsed.get("size_bytes")
+    parse_ok = parsed.get("screp_exit_code") == 0 and parsed.get("json_valid") is True
+    parse_errors = parsed.get("parse_error_commands")
+    parse_errors_ok = parse_errors in (None, [], 0)
+    replay_frames = parsed.get("frames")
+    diagnostic_frames = diagnostic.get("frame_count")
+    frame_delta = replay_frames - diagnostic_frames if isinstance(replay_frames, int) and isinstance(diagnostic_frames, int) else None
+    return {
+        "archival_status": replay.get("archival_status"),
+        "exists": parsed.get("exists") is True,
+        "size_matches": recorded_size is None or actual_size == recorded_size,
+        "hash_recorded": isinstance(recorded_hash, str),
+        "hash_matches": isinstance(recorded_hash, str) and actual_hash == recorded_hash,
+        "screp_parse_ok": parse_ok,
+        "parse_errors_ok": parse_errors_ok,
+        "frames": replay_frames,
+        "diagnostic_frames": diagnostic_frames,
+        "frame_delta": frame_delta,
+        "frame_within_one": frame_delta is not None and abs(frame_delta) <= 1,
+    }
+
+
+def score_kestrel_match(manifest: dict[str, object], manifest_path: Path, screp: Path,
+                        candidate_name: str = "Kestrel", candidate_sha: str | None = None,
+                        root: Path | None = None) -> dict[str, object]:
+    """Return a reviewable, descriptive summary for one archived match."""
+    root = root or Path(__file__).resolve().parents[1]
+    players = manifest.get("players") if isinstance(manifest.get("players"), list) else []
+
+    def is_candidate(player: object) -> bool:
+        if not isinstance(player, dict):
+            return False
+        if player.get("name") == candidate_name:
+            return True
+        metadata = player.get("result_metadata") if isinstance(player.get("result_metadata"), dict) else {}
+        environment = player.get("environment") if isinstance(player.get("environment"), dict) else {}
+        module_path = str(environment.get("BWAPI_CONFIG_AI__AI") or "")
+        return metadata.get("bot") == candidate_name or (candidate_name.split()[0] == metadata.get("bot")) or bool(candidate_sha and candidate_sha in module_path)
+
+    candidate = next((item for item in players if is_candidate(item)), None)
+    game: dict[str, object] = {
+        "manifest_path": str(manifest_path),
+        "run_id": manifest.get("run_id"),
+        "status": manifest.get("status"),
+        "outcome_verified": manifest.get("outcome_verified"),
+        "opponent": next((p.get("name") for p in players if isinstance(p, dict) and p is not candidate), None),
+        "map": ((manifest.get("inputs") or {}).get("map") or {}).get("configured_path") if isinstance(manifest.get("inputs"), dict) else None,
+    }
+    if not isinstance(candidate, dict):
+        game["error"] = f"candidate_player_not_found:{candidate_name}"
+        game["integrity"] = {"grade": "invalid", "reasons": [game["error"]]}
+        return game
+    diagnostic_metadata = candidate.get("result_metadata") if isinstance(candidate.get("result_metadata"), dict) else {}
+    candidate_player = candidate.get("player")
+    replay_records = [r for r in manifest.get("replays", []) if isinstance(r, dict)]
+    candidate_replay = next((r for r in replay_records if r.get("player") == candidate_player), None)
+    diagnostic = _diagnostic_summary(diagnostic_metadata, root)
+    game.update({
+        "candidate_player": candidate_player,
+        "candidate_result_metadata": diagnostic_metadata,
+        "candidate_outcome": "win" if diagnostic_metadata.get("winner") is True else "loss" if diagnostic_metadata.get("winner") is False else "unknown",
+        "terminal_frames": diagnostic_metadata.get("frame_count"),
+        "elapsed_seconds": manifest.get("elapsed_seconds"),
+        "durable_completion_seconds": manifest.get("durable_completion_seconds"),
+        "durable_fps": manifest.get("durable_logical_frames_per_wall_second"),
+        "short_game": isinstance(manifest.get("elapsed_seconds"), (int, float)) and manifest["elapsed_seconds"] <= 300,
+        "diagnostic": diagnostic,
+        "outcome_performance": outcome_performance(diagnostic_metadata),
+    })
+    parsed_replays: list[dict[str, object]] = []
+    for replay in replay_records:
+        replay_path = _resolve_path(replay.get("path"), root)
+        parsed = parse_replay(replay_path, screp) if replay_path else {"exists": False, "sha256": None, "screp_exit_code": None, "json_valid": False}
+        parsed["manifest_sha256"] = replay.get("sha256")
+        parsed["manifest_size_bytes"] = replay.get("size_bytes")
+        parsed["manifest_hash_matches"] = parsed.get("sha256") == replay.get("sha256") if replay.get("sha256") else False
+        parsed["manifest_size_matches"] = parsed.get("size_bytes") == replay.get("size_bytes") if replay.get("size_bytes") is not None else False
+        parsed["player"] = replay.get("player")
+        parsed_replays.append(parsed)
+    candidate_parsed = next((p for p in parsed_replays if p.get("player") == candidate_player), None)
+    if candidate_replay is not None and candidate_parsed is not None:
+        game["replay"] = candidate_parsed
+        game["replay_fidelity"] = _replay_fidelity(candidate_parsed, candidate_replay, diagnostic)
+        # Preserve the old command-derived fields at the game level.
+        for key in ("heuristic_grade", "heuristic_score", "signals", "first_frames", "attack_orders", "harvest_orders", "build_units", "production_units"):
+            if key in candidate_parsed:
+                game[key] = candidate_parsed[key]
+    else:
+        game["error"] = "candidate_replay_missing"
+        game["replay_fidelity"] = {"exists": False, "hash_matches": False, "screp_parse_ok": False, "parse_errors_ok": False}
+    game["replays"] = [{
+        "player": replay.get("player"),
+        "path": parsed.get("path"),
+        "fidelity": _replay_fidelity(parsed, replay, diagnostic if replay.get("player") == candidate_player else {}),
+    } for replay, parsed in zip(replay_records, parsed_replays)]
+    integrity_reasons: list[str] = []
+    if manifest.get("status") != "completed": integrity_reasons.append("manifest_not_completed")
+    if manifest.get("outcome_verified") is not True: integrity_reasons.append("outcome_not_verified")
+    if candidate.get("return_code") not in (None, 0): integrity_reasons.append("candidate_return_code")
+    if diagnostic.get("metadata_exists") is False: integrity_reasons.append("diagnostic_missing")
+    if diagnostic.get("metadata_exists") and diagnostic.get("metadata_file_parse_ok") is not True: integrity_reasons.append("diagnostic_parse")
+    if diagnostic.get("metadata_file_mismatches"): integrity_reasons.append("diagnostic_mismatch")
+    if not candidate_parsed: integrity_reasons.append("candidate_replay_missing")
+    if candidate_parsed and not candidate_parsed.get("manifest_hash_matches"): integrity_reasons.append("candidate_replay_hash")
+    if any(not item["fidelity"].get("hash_matches") for item in game["replays"]): integrity_reasons.append("replay_hash")
+    if any(not item["fidelity"].get("screp_parse_ok") or not item["fidelity"].get("parse_errors_ok") for item in game["replays"]): integrity_reasons.append("replay_parse")
+    game["integrity"] = {
+        "grade": "valid" if not integrity_reasons else "review",
+        "reasons": sorted(set(integrity_reasons)),
+        "all_replays_hash_match": bool(game["replays"]) and all(item["fidelity"].get("hash_matches") for item in game["replays"]),
+        "all_replays_parse_ok": bool(game["replays"]) and all(item["fidelity"].get("screp_parse_ok") and item["fidelity"].get("parse_errors_ok") for item in game["replays"]),
+    }
+    defense = diagnostic["defense"]
+    threat = defense.get("first_home_army_threat_frame")
+    if not isinstance(threat, int) or threat < 0:
+        threat = defense.get("first_home_threat_frame")
+    loss = defense.get("first_home_combat_loss_frame")
+    game["survival"] = {
+        "terminal_frames": diagnostic.get("frame_count"),
+        "replay_frames": (game.get("replay") or {}).get("frames"),
+        "durable_fps": game.get("durable_fps"),
+        "throughput_at_least_384_fps": isinstance(game.get("durable_fps"), (int, float)) and game["durable_fps"] >= 384,
+        "first_threat_frame": threat,
+        "first_army_threat_frame": defense.get("first_home_army_threat_frame"),
+        "first_home_combat_loss_frame": loss,
+        "threat_to_loss_frames": loss - threat if isinstance(threat, int) and isinstance(loss, int) and threat >= 0 and loss >= 0 else None,
+        "survived_opening_window": isinstance(diagnostic.get("frame_count"), int) and diagnostic["frame_count"] >= 9000,
+    }
+    game["defense"] = defense
+    game["reserve_offense"] = diagnostic["reserve_offense"]
+    return game
+
+
 def parse_replay(path: Path, screp: Path) -> dict[str, object]:
     result: dict[str, object] = {
         "path": str(path),
         "sha256": sha256(path) if path.is_file() else None,
+        "size_bytes": path.stat().st_size if path.is_file() else None,
         "exists": path.is_file(),
+        "json_valid": False,
     }
     if not path.is_file():
         result["grade"] = "missing"
@@ -114,6 +428,7 @@ def parse_replay(path: Path, screp: Path) -> dict[str, object]:
             parsed = None
     result["screp_exit_code"] = completed.returncode
     result["stderr"] = completed.stderr[-2000:]
+    result["json_valid"] = isinstance(parsed, dict)
     header = parsed.get("Header") if isinstance(parsed, dict) else None
     commands = parsed.get("Commands") if isinstance(parsed, dict) else None
     rows = commands.get("Cmds") if isinstance(commands, dict) else None
@@ -202,55 +517,23 @@ def main() -> int:
     screp = (root / args.screp).resolve()
     games = []
     for record in ledger.get("games", []):
-        manifest_path = Path(record.get("match_manifest", ""))
-        if not manifest_path.is_absolute():
-            manifest_path = (root / manifest_path).resolve()
-        game = {"index": record.get("index"), "record": record, "manifest_path": str(manifest_path)}
-        if not manifest_path.is_file():
+        manifest_path = _resolve_path(record.get("match_manifest"), root) if isinstance(record, dict) else None
+        game = {"index": record.get("index") if isinstance(record, dict) else None,
+                "record": record,
+                "manifest_path": str(manifest_path) if manifest_path else None}
+        if not manifest_path or not manifest_path.is_file():
             game["error"] = "missing_match_manifest"
+            game["integrity"] = {"grade": "invalid", "reasons": ["missing_match_manifest"]}
             games.append(game)
             continue
-        manifest = json.loads(manifest_path.read_text())
-        players = manifest.get("players", [])
-        def is_candidate(player: dict) -> bool:
-            if player.get("name") == candidate_name:
-                return True
-            environment = player.get("environment") or {}
-            module_path = str(environment.get("BWAPI_CONFIG_AI__AI") or "")
-            if candidate_sha and candidate_sha in module_path:
-                return True
-            metadata = player.get("result_metadata") or {}
-            return metadata.get("bot") == candidate_name or (candidate_name.split()[0] == metadata.get("bot"))
-
-        candidate = next((p for p in players if is_candidate(p)), None)
-        if candidate is None:
-            game["error"] = f"candidate_player_not_found:{candidate_name}"
+        try:
+            manifest = json.loads(manifest_path.read_text())
+        except (OSError, json.JSONDecodeError) as error:
+            game["error"] = f"invalid_match_manifest:{type(error).__name__}"
+            game["integrity"] = {"grade": "invalid", "reasons": [game["error"]]}
             games.append(game)
             continue
-        candidate_player = candidate.get("player")
-        candidate_result = candidate.get("result_metadata") or {}
-        replay = next((r for r in manifest.get("replays", []) if r.get("player") == candidate_player), None)
-        game.update({
-            "run_id": manifest.get("run_id"),
-            "candidate_player": candidate_player,
-            "status": manifest.get("status"),
-            "outcome_verified": manifest.get("outcome_verified"),
-            "candidate_result_metadata": candidate_result,
-            "candidate_outcome": "win" if candidate_result.get("winner") is True else "loss" if candidate_result.get("winner") is False else "unknown",
-            "elapsed_seconds": manifest.get("elapsed_seconds"),
-            "durable_completion_seconds": manifest.get("durable_completion_seconds"),
-            "terminal_frames": candidate_result.get("frame_count"),
-            "durable_fps": manifest.get("durable_logical_frames_per_wall_second"),
-            "short_game": isinstance(manifest.get("elapsed_seconds"), (int, float)) and manifest["elapsed_seconds"] <= 300,
-            "outcome_performance": outcome_performance(candidate_result),
-        })
-        if not replay:
-            game["error"] = "candidate_replay_missing"
-        else:
-            replay_path = Path(replay.get("path", ""))
-            game["replay"] = parse_replay(replay_path, screp)
-            game["replay"]["manifest_sha256"] = replay.get("sha256")
-            game["replay"]["manifest_hash_matches"] = game["replay"].get("sha256") == replay.get("sha256")
+        game.update(score_kestrel_match(manifest, manifest_path, screp, candidate_name, candidate_sha, root))
         games.append(game)
     valid = [g for g in games if isinstance(g.get("replay"), dict) and g["replay"].get("exists")]
     aggregate = {"games": len(games), "scored_replays": len(valid),
@@ -260,14 +543,21 @@ def main() -> int:
                                         for outcome in ("win", "loss", "unknown")},
                  "outcome_performance_grades": {grade: sum((g.get("outcome_performance") or {}).get("grade") == grade for g in games)
                                                  for grade in ("win", "competitive_loss", "partial_loss", "early_loss", "unverified")},
+                 "integrity_grades": {grade: sum((g.get("integrity") or {}).get("grade") == grade for g in games)
+                                      for grade in ("valid", "review", "invalid")},
                  "short_games": sum(g.get("short_game") is True for g in games),
                  "signals": {name: sum(g["replay"].get("signals", {}).get(name, False) for g in valid)
-                             for name in ("economy", "construction", "production", "combat")}}
+                             for name in ("economy", "construction", "production", "combat")},
+                 "replay_hash_matches": sum((g.get("integrity") or {}).get("all_replays_hash_match") is True for g in games),
+                 "replay_parse_complete": sum((g.get("integrity") or {}).get("all_replays_parse_ok") is True for g in games),
+                 "throughput_at_least_384_fps": sum((g.get("survival") or {}).get("throughput_at_least_384_fps") is True for g in games),
+                 "command_rejection_free": sum((g.get("diagnostic") or {}).get("rejected_commands") == 0 for g in games),
+                 "actual_threat_observed": sum(isinstance((g.get("survival") or {}).get("first_army_threat_frame"), int) and (g.get("survival") or {}).get("first_army_threat_frame") >= 0 for g in games)}
     output = Path(args.output).resolve() if args.output else experiment_dir / "hillclimb-scorecard.json"
     scorecard = {"schema_version": 1, "experiment_id": args.experiment_id,
                  "candidate_name": candidate_name, "ledger_path": str(ledger_path),
                  "ledger_sha256": sha256(ledger_path), "schedule_path": str(schedule_path) if schedule_path.is_file() else None,
-                 "screp": str(screp), "measurement_scope": "One candidate-owned replay per archived game.",
+                 "screp": str(screp), "measurement_scope": "One Kestrel diagnostic plus every replay copy archived for each game.",
                  "aggregate": aggregate, "games": games,
                  "decision_note": "Exploratory hill-climb scorecard only; do not use as Elo, a promotion gate, or tournament evidence."}
     atomic_json(output, scorecard)

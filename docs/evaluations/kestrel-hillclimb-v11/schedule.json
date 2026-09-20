@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "experiment_id": "kestrel-hillclimb-v11",
+  "registered_at": "2026-09-20T15:34:49Z",
+  "eval_plan_sha256": "a32332efdd83212df2714e603d62597dc91c28e4b2607cfc3135749c2f0d0849",
+  "purpose": "Exploratory five-way Kestrel v32 stable three-unit Zerg reserve hill-climb",
+  "hypothesis": "An explicit latched reserve of three combat units against Zerg will preserve local defense while eliminating v31's repeated home-move traffic and allowing surplus units to attack.",
+  "stop_condition": "Run exactly five attempts concurrently; retain every result and stop after two consecutive infrastructure failures, a 900-second cohort cap, or completion. Do not retry or replace attempts.",
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "wall_timeout_seconds": 300,
+  "cohort_wall_cap_seconds": 900,
+  "stop_after_consecutive_invalid": 2,
+  "candidate": {
+    "name": "Kestrel-v32-stable-three-unit-Zerg-reserve",
+    "path": "artifacts/builds/3809371159c53fee4b761227d0d4d91d5b45bb5342ddda0be3ab73eba0a9899d/kestrel-opening-v32-candidate/Kestrel.dylib",
+    "race": "Protoss",
+    "sha256": "3809371159c53fee4b761227d0d4d91d5b45bb5342ddda0be3ab73eba0a9899d"
+  },
+  "opponents": {
+    "zzzk": {
+      "name": "ZZZKBot",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "race": "Zerg",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"
+    },
+    "uab-t": {
+      "name": "UAlbertaBot-Terran",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "race": "Terran",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+    },
+    "uab-p": {
+      "name": "UAlbertaBot-Protoss",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "race": "Protoss",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"
+    },
+    "mcrave": {
+      "name": "McRave-9Pool-treatment",
+      "path": "artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib",
+      "race": "Zerg",
+      "sha256": "436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"
+    },
+    "stardust": {
+      "name": "Stardust-repaired",
+      "path": "artifacts/builds/1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa/stardust-emptytimer-repair/Stardust.dylib",
+      "race": "Protoss",
+      "sha256": "1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa"
+    }
+  },
+  "games": [
+    {
+      "opponent": "zzzk",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9911,
+      "candidate_player": 1
+    },
+    {
+      "opponent": "uab-t",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 9912,
+      "candidate_player": 2
+    },
+    {
+      "opponent": "uab-p",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 9913,
+      "candidate_player": 1
+    },
+    {
+      "opponent": "mcrave",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 9914,
+      "candidate_player": 2
+    },
+    {
+      "opponent": "stardust",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 9915,
+      "candidate_player": 1
+    }
+  ],
+  "required_files": [
+    {
+      "path": "docs/evaluations/kestrel-hillclimb-v11/EVAL_PLAN.md",
+      "sha256": "a32332efdd83212df2714e603d62597dc91c28e4b2607cfc3135749c2f0d0849"
+    },
+    {
+      "path": "patches/kestrel-v32-stable-zerg-reserve.patch",
+      "sha256": "7ab53d2036addac5dcb6464c8ce24d318093dcc8c688d26de2dff8dac91c0e10"
+    }
+  ],
+  "policy_base_experiment_id": "kestrel-hillclimb-v10-recovery",
+  "diagnostic_motivation_experiment_id": "kestrel-first-engagement-diagnostic-v1",
+  "replaces_candidate": "Kestrel-v31-early-Zerg-squad-staging",
+  "notes": [
+    "The candidate is frozen and compiled against native OpenBW and official BWAPI 4.4 headers before launch.",
+    "No fixed 384-fps gate applies; report durable frames per second and callback performance descriptively while enforcing wall caps and lifecycle gates.",
+    "A complete valid cohort requires all integrity, regression and stable-reserve mechanism gates plus at least one verified win for advancement."
+  ]
+}

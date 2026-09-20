@@ -1,0 +1,300 @@
+--- a/third_party/kestrel-opening-v31-candidate/Kestrel.cpp
++++ b/third_party/kestrel-opening-v32-candidate/Kestrel.cpp
+@@ -85,6 +85,36 @@
+     int firstHomeArmyThreatFrame_ = -1;
+     int localCombatAtFirstHomeArmyThreat_ = -1;
+     int globalCombatAtFirstHomeArmyThreat_ = -1;
++    // Zerg-only early-defense state. Reserve membership is stable until the
++    // member dies; it is never recomputed from the unit's current position.
++    std::vector<int> zergReserveIds_;
++    std::unordered_map<int, int> zergReserveLastThreatTargets_;
++    std::unordered_map<int, int> zergReserveHomeMoveLastFrame_;
++    std::unordered_map<int, int> zergReserveHomeMoveRepeatUnits_;
++    std::unordered_map<int, int> zergReserveHomeMoveAcceptedCounts_;
++    std::unordered_map<int, int> zergReserveHomeMoveLastAcceptedFrame_;
++    int zergReserveRecruitEvents_ = 0;
++    int zergReserveDeathEvents_ = 0;
++    int zergReservePeak_ = 0;
++    int zergFirstReserveThreeFrame_ = -1;
++    int zergReserveSizeAtFirstHomeThreat_ = -1;
++    int zergReservedLocalAtFirstHomeThreat_ = -1;
++    int zergFirstAcceptedSurplusReleaseFrame_ = -1;
++    int zergFirstAcceptedSurplusReleaseArmy_ = -1;
++    int zergReserveCurrentSurplus_ = 0;
++    int zergReserveMaxSurplus_ = 0;
++    int zergReserveLocalThreatEvents_ = 0;
++    int zergReserveRemoteThreatEvents_ = 0;
++    int zergReserveRemoteOrderBlocks_ = 0;
++    int zergReserveLocalAttackOrders_ = 0;
++    int zergReserveRemoteAttackOrders_ = 0;
++    int zergNonreserveRemoteAttackOrders_ = 0;
++    int zergReserveHomeMoveAttempts_ = 0;
++    int zergReserveHomeMoveOrders_ = 0;
++    int zergReserveHomeMoveCooldownBlocks_ = 0;
++    int zergReserveHomeMoveRepeatOrders_ = 0;
++    int zergReserveHomeMoveMaxAcceptedPerUnit_ = 0;
++    int zergReserveHomeMoveMinAcceptedRepeatInterval_ = -1;
+     struct AttackRequest {
+         int targetId;
+         int frame;
+@@ -194,6 +224,30 @@
+             << ",\"first_home_army_threat_frame\":" << firstHomeArmyThreatFrame_
+             << ",\"local_combat_at_first_home_army_threat\":" << localCombatAtFirstHomeArmyThreat_
+             << ",\"global_combat_at_first_home_army_threat\":" << globalCombatAtFirstHomeArmyThreat_
++            << ",\"zerg_reserve_current\":" << zergReserveIds_.size()
++            << ",\"zerg_reserve_recruit_events\":" << zergReserveRecruitEvents_
++            << ",\"zerg_reserve_death_events\":" << zergReserveDeathEvents_
++            << ",\"zerg_reserve_peak\":" << zergReservePeak_
++            << ",\"zerg_first_reserve_three_frame\":" << zergFirstReserveThreeFrame_
++            << ",\"zerg_reserve_size_at_first_home_threat\":" << zergReserveSizeAtFirstHomeThreat_
++            << ",\"zerg_reserved_local_at_first_home_threat\":" << zergReservedLocalAtFirstHomeThreat_
++            << ",\"zerg_first_accepted_surplus_release_frame\":" << zergFirstAcceptedSurplusReleaseFrame_
++            << ",\"zerg_first_accepted_surplus_release_army\":" << zergFirstAcceptedSurplusReleaseArmy_
++            << ",\"zerg_reserve_current_surplus\":" << zergReserveCurrentSurplus_
++            << ",\"zerg_reserve_max_surplus\":" << zergReserveMaxSurplus_
++            << ",\"zerg_reserve_local_threat_events\":" << zergReserveLocalThreatEvents_
++            << ",\"zerg_reserve_remote_threat_events\":" << zergReserveRemoteThreatEvents_
++            << ",\"zerg_reserve_remote_order_blocks\":" << zergReserveRemoteOrderBlocks_
++            << ",\"zerg_reserve_local_attack_orders\":" << zergReserveLocalAttackOrders_
++            << ",\"zerg_reserve_remote_attack_orders\":" << zergReserveRemoteAttackOrders_
++            << ",\"zerg_nonreserve_remote_attack_orders\":" << zergNonreserveRemoteAttackOrders_
++            << ",\"zerg_reserve_home_move_attempts\":" << zergReserveHomeMoveAttempts_
++            << ",\"zerg_reserve_home_move_orders\":" << zergReserveHomeMoveOrders_
++            << ",\"zerg_reserve_home_move_cooldown_blocks\":" << zergReserveHomeMoveCooldownBlocks_
++            << ",\"zerg_reserve_home_move_repeat_orders\":" << zergReserveHomeMoveRepeatOrders_
++            << ",\"zerg_reserve_home_move_repeat_units\":" << zergReserveHomeMoveRepeatUnits_.size()
++            << ",\"zerg_reserve_home_move_max_accepted_per_unit\":" << zergReserveHomeMoveMaxAcceptedPerUnit_
++            << ",\"zerg_reserve_home_move_min_accepted_repeat_interval\":" << zergReserveHomeMoveMinAcceptedRepeatInterval_
+             << "}\n";
+         out.close();
+         if (out) {
+@@ -208,8 +262,100 @@
+             if (unit->getID() == id && unit->exists()) return unit;
+         }
+         return nullptr;
++    }
++
++    static bool isCombatUnit(BWAPI::Unit unit) {
++        return unit && (unit->getType() == BWAPI::UnitTypes::Protoss_Zealot ||
++                        unit->getType() == BWAPI::UnitTypes::Protoss_Dragoon);
++    }
++
++    bool isZergReserve(int id) const {
++        return std::find(zergReserveIds_.begin(), zergReserveIds_.end(), id) != zergReserveIds_.end();
++    }
++
++    bool removeZergReserve(int id) {
++        const auto found = std::find(zergReserveIds_.begin(), zergReserveIds_.end(), id);
++        if (found == zergReserveIds_.end()) return false;
++        zergReserveIds_.erase(found);
++        zergReserveLastThreatTargets_.erase(id);
++        zergReserveHomeMoveLastFrame_.erase(id);
++        attackRequests_.erase(id);
++        ++zergReserveDeathEvents_;
++        return true;
++    }
++
++    void refreshZergReserve(const BWAPI::Position& home, int frame) {
++        if (!knownZerg_) return;
++
++        for (auto it = zergReserveIds_.begin(); it != zergReserveIds_.end();) {
++            if (unitById(*it)) {
++                ++it;
++            } else {
++                const int deadId = *it;
++                it = zergReserveIds_.erase(it);
++                zergReserveLastThreatTargets_.erase(deadId);
++                zergReserveHomeMoveLastFrame_.erase(deadId);
++                attackRequests_.erase(deadId);
++                ++zergReserveDeathEvents_;
++            }
++        }
++
++        std::vector<BWAPI::Unit> candidates;
++        for (auto unit : BWAPI::Broodwar->self()->getUnits()) {
++            if (unit->exists() && unit->isCompleted() && isCombatUnit(unit)) candidates.push_back(unit);
++        }
++        std::sort(candidates.begin(), candidates.end(), [&home](BWAPI::Unit a, BWAPI::Unit b) {
++            const int aDistance = a->getDistance(home);
++            const int bDistance = b->getDistance(home);
++            if (aDistance != bDistance) return aDistance < bDistance;
++            return a->getID() < b->getID();
++        });
++        for (auto unit : candidates) {
++            if (zergReserveIds_.size() >= 3) break;
++            if (isZergReserve(unit->getID())) continue;
++            zergReserveIds_.push_back(unit->getID());
++            ++zergReserveRecruitEvents_;
++        }
++        zergReservePeak_ = std::max(zergReservePeak_, static_cast<int>(zergReserveIds_.size()));
++        if (zergReserveIds_.size() >= 3 && zergFirstReserveThreeFrame_ < 0)
++            zergFirstReserveThreeFrame_ = frame;
++        const int army = count(BWAPI::UnitTypes::Protoss_Zealot, true) + count(BWAPI::UnitTypes::Protoss_Dragoon, true);
++        zergReserveCurrentSurplus_ = std::max(0, army - static_cast<int>(zergReserveIds_.size()));
++        zergReserveMaxSurplus_ = std::max(zergReserveMaxSurplus_, zergReserveCurrentSurplus_);
+     }
+ 
++    void issueZergReserveHomeMove(BWAPI::Unit unit, const BWAPI::Position& home, int frame) {
++        if (unit->getTargetPosition() == home) return;
++        if (unit->getDistance(home) <= 4 * 32 && !unit->isMoving()) return;
++        const auto previous = zergReserveHomeMoveLastFrame_.find(unit->getID());
++        const bool hadPrevious = previous != zergReserveHomeMoveLastFrame_.end();
++        if (hadPrevious && frame - previous->second < 96) {
++            ++zergReserveHomeMoveCooldownBlocks_;
++            return;
++        }
++        ++zergReserveHomeMoveAttempts_;
++        zergReserveHomeMoveLastFrame_[unit->getID()] = frame;
++        if (issue(unit->move(home), AttackCommand)) {
++            ++zergReserveHomeMoveOrders_;
++            const auto previousAccepted = zergReserveHomeMoveLastAcceptedFrame_.find(unit->getID());
++            const bool hadAcceptedPrevious = previousAccepted != zergReserveHomeMoveLastAcceptedFrame_.end();
++            if (hadAcceptedPrevious) {
++                const int interval = frame - previousAccepted->second;
++                if (zergReserveHomeMoveMinAcceptedRepeatInterval_ < 0 ||
++                    interval < zergReserveHomeMoveMinAcceptedRepeatInterval_)
++                    zergReserveHomeMoveMinAcceptedRepeatInterval_ = interval;
++            }
++            const int acceptedCount = ++zergReserveHomeMoveAcceptedCounts_[unit->getID()];
++            zergReserveHomeMoveMaxAcceptedPerUnit_ =
++                std::max(zergReserveHomeMoveMaxAcceptedPerUnit_, acceptedCount);
++            zergReserveHomeMoveLastAcceptedFrame_[unit->getID()] = frame;
++            if (hadAcceptedPrevious) {
++                ++zergReserveHomeMoveRepeatOrders_;
++                zergReserveHomeMoveRepeatUnits_[unit->getID()] = frame;
++            }
++        }
++    }
++
+     void recordGasWorkerGuard(BWAPI::Unit worker, const char* context) {
+         ++gasWorkerGuardEvents_;
+         std::ofstream out("bwapi-data/write/gas-worker-guard.jsonl", std::ios::app);
+@@ -485,6 +631,8 @@
+             if (localCompletedCombat >= 2 && firstEarlyZergStageLocalTwoFrame_ < 0)
+                 firstEarlyZergStageLocalTwoFrame_ = BWAPI::Broodwar->getFrameCount();
+         }
++        const int frame = BWAPI::Broodwar->getFrameCount();
++        refreshZergReserve(home, frame);
+         if (scoutId_ < 0 && count(BWAPI::UnitTypes::Protoss_Probe) >= 9) {
+             for (auto probe : sorted(BWAPI::Broodwar->self()->getUnits())) {
+                 if (probe->exists() && probe->isCompleted() && probe->getType() == BWAPI::UnitTypes::Protoss_Probe &&
+@@ -500,24 +648,26 @@
+             const bool scout = unit->getID() == scoutId_;
+             if (!combat && !scout) continue;
+             BWAPI::Unit enemy = visibleEnemyTarget(unit);
+-            if (knownZerg_ && combat && army < 4) {
+-                if (!enemy || enemy->getDistance(home) >= homeRadius) {
+-                    if (enemy) {
+-                        const auto previous = earlyZergSuppressedTargets_.find(unit->getID());
+-                        if (previous == earlyZergSuppressedTargets_.end() || previous->second != enemy->getID()) {
+-                            earlyZergSuppressedTargets_[unit->getID()] = enemy->getID();
+-                            ++earlyZergStageRemoteTargetEvents_;
+-                            if (firstEarlyZergStageSuppressionFrame_ < 0)
+-                                firstEarlyZergStageSuppressionFrame_ = BWAPI::Broodwar->getFrameCount();
++            const bool zergReserve = knownZerg_ && combat && isZergReserve(unit->getID());
++            if (zergReserve) {
++                const bool localThreat = enemy && enemy->getDistance(home) < homeRadius;
++                if (enemy) {
++                    const auto previous = zergReserveLastThreatTargets_.find(unit->getID());
++                    if (previous == zergReserveLastThreatTargets_.end() || previous->second != enemy->getID()) {
++                        zergReserveLastThreatTargets_[unit->getID()] = enemy->getID();
++                        if (localThreat) {
++                            ++zergReserveLocalThreatEvents_;
++                        } else {
++                            ++zergReserveRemoteThreatEvents_;
++                            ++zergReserveRemoteOrderBlocks_;
+                         }
+                     }
++                } else {
++                    zergReserveLastThreatTargets_.erase(unit->getID());
++                }
++                if (!localThreat) {
+                     attackRequests_.erase(unit->getID());
+-                    if ((unit->getDistance(home) > 4 * 32 ||
+-                         (unit->isMoving() && unit->getTargetPosition() != home)) &&
+-                        unit->getTargetPosition() != home) {
+-                        ++earlyZergStageHomeMoveAttempts_;
+-                        if (issue(unit->move(home), AttackCommand)) ++earlyZergStageHomeMoveOrders_;
+-                    }
++                    issueZergReserveHomeMove(unit, home, BWAPI::Broodwar->getFrameCount());
+                     continue;
+                 }
+             }
+@@ -529,7 +679,6 @@
+             }
+             if (unit->isAttacking() && unit->getOrderTarget()) continue;
+             if (enemy) {
+-                const int frame = BWAPI::Broodwar->getFrameCount();
+                 const auto previous = attackRequests_.find(unit->getID());
+                 const bool targetChanged = previous == attackRequests_.end() || previous->second.targetId != enemy->getID();
+                 const int retryFrames = 96;
+@@ -537,15 +686,18 @@
+                     const bool accepted = issue(unit->attack(enemy), AttackCommand);
+                     attackRequests_[unit->getID()] = {enemy->getID(), frame};
+                     if (accepted && knownZerg_ && combat) {
+-                        if (army < 4) {
+-                            if (enemy->getDistance(home) < homeRadius) ++earlyZergStageHomeTargetOrders_;
+-                            else ++earlyZergStageRemoteAttackOrders_;
+-                        } else {
+-                            ++earlyZergStageReleaseAttackOrders_;
+-                            if (firstEarlyZergStageReleaseFrame_ < 0) {
+-                                firstEarlyZergStageReleaseFrame_ = frame;
+-                                earlyZergStageReleaseArmy_ = army;
++                        if (zergReserve) {
++                            if (enemy->getDistance(home) < homeRadius) {
++                                ++zergReserveLocalAttackOrders_;
++                            } else {
++                                ++zergReserveRemoteAttackOrders_;
+                             }
++                        } else if (enemy->getDistance(home) >= homeRadius) {
++                            ++zergNonreserveRemoteAttackOrders_;
++                            if (army >= 4 && zergFirstAcceptedSurplusReleaseFrame_ < 0) {
++                                zergFirstAcceptedSurplusReleaseFrame_ = frame;
++                                zergFirstAcceptedSurplusReleaseArmy_ = army;
++                            }
+                         }
+                     }
+                 }
+@@ -556,11 +708,11 @@
+             if (scout || army >= 4) target = unexploredStart(unit);
+             if (target.isValid() && unit->getTargetPosition() != target) {
+                 const bool accepted = issue(unit->attack(target), AttackCommand);
+-                if (accepted && knownZerg_ && combat && army >= 4) {
+-                    ++earlyZergStageReleaseAttackOrders_;
+-                    if (firstEarlyZergStageReleaseFrame_ < 0) {
+-                        firstEarlyZergStageReleaseFrame_ = BWAPI::Broodwar->getFrameCount();
+-                        earlyZergStageReleaseArmy_ = army;
++                if (accepted && knownZerg_ && combat && !zergReserve && army >= 4) {
++                    ++zergNonreserveRemoteAttackOrders_;
++                    if (zergFirstAcceptedSurplusReleaseFrame_ < 0) {
++                        zergFirstAcceptedSurplusReleaseFrame_ = frame;
++                        zergFirstAcceptedSurplusReleaseArmy_ = army;
+                     }
+                 }
+             }
+@@ -614,6 +766,13 @@
+                          unit->getType() == BWAPI::UnitTypes::Protoss_Dragoon) &&
+                         unit->getDistance(home) < 12 * 32) ++localCombatAtFirstHomeArmyThreat_;
+                 }
++                zergReserveSizeAtFirstHomeThreat_ = static_cast<int>(zergReserveIds_.size());
++                zergReservedLocalAtFirstHomeThreat_ = 0;
++                for (int id : zergReserveIds_) {
++                    BWAPI::Unit reserve = unitById(id);
++                    if (reserve && reserve->isCompleted() && reserve->getDistance(home) < 12 * 32)
++                        ++zergReservedLocalAtFirstHomeThreat_;
++                }
+                 break;
+             }
+         }
+@@ -652,8 +811,9 @@
+     void onEnd(bool won) override { writeResult(true, won); }
+ 
+     void onUnitDestroy(BWAPI::Unit unit) override {
+-        if (!unit || !BWAPI::Broodwar->self() || unit->getPlayer() != BWAPI::Broodwar->self() ||
+-            unit->getType() != BWAPI::UnitTypes::Protoss_Zealot || firstHomeThreatFrame_ < 0 ||
++        if (!unit || !BWAPI::Broodwar->self() || unit->getPlayer() != BWAPI::Broodwar->self()) return;
++        if (knownZerg_) removeZergReserve(unit->getID());
++        if (unit->getType() != BWAPI::UnitTypes::Protoss_Zealot || firstHomeThreatFrame_ < 0 ||
+             firstHomeZealotLossFrame_ >= 0) return;
+         const auto observed = lastZealotPositions_.find(unit->getID());
+         if (observed == lastZealotPositions_.end() || !observed->second.isValid()) {
