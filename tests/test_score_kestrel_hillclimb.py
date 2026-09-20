@@ -367,6 +367,113 @@ class KestrelScorecardTests(TestCase):
             self.assertEqual(result["command_count"], 2)
             self.assertEqual(result["parse_error_commands"], [])
 
+    def test_parse_replay_filters_command_signals_without_losing_whole_replay_count(self):
+        with TemporaryDirectory() as directory:
+            replay = Path(directory) / "game.rep"
+            replay.write_bytes(b"replay")
+            payload = {
+                "Header": {"Frames": 98, "Players": [
+                    {"ID": 0, "Name": "Kestrel-v1"},
+                    {"ID": 2, "Name": "Opponent Z"},
+                ]},
+                "Commands": {"Cmds": [
+                    {"PlayerID": 0, "Type": {"Name": "Build"}, "Order": {"Name": "PlaceProtossBuilding"}, "Frame": 10,
+                     "Unit": {"Name": "Pylon"}},
+                    {"PlayerID": 0, "Type": {"Name": "Train"}, "Order": {"Name": "Train"}, "Frame": 20,
+                     "Unit": {"Name": "Probe"}},
+                    {"PlayerID": 2, "Type": {"Name": "Targeted Order"}, "Order": {"Name": "AttackMove"}, "Frame": 30},
+                    {"PlayerID": 2, "Type": {"Name": "Targeted Order"}, "Order": {"Name": "Harvest1"}, "Frame": 40},
+                ], "ParseErrCmds": []},
+            }
+
+            def fake_run(command, *, stdout, stderr, text, check):
+                json.dump(payload, stdout)
+                stdout.flush()
+                return SimpleNamespace(returncode=0, stderr="")
+
+            with patch.object(scorer.subprocess, "run", side_effect=fake_run):
+                whole = scorer.parse_replay(replay, Path("screp"))
+                candidate = scorer.parse_replay(replay, Path("screp"), player_id=0)
+
+            self.assertEqual(whole["command_count"], 4)
+            self.assertEqual(whole["whole_replay_command_count"], 4)
+            self.assertEqual(candidate["command_count"], 2)
+            self.assertEqual(candidate["whole_replay_command_count"], 4)
+            self.assertEqual(candidate["attack_orders"], 0)
+            self.assertEqual(candidate["build_units"], ["Pylon"])
+            self.assertEqual(candidate["command_filter_status"], "filtered")
+
+    def test_replay_owner_resolution_stays_unresolved_when_header_identity_is_ambiguous(self):
+        parsed = {"header": {"Players": [
+            {"ID": 0, "Name": "bwapi", "Race": {"Name": "Protoss"}},
+            {"ID": 2, "Name": "bwapi", "Race": {"Name": "Protoss"}},
+        ]}}
+        candidate = {"player": 1, "name": "Kestrel-v1", "environment": {"BWAPI_CONFIG_AUTO_MENU__RACE": "Protoss"}}
+        opponent = {"player": 2, "name": "Opponent", "environment": {"BWAPI_CONFIG_AUTO_MENU__RACE": "Protoss"}}
+
+        resolution = scorer._resolve_replay_command_owner(parsed, candidate, [candidate, opponent], "Kestrel-v1")
+
+        self.assertEqual(resolution["status"], "unresolved")
+        self.assertIsNone(resolution["player_id"])
+        self.assertEqual(resolution["reason"], "no_verified_header_owner")
+
+    def test_score_match_uses_filtered_candidate_commands_and_keeps_whole_parse(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            diagnostic_path = root / "diagnostic.json"
+            metadata = {"schema_version": 1, "bot": "Kestrel", "ended": True, "winner": False,
+                        "frame_count": 1000, "command_categories": {"build": [1, 0], "train": [1, 0]},
+                        "rejected_commands": 0}
+            diagnostic_path.write_text(json.dumps(metadata) + "\n")
+            candidate_replay = root / "candidate.rep"
+            opponent_replay = root / "opponent.rep"
+            candidate_replay.write_bytes(b"candidate")
+            opponent_replay.write_bytes(b"opponent")
+
+            def replay_record(player, path):
+                return {"player": player, "path": str(path),
+                        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                        "size_bytes": path.stat().st_size, "archival_status": "copied"}
+
+            players = [
+                {"player": 1, "name": "Kestrel-v1", "return_code": 0,
+                 "environment": {"BWAPI_CONFIG_AUTO_MENU__CHARACTER_NAME": "Kestrel-v1 Pr",
+                                  "BWAPI_CONFIG_AUTO_MENU__RACE": "Protoss"},
+                 "result_metadata": metadata},
+                {"player": 2, "name": "Opponent", "return_code": 0,
+                 "environment": {"BWAPI_CONFIG_AUTO_MENU__CHARACTER_NAME": "Opponent Z",
+                                  "BWAPI_CONFIG_AUTO_MENU__RACE": "Zerg"},
+                 "result_metadata": {"winner": True}},
+            ]
+            manifest = {"run_id": "owner-filter", "status": "completed", "outcome_verified": True,
+                        "players": players, "replays": [replay_record(1, candidate_replay), replay_record(2, opponent_replay)]}
+
+            def fake_parse(path, screp, player_id=None):
+                filtered = player_id is not None
+                return {"path": str(path), "exists": True, "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                        "size_bytes": path.stat().st_size, "screp_exit_code": 0, "json_valid": True,
+                        "parse_error_commands": [], "frames": 999, "whole_replay_command_count": 4,
+                        "command_count": 2 if filtered else 4,
+                        "heuristic_grade": "partial" if filtered else "strong",
+                        "heuristic_score": 50 if filtered else 100,
+                        "signals": {"economy": True, "construction": True, "production": True, "combat": filtered},
+                        "header": {"Players": [{"ID": 0, "Name": "Kestrel-v1 Pr"},
+                                                   {"ID": 2, "Name": "Opponent Z"}]},
+                        "header_players": [{"ID": 0, "Name": "Kestrel-v1 Pr"},
+                                           {"ID": 2, "Name": "Opponent Z"}],
+                        "command_owner_id": player_id}
+
+            with patch.object(scorer, "parse_replay", side_effect=fake_parse):
+                result = scorer.score_kestrel_match(manifest, root / "manifest.json", Path("screp"),
+                                                    candidate_name="Kestrel-v1", root=root)
+
+            self.assertEqual(result["candidate_replay_owner_resolution"]["status"], "resolved_exact_name")
+            self.assertEqual(result["candidate_replay_owner_resolution"]["player_id"], 0)
+            self.assertEqual(result["replay"]["heuristic_score"], 50)
+            self.assertEqual(result["replay"]["heuristic_status"], "owner_filtered")
+            self.assertEqual(result["replay_whole"]["heuristic_score"], 100)
+            self.assertEqual(result["replays"][1]["command_owner_resolution"]["player_id"], 2)
+
     def test_score_match_combines_integrity_outcome_defense_and_replay_fidelity(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)

@@ -305,7 +305,7 @@
       "date": "2026-09-20",
       "status": "completed",
       "hypothesis": "The frozen A* dimension-snapshot candidate completes ten fixed games cleanly with at least 384 durable logical frames per wall second in every game and in aggregate.",
-      "notes": "Ten wins from ten clean games, with opposing results, no state-hash mismatch and 20 archived replays. Games 5\u201310 missed the 384 fps floor; aggregate throughput was 373.9 fps. The fixed cohort is uncalibrated and does not establish a strength improvement.",
+      "notes": "Ten wins from ten clean games, with opposing results, no state-hash mismatch and 20 archived replays. Games 5–10 missed the 384 fps floor; aggregate throughput was 373.9 fps. The fixed cohort is uncalibrated and does not establish a strength improvement.",
       "conclusion": "The registered performance gate failed. Preserve this candidate as an experiment and investigate repeated pathfinding callback work before another throughput check.",
       "evidence_run_ids": [],
       "decision": "REJECT"
@@ -362,7 +362,7 @@
       "date": "2026-09-20",
       "status": "completed",
       "hypothesis": "The frozen per-search A* memoization candidate completes ten fixed games cleanly with at least 384 durable logical frames per wall second in every game and in aggregate.",
-      "notes": "Ten clean wins, with opposing results, no state-hash mismatch and 20 hash-checked, parsed replays. Aggregate throughput reached 413.1 fps, but games 6\u20139 fell below 384; the slowest ran at 269.5 fps.",
+      "notes": "Ten clean wins, with opposing results, no state-hash mismatch and 20 hash-checked, parsed replays. Aggregate throughput reached 413.1 fps, but games 6–9 fell below 384; the slowest ran at 269.5 fps.",
       "conclusion": "The registered per-game performance gate failed. Preserve this candidate and profile the slowest scenario later in the game before choosing another optimization. These reused scenarios do not establish a causal speedup or strength improvement.",
       "decision": "REJECT"
     },
@@ -387,7 +387,7 @@
       "decision": "REJECT",
       "hypothesis": "Five exact build/race configurations complete twelve clean comparisons and form a connected graph on two previously unused maps.",
       "notes": "All twelve attempted; nine clean and three conflicting-winner outcomes. All 24 replays parse and match owner frames. Local estimates retain broad model-dependent intervals and prior sensitivity.",
-      "conclusion": "The clean-cohort gate failed. Show the nine reviewed games as a partial uncalibrated league; investigate McRave\u2013Stardust terminal integrity and McRave losses on Heartbreak Ridge. No promotion or BASIL estimate.",
+      "conclusion": "The clean-cohort gate failed. Show the nine reviewed games as a partial uncalibrated league; investigate McRave–Stardust terminal integrity and McRave losses on Heartbreak Ridge. No promotion or BASIL estimate.",
       "evidence_run_ids": [
         "20260920T055717-7842246af878",
         "20260920T055717-5eafb5ffe760",
@@ -624,12 +624,12 @@
     },
     {
       "id": "mcrave-zvz-opening-probe-v1",
-      "title": "Explain McRave\u2019s delayed Zerg opening",
+      "title": "Explain McRave’s delayed Zerg opening",
       "date": "2026-09-20",
       "status": "completed",
       "decision": "ADOPT",
       "hypothesis": "Crossing fixed seeds with two maps distinguishes opener selection from map-dependent production delay.",
-      "notes": "All four games clean with paired replays. Seed 1001 chose 9Pool and seed 6301 chose Gaspool on both maps. Opener choice shifted first Zergling timing about 559 frames; within-opener map differences were 51\u201362 frames.",
+      "notes": "All four games clean with paired replays. Seed 1001 chose 9Pool and seed 6301 chose Gaspool on both maps. Opener choice shifted first Zergling timing about 559 frames; within-opener map differences were 51–62 frames.",
       "conclusion": "Adopt the diagnosis: selected opening explains the observed delay in these cells. Preregister a separate strategy comparison; this diagnostic does not establish a stronger bot.",
       "evidence_run_ids": [
         "20260920T063857-4d53d8292099",
@@ -644,8 +644,8 @@
       "date": "2026-09-20",
       "status": "completed",
       "decision": "ADOPT",
-      "hypothesis": "Direct Stardust\u2013ZZZK and McRave\u2013UAlberta comparisons add missing edges to the current exact-build graph.",
-      "notes": "All 12 games clean with 24 hash-checked, parsed replay copies. Stardust\u2013ZZZK 4\u20130; McRave\u2013UAlberta Protoss 4\u20130 and Terran 3\u20131.",
+      "hypothesis": "Direct Stardust–ZZZK and McRave–UAlberta comparisons add missing edges to the current exact-build graph.",
+      "notes": "All 12 games clean with 24 hash-checked, parsed replay copies. Stardust–ZZZK 4–0; McRave–UAlberta Protoss 4–0 and Terran 3–1.",
       "conclusion": "Adopt the complete extension for local display. Current-engine evidence now totals 36 games in one component. Intervals remain conditional and wide; no bot promotion or BASIL transfer.",
       "evidence_run_ids": [
         "20260920T064337-e561a04c0d65",
@@ -790,7 +790,7 @@
       "date": "2026-09-20",
       "status": "completed",
       "decision": "REJECT",
-      "hypothesis": "Protecting the pending first Pylon\u2019s mineral cost will let a single accepted build order start construction within 120 frames while preserving normal production.",
+      "hypothesis": "Protecting the pending first Pylon’s mineral cost will let a single accepted build order start construction within 120 frames while preserving normal production.",
       "notes": "Both fixed games issued only one first-Pylon build order. Benzene took 289 frames to start construction; Heartbreak took 115. Both games completed with parsed replay pairs. The once-only guard was corrected before either trial.",
       "conclusion": "The registered screen failed: Benzene exceeded the 120-frame limit, and Heartbreak rejected 11 of 68 commands, all build Unit_Busy errors. Both games lost. Keep v7; distinguish builder travel and command conflicts before another opening change.",
       "evidence_run_ids": [
@@ -813,7 +813,7 @@
     },
     {
       "id": "mcrave-uabz-destination-profile-v2",
-      "title": "Profile McRave\u2019s slower Zerg matchup",
+      "title": "Profile McRave’s slower Zerg matchup",
       "date": "2026-09-20",
       "status": "completed",
       "hypothesis": "A complete ten-second sample after frame 15000 will identify a McRave subsystem accounting for at least 20% of main-thread samples.",
@@ -855,7 +855,7 @@
       "decision": "ADOPT",
       "hypothesis": "Excluding gas-gathering Probes from construction selection will remove the reproduced build Unit_Busy failure while preserving economy and army production.",
       "notes": "Both registered games exercised the guard: one event against ZZZK and seven against UAlberta Terran. Gas-worker build attempts and build Unit_Busy errors were zero. Total rejected commands stayed below 5%; all four replay copies parsed and throughput exceeded 384 fps.",
-      "conclusion": "Adopted as Kestrel\u2019s development baseline after source and evidence review. Both games were losses, so this is a narrow construction-reliability improvement and does not establish stronger play.",
+      "conclusion": "Adopted as Kestrel’s development baseline after source and evidence review. Both games were losses, so this is a narrow construction-reliability improvement and does not establish stronger play.",
       "evidence_run_ids": [
         "20260920T073627-856dcb721664",
         "20260920T073629-a6ad5ae88993"
@@ -903,7 +903,7 @@
       "status": "completed",
       "decision": "ADOPT",
       "hypothesis": "Direct games on a missing reference edge and a close matchup will improve the evidence supporting the existing local rating model.",
-      "notes": "Twelve registered games completed cleanly and all 24 replays passed full parsing and hash checks. UAlberta Protoss went 5\u20131 against Terran and 1\u20135 against ZZZK. Exact node and engine identities match the previous cohorts.",
+      "notes": "Twelve registered games completed cleanly and all 24 replays passed full parsing and hash checks. UAlberta Protoss went 5–1 against Terran and 1–5 against ZZZK. Exact node and engine identities match the previous cohorts.",
       "conclusion": "Accepted for rating display after independent manifest and replay-hash review. The unchanged model now uses 48 current-engine games. Conditional intervals narrowed, but remain wide; this is uncalibrated local evidence and does not promote a bot.",
       "evidence_run_ids": [
         "20260920T075647-f2c82022020e",
@@ -922,7 +922,7 @@
     },
     {
       "id": "kestrel-v14-fight-diagnostic-v1",
-      "title": "Inspect Kestrel\u2019s earlier first defenders",
+      "title": "Inspect Kestrel’s earlier first defenders",
       "date": "2026-09-20",
       "status": "completed",
       "hypothesis": "Public fight traces can distinguish distant chasing or target switching from losing sequential fights near home.",
@@ -1376,7 +1376,7 @@
       "decision": "REJECT",
       "hypothesis": "A stable three-unit reserve against Zerg will preserve local defense, eliminate repeated home-move traffic and retain surplus offense.",
       "notes": "Five concurrent games completed validly with ten hash- and frame-verified replays. The reserve mechanism passed: McRave had three of three reserve units local at first real pressure, reserve remote attacks stayed zero, and surplus offense released at army four. Kestrel lost all five games.",
-      "conclusion": "Reject v32 for advancement because the frozen screen recorded zero wins. Retain its reserve and command-state improvements as measured evidence; the next bounded candidate should bridge ZZZK\u2019s one-defender pressure window. No Elo update.",
+      "conclusion": "Reject v32 for advancement because the frozen screen recorded zero wins. Retain its reserve and command-state improvements as measured evidence; the next bounded candidate should bridge ZZZK’s one-defender pressure window. No Elo update.",
       "evidence_run_ids": [
         "20260920T155249-f10d4c5796a5",
         "20260920T155249-6b174c7d4dcb",
@@ -1398,7 +1398,7 @@
       "date": "2026-09-20",
       "status": "completed",
       "decision": "INCONCLUSIVE",
-      "hypothesis": "A threat-qualified bridge of at most two eligible Probes will cover a real local Zerg threat until two completed combat units exist, while preserving v32\u2019s stable reserve and non-Zerg behavior.",
+      "hypothesis": "A threat-qualified bridge of at most two eligible Probes will cover a real local Zerg threat until two completed combat units exist, while preserving v32’s stable reserve and non-Zerg behavior.",
       "notes": "Four games completed as verified losses with eight hash- and frame-verified replays. The ZZZK lane exercised two coherent two-Probe bridge episodes and survived to the 300-second wall cap, but produced no terminal result or replay.",
       "conclusion": "Inconclusive because the frozen ZZZK attempt timed out. The bridge assignments, releases, role exclusions and post-release gathering were coherent, but no verified win exists and the 964,800-frame non-terminal game fails the short-game objective. No Elo update.",
       "evidence_run_ids": [
@@ -1410,6 +1410,30 @@
       ],
       "evidence_experiment_id": "kestrel-hillclimb-v12",
       "candidate_binary_sha256": "1d77b4483ea0fa21db1df9d8b45e15364986b793a2745b2c570f0db2fb55b632",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      }
+    },
+    {
+      "id": "kestrel-hillclimb-v13",
+      "title": "Kestrel v34 bridge-threshold and staged-offense hill-climb",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Keeping the two-Probe bridge through completed army two and staging nonreserve Zerg offense until surplus six will improve short completion while preserving the stable reserve and non-Zerg behavior.",
+      "notes": "All five games were valid short terminal losses with ten verified replays. McRave exercised the surplus-six latch coherently; ZZZK assigned six cumulative emergency Probes under the simultaneous two-defender cap and lost all six.",
+      "conclusion": "Rejected at zero verified wins. Integrity and regression passed, but the ZZZK opening still had only one completed combat unit at pressure and the replacement chain consumed six Probes. McRave proved the stage/latch state machine without demonstrating competitive benefit. No Elo update.",
+      "evidence_run_ids": [
+        "20260920T165258-965c2455153f",
+        "20260920T165258-50963d417a62",
+        "20260920T165258-ed9ffbd12dac",
+        "20260920T165258-69e69e4b3977",
+        "20260920T165258-e803a260d474"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v13",
+      "candidate_binary_sha256": "f71a1dc353a89c1770a05c59b21ae4907aebb7650d87cbb3af9239137a4b763a",
       "provenance": {
         "ownership": "Ours",
         "origin": "Original",

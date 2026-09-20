@@ -948,6 +948,57 @@ def _replay_fidelity(parsed: dict[str, object], replay: dict[str, object], diagn
     }
 
 
+def _header_players(parsed: dict[str, object]) -> list[dict[str, object]]:
+    header = parsed.get("header")
+    players = header.get("Players") if isinstance(header, dict) else None
+    return [player for player in players if isinstance(player, dict)] if isinstance(players, list) else []
+
+
+def _player_names(player: dict[str, object], candidate_name: str | None = None) -> list[str]:
+    names: list[str] = []
+    for value in (
+        player.get("name"),
+        (player.get("environment") or {}).get("BWAPI_CONFIG_AUTO_MENU__CHARACTER_NAME")
+        if isinstance(player.get("environment"), dict) else None,
+        (player.get("result_metadata") or {}).get("bot")
+        if isinstance(player.get("result_metadata"), dict) else None,
+        candidate_name,
+    ):
+        if isinstance(value, str) and value and value not in names:
+            names.append(value)
+    return names
+
+
+def _resolve_replay_command_owner(parsed: dict[str, object], process_player: object,
+                                  all_players: list[object], candidate_name: str) -> dict[str, object]:
+    """Resolve a process player's screp PlayerID only from verified evidence."""
+    headers = _header_players(parsed)
+    if not isinstance(process_player, dict):
+        return {"status": "unresolved", "reason": "process_player_missing", "player_id": None}
+    if not headers:
+        return {"status": "unresolved", "reason": "replay_header_players_missing", "player_id": None}
+
+    metadata = process_player.get("result_metadata") if isinstance(process_player.get("result_metadata"), dict) else {}
+    is_candidate = process_player.get("name") == candidate_name or metadata.get("bot") == candidate_name
+    names = _player_names(process_player, candidate_name if is_candidate else None)
+    exact = [header for header in headers if isinstance(header.get("Name"), str) and header.get("Name") in names]
+    if len(exact) == 1:
+        owner = exact[0]
+        owner_id = owner.get("ID")
+        if isinstance(owner_id, int) and not isinstance(owner_id, bool):
+            return {
+                "status": "resolved_exact_name",
+                "method": "exact_process_name",
+                "player_id": owner_id,
+                "header_name": owner.get("Name"),
+            }
+        return {"status": "unresolved", "reason": "header_player_id_invalid", "player_id": None}
+    if len(exact) > 1:
+        return {"status": "unresolved", "reason": "process_name_ambiguous", "player_id": None}
+
+    return {"status": "unresolved", "reason": "no_verified_header_owner", "player_id": None}
+
+
 def score_kestrel_match(manifest: dict[str, object], manifest_path: Path, screp: Path,
                         candidate_name: str = "Kestrel", candidate_sha: str | None = None,
                         root: Path | None = None) -> dict[str, object]:
@@ -1009,21 +1060,58 @@ def score_kestrel_match(manifest: dict[str, object], manifest_path: Path, screp:
         parsed["manifest_hash_matches"] = parsed.get("sha256") == replay.get("sha256") if replay.get("sha256") else False
         parsed["manifest_size_matches"] = parsed.get("size_bytes") == replay.get("size_bytes") if replay.get("size_bytes") is not None else False
         parsed["player"] = replay.get("player")
+        process_player = next((p for p in players if isinstance(p, dict) and p.get("player") == replay.get("player")), None)
+        owner = _resolve_replay_command_owner(parsed, process_player, players, candidate_name)
+        parsed["command_owner_resolution"] = owner
         parsed_replays.append(parsed)
     candidate_parsed = next((p for p in parsed_replays if p.get("player") == candidate_player), None)
     if candidate_replay is not None and candidate_parsed is not None:
-        game["replay"] = candidate_parsed
+        owner = candidate_parsed.get("command_owner_resolution") or {"status": "unresolved", "reason": "owner_resolution_missing", "player_id": None}
+        game["candidate_replay_owner_resolution"] = owner
+        game["replay_whole"] = candidate_parsed
+        filtered = None
+        if owner.get("status", "").startswith("resolved") and isinstance(owner.get("player_id"), int):
+            try:
+                filtered = parse_replay(_resolve_path(candidate_replay.get("path"), root), screp,
+                                        player_id=owner["player_id"])
+            except TypeError as error:
+                # Keep old tests/callers that replace parse_replay with a
+                # legacy two-argument stub. Never fall back to whole-replay
+                # heuristic counts when filtering is unavailable.
+                if "player_id" not in str(error):
+                    raise
+                owner = {**owner, "status": "unresolved", "reason": "filtered_parser_unsupported", "player_id": None}
+                game["candidate_replay_owner_resolution"] = owner
+        game["replay"] = filtered or dict(candidate_parsed)
+        if filtered is not None:
+            for key in ("manifest_sha256", "manifest_size_bytes", "manifest_hash_matches", "manifest_size_matches", "player"):
+                if key in candidate_parsed:
+                    game["replay"][key] = candidate_parsed[key]
+        if filtered is None:
+            game["replay"]["heuristic_status"] = "owner_unresolved"
+            game["replay"]["heuristic_grade"] = None
+            game["replay"]["heuristic_score"] = None
+            game["replay"]["signals"] = None
+            game["replay"]["first_frames"] = None
+            game["replay"]["attack_orders"] = None
+            game["replay"]["harvest_orders"] = None
+            game["replay"]["build_units"] = None
+            game["replay"]["production_units"] = None
+        else:
+            game["replay"]["heuristic_status"] = "owner_filtered"
+            game["replay"]["command_owner_resolution"] = owner
         game["replay_fidelity"] = _replay_fidelity(candidate_parsed, candidate_replay, diagnostic)
         # Preserve the old command-derived fields at the game level.
         for key in ("heuristic_grade", "heuristic_score", "signals", "first_frames", "attack_orders", "harvest_orders", "build_units", "production_units"):
-            if key in candidate_parsed:
-                game[key] = candidate_parsed[key]
+            if key in game["replay"] and game["replay"][key] is not None:
+                game[key] = game["replay"][key]
     else:
         game["error"] = "candidate_replay_missing"
         game["replay_fidelity"] = {"exists": False, "hash_matches": False, "screp_parse_ok": False, "parse_errors_ok": False}
     game["replays"] = [{
         "player": replay.get("player"),
         "path": parsed.get("path"),
+        "command_owner_resolution": parsed.get("command_owner_resolution"),
         "fidelity": _replay_fidelity(parsed, replay, diagnostic if replay.get("player") == candidate_player else {}),
     } for replay, parsed in zip(replay_records, parsed_replays)]
     integrity_reasons: list[str] = []
@@ -1039,6 +1127,8 @@ def score_kestrel_match(manifest: dict[str, object], manifest_path: Path, screp:
     if candidate_parsed and not candidate_parsed.get("manifest_hash_matches"): integrity_reasons.append("candidate_replay_hash")
     if any(not item["fidelity"].get("hash_matches") for item in game["replays"]): integrity_reasons.append("replay_hash")
     if any(not item["fidelity"].get("screp_parse_ok") or not item["fidelity"].get("parse_errors_ok") for item in game["replays"]): integrity_reasons.append("replay_parse")
+    if isinstance(candidate_parsed, dict) and "header_players" in candidate_parsed and (candidate_parsed.get("command_owner_resolution") or {}).get("status") != "resolved_exact_name":
+        integrity_reasons.append("candidate_replay_owner_unresolved")
     game["integrity"] = {
         "grade": "valid" if not integrity_reasons else "review",
         "reasons": sorted(set(integrity_reasons)),
@@ -1066,13 +1156,21 @@ def score_kestrel_match(manifest: dict[str, object], manifest_path: Path, screp:
     return game
 
 
-def parse_replay(path: Path, screp: Path) -> dict[str, object]:
+def parse_replay(path: Path, screp: Path, player_id: int | None = None) -> dict[str, object]:
+    """Parse a replay, optionally restricting command-derived signals to one screp PlayerID.
+
+    The parser always records whole-replay parse integrity. ``player_id`` only
+    affects command-derived counters and is intentionally an exact integer
+    match; callers must resolve it from replay-header evidence first.
+    """
     result: dict[str, object] = {
         "path": str(path),
         "sha256": sha256(path) if path.is_file() else None,
         "size_bytes": path.stat().st_size if path.is_file() else None,
         "exists": path.is_file(),
         "json_valid": False,
+        "command_owner_id": player_id,
+        "command_filter_status": "whole_replay" if player_id is None else "requested",
     }
     if not path.is_file():
         result["grade"] = "missing"
@@ -1098,15 +1196,22 @@ def parse_replay(path: Path, screp: Path) -> dict[str, object]:
     rows = commands.get("Cmds") if isinstance(commands, dict) else None
     parse_errors = commands.get("ParseErrCmds") if isinstance(commands, dict) else None
     rows = rows if isinstance(rows, list) else []
+    result["header"] = header if isinstance(header, dict) else None
+    result["header_players"] = header.get("Players") if isinstance(header, dict) and isinstance(header.get("Players"), list) else None
     result["frames"] = header.get("Frames") if isinstance(header, dict) else None
     result["parse_error_commands"] = parse_errors
-    result["command_count"] = len(rows)
+    result["whole_replay_command_count"] = len(rows)
+    result["whole_replay_parse_error_commands"] = parse_errors
+    selected_rows = rows if player_id is None else [row for row in rows if isinstance(row, dict) and row.get("PlayerID") == player_id]
+    result["filtered_command_count"] = len(selected_rows)
+    result["command_count"] = len(selected_rows)
+    result["command_filter_status"] = "whole_replay" if player_id is None else "filtered"
     type_counts: dict[str, int] = {}
     order_counts: dict[str, int] = {}
     build_units: list[str] = []
     morph_units: list[str] = []
     first_frames: dict[str, int | None] = {"build": None, "production": None, "attack": None, "harvest": None}
-    for row in rows:
+    for row in selected_rows:
         if not isinstance(row, dict):
             continue
         command_type = (row.get("Type") or {}).get("Name")
