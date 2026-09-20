@@ -11,7 +11,8 @@
     "local-calibration-v2-mcrave",
     "local-calibration-v3-stardust",
     "local-calibration-v3-mcrave",
-    "local-anchor-calibration-v4"
+    "local-anchor-calibration-v4",
+    "kestrel-local-anchor-v3"
   ],
   "reviewed_runs": {
     "20260920T055755-fa9bfeecf7e3": "cbb786b46f654e4c65edcb119c40c52d8aed6cccd172f44ec1b2dd127c4ba97d",
@@ -82,7 +83,23 @@
     "20260920T091038-d157800d41e2": "8b8937deec82154573961758a01ec2de7b3400e1243ddc96d3552ac340cfdd9a",
     "20260920T091040-29e80df3a9e1": "af589a95e671d233eb81f1c494c295317a788a0336ab86373652d53b7d477824",
     "20260920T091041-1f8ba26a1a2a": "aa372541866221b101324740f22effcabdb5017a25ca88455fc0f6745724ab99",
-    "20260920T091043-37c859020c1e": "7e605964309c2ca06a7451f0bc25c06b2e4d3d047e4305b6e2e2bce100a8e798"
+    "20260920T091043-37c859020c1e": "7e605964309c2ca06a7451f0bc25c06b2e4d3d047e4305b6e2e2bce100a8e798",
+    "20260920T193309-63b45d5c49c0": "4719bb41095f592029f1f9242e74ff4779bed0030bf147018d5aa2cc6cc1aad8",
+    "20260920T193309-9be0fc272fc8": "bba4ded2ec44e97131b8187eb3312f8bbe11dde261cbe4d5da16b945168df4ec",
+    "20260920T193309-5a21729162f4": "78df64dc780e82883e313bcbb816e545c36a065ebc4ed6fad99381267c827f94",
+    "20260920T193309-277c1655e5b4": "8a74d78d0d44433ae32da1b65f505557fa9dbb7b4000c1cfb36fb3330cc2db77",
+    "20260920T193309-10ade8fd49bb": "d6557158d36242e5c77b556340733dc331e716617534ca121115e11892465418",
+    "20260920T193311-4bb1aab175df": "1b6def61d54b47cea52466d2e310faa7bc5cbd2bcea81ea82fdc3c5b4f6d91c4",
+    "20260920T193311-15656dc9827e": "59001b1f36d376f898565520d9186d3943b9f9382a8bc9e42e574329bc64d143",
+    "20260920T193313-9194fa053231": "c1820505e1e3e2faae819bff9a39d5c896895f3395d2b07d323d96b770a463fd",
+    "20260920T193314-36e1360c2988": "5f6cb802832e25cf2f048f452d57cdc9923d3435d9fc3412366a7a3e2893cb5b",
+    "20260920T193315-e27fba2acd8a": "519ab3d8104bc016487ce0bfda155b884682f7251b764eac0c1a430f3b72f1ee",
+    "20260920T193317-cf2faf653858": "3d0223ffa5a6dca42a4febcad7b15d2ef3a56be3a3a5c98f7b6f58dfd5447b37",
+    "20260920T193320-9cca13f84e40": "9dd0ce1365691529f1df1006be591c9375fad68e8ea8116f1fc2ba3b1433120d",
+    "20260920T193322-e06b675801d6": "f2c7682bdb814779abd8911bd73960fc9f101ffe3301df3684059e5adc0ffce3",
+    "20260920T193323-57d4b513e6c4": "463fcf6d223638196fdeefdbb4a33b11108fa691e6228e89ad442be720cc54cb",
+    "20260920T193323-eee596f37130": "4cb2ed31839301720ea1aeb868c513ae278eab0348e1ace4a9e9b244fc3e030d",
+    "20260920T193325-889d2802c20d": "7c9ab8d6f1038d75f8faac48ea80165410bda27a2618ce872c1de8be36107244"
   },
   "cohorts": [
     {
@@ -132,13 +149,23 @@
     },
     {
       "id": "kestrel-local-anchor-v1",
-      "label": "Current engine · Kestrel v13 anchor",
+      "label": "Current engine \u00b7 Kestrel v13 anchor",
       "current": true,
       "experiment_ids": [
         "kestrel-local-anchor-v1"
       ],
       "expected_nodes": 3,
       "expected_games": 12
+    },
+    {
+      "id": "kestrel-local-anchor-v3",
+      "label": "Current engine \u00b7 Kestrel v13 four-map extension",
+      "current": true,
+      "experiment_ids": [
+        "kestrel-local-anchor-v3"
+      ],
+      "expected_nodes": 3,
+      "expected_games": 16
     }
   ]
 }

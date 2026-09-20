@@ -305,7 +305,7 @@
       "date": "2026-09-20",
       "status": "completed",
       "hypothesis": "The frozen A* dimension-snapshot candidate completes ten fixed games cleanly with at least 384 durable logical frames per wall second in every game and in aggregate.",
-      "notes": "Ten wins from ten clean games, with opposing results, no state-hash mismatch and 20 archived replays. Games 5–10 missed the 384 fps floor; aggregate throughput was 373.9 fps. The fixed cohort is uncalibrated and does not establish a strength improvement.",
+      "notes": "Ten wins from ten clean games, with opposing results, no state-hash mismatch and 20 archived replays. Games 5\u201310 missed the 384 fps floor; aggregate throughput was 373.9 fps. The fixed cohort is uncalibrated and does not establish a strength improvement.",
       "conclusion": "The registered performance gate failed. Preserve this candidate as an experiment and investigate repeated pathfinding callback work before another throughput check.",
       "evidence_run_ids": [],
       "decision": "REJECT"
@@ -362,7 +362,7 @@
       "date": "2026-09-20",
       "status": "completed",
       "hypothesis": "The frozen per-search A* memoization candidate completes ten fixed games cleanly with at least 384 durable logical frames per wall second in every game and in aggregate.",
-      "notes": "Ten clean wins, with opposing results, no state-hash mismatch and 20 hash-checked, parsed replays. Aggregate throughput reached 413.1 fps, but games 6–9 fell below 384; the slowest ran at 269.5 fps.",
+      "notes": "Ten clean wins, with opposing results, no state-hash mismatch and 20 hash-checked, parsed replays. Aggregate throughput reached 413.1 fps, but games 6\u20139 fell below 384; the slowest ran at 269.5 fps.",
       "conclusion": "The registered per-game performance gate failed. Preserve this candidate and profile the slowest scenario later in the game before choosing another optimization. These reused scenarios do not establish a causal speedup or strength improvement.",
       "decision": "REJECT"
     },
@@ -387,7 +387,7 @@
       "decision": "REJECT",
       "hypothesis": "Five exact build/race configurations complete twelve clean comparisons and form a connected graph on two previously unused maps.",
       "notes": "All twelve attempted; nine clean and three conflicting-winner outcomes. All 24 replays parse and match owner frames. Local estimates retain broad model-dependent intervals and prior sensitivity.",
-      "conclusion": "The clean-cohort gate failed. Show the nine reviewed games as a partial uncalibrated league; investigate McRave–Stardust terminal integrity and McRave losses on Heartbreak Ridge. No promotion or BASIL estimate.",
+      "conclusion": "The clean-cohort gate failed. Show the nine reviewed games as a partial uncalibrated league; investigate McRave\u2013Stardust terminal integrity and McRave losses on Heartbreak Ridge. No promotion or BASIL estimate.",
       "evidence_run_ids": [
         "20260920T055717-7842246af878",
         "20260920T055717-5eafb5ffe760",
@@ -624,12 +624,12 @@
     },
     {
       "id": "mcrave-zvz-opening-probe-v1",
-      "title": "Explain McRave’s delayed Zerg opening",
+      "title": "Explain McRave\u2019s delayed Zerg opening",
       "date": "2026-09-20",
       "status": "completed",
       "decision": "ADOPT",
       "hypothesis": "Crossing fixed seeds with two maps distinguishes opener selection from map-dependent production delay.",
-      "notes": "All four games clean with paired replays. Seed 1001 chose 9Pool and seed 6301 chose Gaspool on both maps. Opener choice shifted first Zergling timing about 559 frames; within-opener map differences were 51–62 frames.",
+      "notes": "All four games clean with paired replays. Seed 1001 chose 9Pool and seed 6301 chose Gaspool on both maps. Opener choice shifted first Zergling timing about 559 frames; within-opener map differences were 51\u201362 frames.",
       "conclusion": "Adopt the diagnosis: selected opening explains the observed delay in these cells. Preregister a separate strategy comparison; this diagnostic does not establish a stronger bot.",
       "evidence_run_ids": [
         "20260920T063857-4d53d8292099",
@@ -644,8 +644,8 @@
       "date": "2026-09-20",
       "status": "completed",
       "decision": "ADOPT",
-      "hypothesis": "Direct Stardust–ZZZK and McRave–UAlberta comparisons add missing edges to the current exact-build graph.",
-      "notes": "All 12 games clean with 24 hash-checked, parsed replay copies. Stardust–ZZZK 4–0; McRave–UAlberta Protoss 4–0 and Terran 3–1.",
+      "hypothesis": "Direct Stardust\u2013ZZZK and McRave\u2013UAlberta comparisons add missing edges to the current exact-build graph.",
+      "notes": "All 12 games clean with 24 hash-checked, parsed replay copies. Stardust\u2013ZZZK 4\u20130; McRave\u2013UAlberta Protoss 4\u20130 and Terran 3\u20131.",
       "conclusion": "Adopt the complete extension for local display. Current-engine evidence now totals 36 games in one component. Intervals remain conditional and wide; no bot promotion or BASIL transfer.",
       "evidence_run_ids": [
         "20260920T064337-e561a04c0d65",
@@ -790,7 +790,7 @@
       "date": "2026-09-20",
       "status": "completed",
       "decision": "REJECT",
-      "hypothesis": "Protecting the pending first Pylon’s mineral cost will let a single accepted build order start construction within 120 frames while preserving normal production.",
+      "hypothesis": "Protecting the pending first Pylon\u2019s mineral cost will let a single accepted build order start construction within 120 frames while preserving normal production.",
       "notes": "Both fixed games issued only one first-Pylon build order. Benzene took 289 frames to start construction; Heartbreak took 115. Both games completed with parsed replay pairs. The once-only guard was corrected before either trial.",
       "conclusion": "The registered screen failed: Benzene exceeded the 120-frame limit, and Heartbreak rejected 11 of 68 commands, all build Unit_Busy errors. Both games lost. Keep v7; distinguish builder travel and command conflicts before another opening change.",
       "evidence_run_ids": [
@@ -813,7 +813,7 @@
     },
     {
       "id": "mcrave-uabz-destination-profile-v2",
-      "title": "Profile McRave’s slower Zerg matchup",
+      "title": "Profile McRave\u2019s slower Zerg matchup",
       "date": "2026-09-20",
       "status": "completed",
       "hypothesis": "A complete ten-second sample after frame 15000 will identify a McRave subsystem accounting for at least 20% of main-thread samples.",
@@ -855,7 +855,7 @@
       "decision": "ADOPT",
       "hypothesis": "Excluding gas-gathering Probes from construction selection will remove the reproduced build Unit_Busy failure while preserving economy and army production.",
       "notes": "Both registered games exercised the guard: one event against ZZZK and seven against UAlberta Terran. Gas-worker build attempts and build Unit_Busy errors were zero. Total rejected commands stayed below 5%; all four replay copies parsed and throughput exceeded 384 fps.",
-      "conclusion": "Adopted as Kestrel’s development baseline after source and evidence review. Both games were losses, so this is a narrow construction-reliability improvement and does not establish stronger play.",
+      "conclusion": "Adopted as Kestrel\u2019s development baseline after source and evidence review. Both games were losses, so this is a narrow construction-reliability improvement and does not establish stronger play.",
       "evidence_run_ids": [
         "20260920T073627-856dcb721664",
         "20260920T073629-a6ad5ae88993"
@@ -903,7 +903,7 @@
       "status": "completed",
       "decision": "ADOPT",
       "hypothesis": "Direct games on a missing reference edge and a close matchup will improve the evidence supporting the existing local rating model.",
-      "notes": "Twelve registered games completed cleanly and all 24 replays passed full parsing and hash checks. UAlberta Protoss went 5–1 against Terran and 1–5 against ZZZK. Exact node and engine identities match the previous cohorts.",
+      "notes": "Twelve registered games completed cleanly and all 24 replays passed full parsing and hash checks. UAlberta Protoss went 5\u20131 against Terran and 1\u20135 against ZZZK. Exact node and engine identities match the previous cohorts.",
       "conclusion": "Accepted for rating display after independent manifest and replay-hash review. The unchanged model now uses 48 current-engine games. Conditional intervals narrowed, but remain wide; this is uncalibrated local evidence and does not promote a bot.",
       "evidence_run_ids": [
         "20260920T075647-f2c82022020e",
@@ -922,7 +922,7 @@
     },
     {
       "id": "kestrel-v14-fight-diagnostic-v1",
-      "title": "Inspect Kestrel’s earlier first defenders",
+      "title": "Inspect Kestrel\u2019s earlier first defenders",
       "date": "2026-09-20",
       "status": "completed",
       "hypothesis": "Public fight traces can distinguish distant chasing or target switching from losing sequential fights near home.",
@@ -1376,7 +1376,7 @@
       "decision": "REJECT",
       "hypothesis": "A stable three-unit reserve against Zerg will preserve local defense, eliminate repeated home-move traffic and retain surplus offense.",
       "notes": "Five concurrent games completed validly with ten hash- and frame-verified replays. The reserve mechanism passed: McRave had three of three reserve units local at first real pressure, reserve remote attacks stayed zero, and surplus offense released at army four. Kestrel lost all five games.",
-      "conclusion": "Reject v32 for advancement because the frozen screen recorded zero wins. Retain its reserve and command-state improvements as measured evidence; the next bounded candidate should bridge ZZZK’s one-defender pressure window. No Elo update.",
+      "conclusion": "Reject v32 for advancement because the frozen screen recorded zero wins. Retain its reserve and command-state improvements as measured evidence; the next bounded candidate should bridge ZZZK\u2019s one-defender pressure window. No Elo update.",
       "evidence_run_ids": [
         "20260920T155249-f10d4c5796a5",
         "20260920T155249-6b174c7d4dcb",
@@ -1398,7 +1398,7 @@
       "date": "2026-09-20",
       "status": "completed",
       "decision": "INCONCLUSIVE",
-      "hypothesis": "A threat-qualified bridge of at most two eligible Probes will cover a real local Zerg threat until two completed combat units exist, while preserving v32’s stable reserve and non-Zerg behavior.",
+      "hypothesis": "A threat-qualified bridge of at most two eligible Probes will cover a real local Zerg threat until two completed combat units exist, while preserving v32\u2019s stable reserve and non-Zerg behavior.",
       "notes": "Four games completed as verified losses with eight hash- and frame-verified replays. The ZZZK lane exercised two coherent two-Probe bridge episodes and survived to the 300-second wall cap, but produced no terminal result or replay.",
       "conclusion": "Inconclusive because the frozen ZZZK attempt timed out. The bridge assignments, releases, role exclusions and post-release gathering were coherent, but no verified win exists and the 964,800-frame non-terminal game fails the short-game objective. No Elo update.",
       "evidence_run_ids": [
@@ -1595,6 +1595,47 @@
       },
       "matched_parent_experiment": "kestrel-hillclimb-v17",
       "result_path": "docs/evaluations/kestrel-hillclimb-v18/RESULT.md"
+    },
+    {
+      "id": "kestrel-local-anchor-v3",
+      "title": "Kestrel v13 local Elo anchor extension",
+      "date": "2026-09-21",
+      "status": "completed",
+      "decision": "ADOPT",
+      "hypothesis": "Sixteen fresh uniquely seeded games can narrow Kestrel v13 local rating uncertainty without repeating the v2 reciprocal same-seed runtime failure path.",
+      "notes": "All 16 rows completed validly with 32 independently verified replay copies. Kestrel scored 1-7 against UAlbertaBot Terran and 0-8 against ZZZKBot; combined v1+v3 exact-build record is 3-25 across 28 games.",
+      "conclusion": "Adopted for local rating evidence only. The combined Gaussian-prior Bradley-Terry estimate is 373.5 [-115.6, 862.7] relative to the arbitrary ZZZKBot 1000 coordinate. This is conditional Apple Silicon OpenBW calibration, not BASIL or tournament strength.",
+      "evidence_run_ids": [
+        "20260920T193309-63b45d5c49c0",
+        "20260920T193309-9be0fc272fc8",
+        "20260920T193309-5a21729162f4",
+        "20260920T193309-277c1655e5b4",
+        "20260920T193309-10ade8fd49bb",
+        "20260920T193311-4bb1aab175df",
+        "20260920T193311-15656dc9827e",
+        "20260920T193313-9194fa053231",
+        "20260920T193314-36e1360c2988",
+        "20260920T193315-e27fba2acd8a",
+        "20260920T193317-cf2faf653858",
+        "20260920T193320-9cca13f84e40",
+        "20260920T193322-e06b675801d6",
+        "20260920T193323-57d4b513e6c4",
+        "20260920T193323-eee596f37130",
+        "20260920T193325-889d2802c20d"
+      ],
+      "candidate_binary_sha256": "622bca47b47f78f3e9d1971d1e340f991b54ced7f3bfdfd932d3062e125cbd98",
+      "plan_sha256": "502c0967dd2f395db5f095e98c73e592259652d220caddae3607f51a04958bea",
+      "registered_schedule_sha256": "8016f315fe8f22f281b702b705d88a501c69f9a9329f7e63ebcd256b025750b8",
+      "schedule_sha256": "67ba1eece29c04858b407c4c5838c8600b7e0a22361486b16e5e6865d472412d",
+      "ledger_sha256": "60474414641bf8f2b2930c962a2e37b87d708770f9df9dc594fc0f54a72ac540",
+      "result_sha256": "16213bf2d009d60de2fd21ea3218127cf245b2967e76684b5c55cf26753c5aca",
+      "result_path": "docs/evaluations/kestrel-local-anchor-v3/RESULT.md",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "author": "Luke Cameron",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      }
     }
   ]
 }
