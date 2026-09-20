@@ -1319,6 +1319,54 @@
         "origin": "Original",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
       }
+    },
+    {
+      "id": "kestrel-hillclimb-v10",
+      "title": "Kestrel v31 staging launcher attempt",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "INCONCLUSIVE",
+      "hypothesis": "Keeping the first four combat units home against Zerg will prevent scout-provided remote targets from dispersing the defense while preserving a coordinated release.",
+      "notes": "All five launch attempts failed before frame zero because the restricted execution context could not create or connect the per-game Unix transport. No terminal result or replay was produced.",
+      "conclusion": "Infrastructure-only failure. Preserve every manifest and log; the separately preregistered recovery reuses the unchanged build, matrix and seeds outside the restricted socket context.",
+      "evidence_run_ids": [
+        "20260920T151727-ce26722862f4",
+        "20260920T151727-e411b00908e1",
+        "20260920T151727-976ce7d4bedf",
+        "20260920T151727-360a7e381147",
+        "20260920T151727-b2ec05542b7d"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v10",
+      "candidate_binary_sha256": "5ff164dc9dfd5c555837f110002f3907838891c6fdc95a8960cc48f12e47e107",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      }
+    },
+    {
+      "id": "kestrel-hillclimb-v10-recovery",
+      "title": "Kestrel v31 early-Zerg squad-staging hill-climb",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Keeping the first four combat units home against Zerg will prevent scout-provided remote targets from dispersing the defense while preserving a coordinated release.",
+      "notes": "Five concurrent, reciprocal, replay-verified losses completed. Both Zerg lanes suppressed remote pre-four targets and reached two local defenders. McRave released at four but had only one of five completed combat units local when the first non-worker home threat arrived; the home-move guard also emitted 776 accepted moves.",
+      "conclusion": "Reject v31 for zero wins and failure of the registered actual-threat mechanism condition. Keep the valid build guard and sixth-Pylon mechanisms, but replace target-position anti-spam with explicit state and retain an early defensive reserve before another strength screen. No Elo update.",
+      "evidence_run_ids": [
+        "20260920T152002-53fed6c05ff1",
+        "20260920T152002-df2280214a47",
+        "20260920T152002-902b0d03b47d",
+        "20260920T152002-f8ceb7826f10",
+        "20260920T152002-5331c7b2f0dc"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v10-recovery",
+      "candidate_binary_sha256": "5ff164dc9dfd5c555837f110002f3907838891c6fdc95a8960cc48f12e47e107",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      }
     }
   ]
 }
