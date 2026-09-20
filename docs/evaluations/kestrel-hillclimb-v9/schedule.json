@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "experiment_id": "kestrel-hillclimb-v9",
+  "registered_at": "2026-09-20T14:30:00Z",
+  "eval_plan_sha256": "ca6bfbeea5f0d78f20f653a2673eebd4affb400ad4a95eb11a664eaa638b3b34",
+  "purpose": "Exploratory five-way Kestrel v29 build-commandability repair hill-climb",
+  "hypothesis": "Checking worker build commandability before issuing construction will eliminate build Unit_Busy rejections without starving later construction.",
+  "stop_condition": "Run exactly five attempts concurrently; retain every result and stop after two consecutive infrastructure failures, a 900-second cohort cap, or completion. Do not retry or replace attempts.",
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "wall_timeout_seconds": 300,
+  "cohort_wall_cap_seconds": 900,
+  "stop_after_consecutive_invalid": 2,
+  "candidate": {
+    "name": "Kestrel-v29-build-commandability-repair",
+    "path": "artifacts/builds/c7196ea991f5755b6e34c9c9ebff87faf3884d221de9492a7952ce20cc57d56c/kestrel-opening-v29-candidate/Kestrel.dylib",
+    "race": "Protoss",
+    "sha256": "c7196ea991f5755b6e34c9c9ebff87faf3884d221de9492a7952ce20cc57d56c"
+  },
+  "opponents": {
+    "zzzk": {"name":"ZZZKBot","path":"artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib","race":"Zerg","sha256":"ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"},
+    "uab-t": {"name":"UAlbertaBot-Terran","path":"artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib","race":"Terran","sha256":"75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"},
+    "uab-p": {"name":"UAlbertaBot-Protoss","path":"artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib","race":"Protoss","sha256":"75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"},
+    "mcrave": {"name":"McRave-9Pool-treatment","path":"artifacts/builds/436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e/mcrave-support-jps-memo-candidate/McRave.dylib","race":"Zerg","sha256":"436cfa74fa34c267f7404777a3170be0202485bdc7224d15fb30b85f02c5644e"},
+    "stardust": {"name":"Stardust-repaired","path":"artifacts/builds/1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa/stardust-emptytimer-repair/Stardust.dylib","race":"Protoss","sha256":"1039975842c6edea71043e0da091ff21ad5311fd3ddbeb568cf89b364f7d28aa"}
+  },
+  "games": [
+    {"opponent":"zzzk","map":"sscai/(2)Benzene.scx","scenario_seed":9881,"candidate_player":1},
+    {"opponent":"uab-t","map":"sscai/(2)Destination.scx","scenario_seed":9882,"candidate_player":2},
+    {"opponent":"uab-p","map":"sscai/(2)Heartbreak Ridge.scx","scenario_seed":9883,"candidate_player":1},
+    {"opponent":"mcrave","map":"sscai/(4)Circuit Breaker.scx","scenario_seed":9884,"candidate_player":2},
+    {"opponent":"stardust","map":"sscai/(2)Benzene.scx","scenario_seed":9885,"candidate_player":1}
+  ],
+  "required_files": [{"path":"docs/evaluations/kestrel-hillclimb-v9/EVAL_PLAN.md","sha256":"ca6bfbeea5f0d78f20f653a2673eebd4affb400ad4a95eb11a664eaa638b3b34"}],
+  "recovery_of": "kestrel-hillclimb-v8"
+}

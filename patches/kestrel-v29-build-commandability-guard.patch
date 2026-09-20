@@ -1,0 +1,64 @@
+diff --git a/third_party/kestrel-opening-v28-candidate/Kestrel.cpp b/third_party/kestrel-opening-v29-candidate/Kestrel.cpp
+index 623f85d..8a593c9 100644
+--- a/third_party/kestrel-opening-v28-candidate/Kestrel.cpp
++++ b/third_party/kestrel-opening-v29-candidate/Kestrel.cpp
+@@ -43,6 +43,10 @@ class Kestrel final : public BWAPI::AIModule {
+     int gasWorkerGuardEvents_ = 0;
+     int gasWorkerBuildAttempts_ = 0;
+     int buildUnitBusyRejections_ = 0;
++    int buildCommandabilityGuardBlocks_ = 0;
++    int firstBuildCommandabilityGuardBlockFrame_ = -1;
++    int lastBuildCommandabilityGuardBlockFrame_ = -1;
++    int lastAcceptedBuildFrame_ = -1;
+     int firstPylonAcceptedFrame_ = -1;
+     int firstPylonCurrentFrame_ = -1;
+     int firstPylonCompletedFrame_ = -1;
+@@ -135,6 +139,10 @@ class Kestrel final : public BWAPI::AIModule {
+             << ",\"gas_worker_guard_events\":" << gasWorkerGuardEvents_
+             << ",\"gas_worker_build_attempts\":" << gasWorkerBuildAttempts_
+             << ",\"build_unit_busy_rejections\":" << buildUnitBusyRejections_
++            << ",\"build_commandability_guard_blocks\":" << buildCommandabilityGuardBlocks_
++            << ",\"first_build_commandability_guard_block_frame\":" << firstBuildCommandabilityGuardBlockFrame_
++            << ",\"last_build_commandability_guard_block_frame\":" << lastBuildCommandabilityGuardBlockFrame_
++            << ",\"last_accepted_build_frame\":" << lastAcceptedBuildFrame_
+             << ",\"first_pylon_accepted_frame\":" << firstPylonAcceptedFrame_
+             << ",\"first_pylon_current_frame\":" << firstPylonCurrentFrame_
+             << ",\"first_pylon_completed_frame\":" << firstPylonCompletedFrame_
+@@ -227,10 +235,17 @@ class Kestrel final : public BWAPI::AIModule {
+         if (!worker) return false;
+         const BWAPI::TilePosition tile = BWAPI::Broodwar->getBuildLocation(type, near, 32, false);
+         if (!tile.isValid()) return false;
+-        builderId_ = worker->getID();
+         if (worker->isGatheringGas()) ++gasWorkerBuildAttempts_;
++        if (!worker->canBuild(type, tile)) {
++            ++buildCommandabilityGuardBlocks_;
++            if (firstBuildCommandabilityGuardBlockFrame_ < 0) firstBuildCommandabilityGuardBlockFrame_ = frame;
++            lastBuildCommandabilityGuardBlockFrame_ = frame;
++            return false;
++        }
++        builderId_ = worker->getID();
+         const bool accepted = issue(worker->build(type, tile), BuildCommand);
+         if (accepted) {
++            lastAcceptedBuildFrame_ = frame;
+             if (firstZealotTrainFrame_ >= 0) ++acceptedStructuresAfterFirstZealot_;
+             if (type == BWAPI::UnitTypes::Protoss_Pylon && firstPylonAcceptedFrame_ < 0) firstPylonAcceptedFrame_ = frame;
+             if (type == BWAPI::UnitTypes::Protoss_Pylon && count(type) >= 5 && sixthPylonAcceptedFrame_ < 0) sixthPylonAcceptedFrame_ = frame;
+@@ -257,10 +272,17 @@ class Kestrel final : public BWAPI::AIModule {
+             if (distance < bestDistance) { bestDistance = distance; best = geyser; }
+         }
+         if (!best || bestDistance > 400) return false;
+-        builderId_ = worker->getID();
+         if (worker->isGatheringGas()) ++gasWorkerBuildAttempts_;
++        if (!worker->canBuild(BWAPI::UnitTypes::Protoss_Assimilator, best->getTilePosition())) {
++            ++buildCommandabilityGuardBlocks_;
++            if (firstBuildCommandabilityGuardBlockFrame_ < 0) firstBuildCommandabilityGuardBlockFrame_ = frame;
++            lastBuildCommandabilityGuardBlockFrame_ = frame;
++            return false;
++        }
++        builderId_ = worker->getID();
+         const bool accepted = issue(worker->build(BWAPI::UnitTypes::Protoss_Assimilator, best->getTilePosition()), BuildCommand);
+         if (accepted) {
++            lastAcceptedBuildFrame_ = frame;
+             if (firstZealotTrainFrame_ >= 0) ++acceptedStructuresAfterFirstZealot_;
+             pendingBuildType_ = BWAPI::UnitTypes::Protoss_Assimilator;
+             pendingBuildBaseline_ = count(pendingBuildType_);
