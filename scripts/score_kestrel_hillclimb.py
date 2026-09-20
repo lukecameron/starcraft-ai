@@ -134,7 +134,7 @@ def _candidate_generation(candidate_name: object) -> str | None:
     """Resolve a policy generation from the schedule's candidate display name."""
     if not isinstance(candidate_name, str):
         return None
-    match = re.search(r"(?:^|[^a-z0-9])v(37|36)(?:[^a-z0-9]|$)", candidate_name.lower())
+    match = re.search(r"(?:^|[^a-z0-9])v(38|37|36)(?:[^a-z0-9]|$)", candidate_name.lower())
     return f"v{match.group(1)}" if match else None
 
 
@@ -146,8 +146,12 @@ def _diagnostic_generation(metadata: dict[str, object], candidate_name: object =
     field-based detection remains the fallback for archived diagnostics.
     """
     candidate_generation = _candidate_generation(candidate_name)
-    if candidate_generation in {"v36", "v37"}:
+    if candidate_generation in {"v36", "v37", "v38"}:
         return candidate_generation
+    if any(name in metadata for name in (
+        "shared_target_selections", "shared_target_frames", "shared_target_ids",
+    )):
+        return "v38"
     if any(name in metadata for name in (
         "range_upgrade_eligibility_frame", "seventh_pylon_accepted_frame",
         "fifth_gateway_accepted_frame", "max_pylon_cap",
@@ -309,7 +313,7 @@ def _construction_pending_summary(metadata: dict[str, object], opponent_race: st
         grade = "review"
     score_checks = [value for value in checks.values() if isinstance(value, bool)]
     return {
-        "generation": generation if generation in {"v35", "v36", "v37"} else "v35",
+        "generation": generation if generation in {"v35", "v36", "v37", "v38"} else "v35",
         "telemetry_status": "complete" if not missing and not invalid_fields else "partial",
         "fields_present": present,
         "missing_fields": missing,
@@ -349,7 +353,7 @@ def _probe_reserve_summary(metadata: dict[str, object], opponent_race: str | Non
     )
     feature_present = any(name in metadata for name in names)
     if not feature_present:
-        if generation in {"v36", "v37"}:
+        if generation in {"v36", "v37", "v38"}:
             return {
                 "generation": generation,
                 "telemetry_status": "partial",
@@ -482,7 +486,7 @@ def _probe_reserve_summary(metadata: dict[str, object], opponent_race: str | Non
     else:
         grade = "review"
     return {
-        "generation": generation if generation in {"v36", "v37"} else "legacy" if not feature_present else "v36",
+        "generation": generation if generation in {"v36", "v37", "v38"} else "legacy" if not feature_present else "v36",
         "telemetry_status": "complete" if not missing and not invalid_fields and not invalid_scalars else "partial",
         "fields_present": present,
         "missing_fields": missing,
@@ -725,7 +729,7 @@ def _emergency_episode_summary(metadata: dict[str, object], opponent_race: str |
     else:
         grade = "pass" if not review_flags else "review"
     return {
-        "generation": generation if generation in {"v35", "v36", "v37"} else "v35",
+        "generation": generation if generation in {"v35", "v36", "v37", "v38"} else "v35",
         "telemetry_status": "complete" if not missing and not invalid_fields else "partial",
         "fields_present": present,
         "missing_fields": missing,
@@ -770,7 +774,7 @@ def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | 
                               generation: str | None = None) -> dict[str, object]:
     """Normalize v33/v34 emergency-worker telemetry and legacy absence."""
     generation = generation or _diagnostic_generation(metadata)
-    army_generation = "three" if generation in {"v34", "v35", "v36", "v37"} else "two"
+    army_generation = "three" if generation in {"v34", "v35", "v36", "v37", "v38"} else "two"
     army_event_key = f"emergency_army_{army_generation}_release_events"
     army_defender_key = f"emergency_army_{army_generation}_released_defenders"
     first_army_frame_key = f"emergency_first_army_{army_generation}_release_frame"
@@ -920,7 +924,7 @@ def _emergency_bridge_summary(metadata: dict[str, object], opponent_race: str | 
     if values["emergency_threat_clear_release_events"] + values[army_event_key] > 0 and not release_trace:
         review_flags.append("release_reason_without_release_trace")
 
-    episode_summary = _emergency_episode_summary(metadata, opponent_race, generation) if generation in {"v35", "v36", "v37"} else None
+    episode_summary = _emergency_episode_summary(metadata, opponent_race, generation) if generation in {"v35", "v36", "v37", "v38"} else None
     if episode_summary is not None:
         review_flags.extend(f"episode:{flag}" for flag in episode_summary.get("review_flags", []))
 
@@ -1303,7 +1307,7 @@ def _zerg_offense_stage_summary(metadata: dict[str, object], opponent_race: str 
         grade = "review" if review_flags else "pass"
         telemetry_status = "complete" if not missing else "partial"
     return {
-        "generation": generation if feature_present and generation in {"v34", "v35", "v36", "v37"} else "v34" if feature_present else "legacy",
+        "generation": generation if feature_present and generation in {"v34", "v35", "v36", "v37", "v38"} else "v34" if feature_present else "legacy",
         "opponent_race": race,
         "expected_active": expected_active,
         "expected_inactive": expected_inactive,
@@ -1429,7 +1433,7 @@ def _scaling_summary(metadata: dict[str, object], generation: str | None = None)
         "seventh_pylon_completed_frame", "fifth_gateway_accepted_frame",
         "fifth_gateway_current_frame", "fifth_gateway_completed_frame",
     )
-    feature_present = generation == "v37" or any(name in metadata for name in required)
+    feature_present = generation in {"v37", "v38"} or any(name in metadata for name in required)
     if not feature_present:
         return {
             "generation": "legacy_absent", "telemetry_status": "legacy_absent",
@@ -1540,7 +1544,7 @@ def _scaling_summary(metadata: dict[str, object], generation: str | None = None)
     else:
         grade = "pass"
     return {
-        "generation": "v37", "telemetry_status": "complete" if not missing and not invalid else "partial",
+        "generation": generation if generation in {"v37", "v38"} else "v37", "telemetry_status": "complete" if not missing and not invalid else "partial",
         "fields_present": [name for name in required if name in metadata],
         "missing_fields": missing, "invalid_fields": invalid, "review_flags": sorted(set(flags)),
         "opportunity_notes": opportunity_notes, "checks": checks,
@@ -1551,6 +1555,176 @@ def _scaling_summary(metadata: dict[str, object], generation: str | None = None)
                        for prefix in ("seventh_pylon", "fifth_gateway")},
         "quantitative_grade": {"grade": grade, "score": 100 if grade in {"pass", "untested"} else (60 if grade == "partial" else 0),
                                 "max_score": 100},
+    }
+
+
+def _shared_target_summary(metadata: dict[str, object], opponent_race: str | None = None,
+                           generation: str | None = None) -> dict[str, object]:
+    """Validate v38 shared-visible-target traces and command counters."""
+    generation = generation or _diagnostic_generation(metadata)
+    scalar_names = (
+        "shared_target_selections", "shared_target_attempts", "shared_target_accepted",
+        "shared_target_non_zerg_selections", "shared_target_illegal_selections",
+        "shared_target_switches", "shared_target_rejects", "shared_target_correction_opportunities",
+    )
+    list_names = (
+        "shared_target_frames", "shared_target_ids", "shared_target_participant_counts",
+        "shared_target_eligible_counts", "shared_target_ordered_counts",
+        "shared_target_local_counts", "shared_target_attempt_counts",
+        "shared_target_accepted_counts", "shared_target_participant_ids",
+    )
+    required = scalar_names + list_names
+    feature_present = generation == "v38" or any(name in metadata for name in required)
+    if not feature_present:
+        return {
+            "generation": "legacy_absent", "telemetry_status": "legacy_absent",
+            "fields_present": [], "missing_fields": [], "invalid_fields": [],
+            "checks": {}, "opportunity_notes": [], "review_flags": [],
+            "trace": {name: [] for name in list_names},
+            "quantitative_grade": {"grade": "legacy_absent", "score": 0, "max_score": 0},
+        }
+    missing = [name for name in required if name not in metadata]
+    invalid = [name for name in required if name in metadata and
+               ((name in scalar_names and (not isinstance(metadata[name], int) or isinstance(metadata[name], bool))) or
+                (name in list_names and not isinstance(metadata[name], list)))]
+    flags: list[str] = []
+    if missing:
+        flags.append("shared_target_required_fields_missing")
+    if invalid:
+        flags.append("shared_target_field_type_mismatch")
+    values = {name: _metadata_int(metadata, name, 0) for name in scalar_names}
+    arrays = {name: _metadata_list(metadata, name) for name in list_names}
+    for name in scalar_names:
+        raw_value = metadata.get(name)
+        if isinstance(raw_value, int) and not isinstance(raw_value, bool) and raw_value < 0:
+            flags.append(f"shared_target_negative_counter_{name.removeprefix('shared_target_')}")
+    trace_lengths = {name: len(value) for name, value in arrays.items() if name != "shared_target_participant_ids"}
+    if len(set(trace_lengths.values())) > 1:
+        flags.append("shared_target_trace_length_mismatch")
+    rows = min(trace_lengths.values(), default=0)
+    frames = arrays["shared_target_frames"]
+    ids = arrays["shared_target_ids"]
+    participant_counts = arrays["shared_target_participant_counts"]
+    eligible_counts = arrays["shared_target_eligible_counts"]
+    ordered_counts = arrays["shared_target_ordered_counts"]
+    local_counts = arrays["shared_target_local_counts"]
+    attempt_counts = arrays["shared_target_attempt_counts"]
+    accepted_counts = arrays["shared_target_accepted_counts"]
+    participant_ids = arrays["shared_target_participant_ids"]
+    if any(not isinstance(value, int) or isinstance(value, bool) for value in participant_ids):
+        flags.append("shared_target_participant_id_type_mismatch")
+    if any(isinstance(value, int) and not isinstance(value, bool) and value < 0 for value in participant_ids):
+        flags.append("shared_target_participant_id_invalid")
+    if len(frames) != rows or len(ids) != rows:
+        flags.append("shared_target_trace_incomplete")
+    if any(not isinstance(frames[index], int) or isinstance(frames[index], bool) or frames[index] < 0
+           for index in range(rows)):
+        flags.append("shared_target_frame_invalid")
+    if any(current <= previous for previous, current in zip(frames, frames[1:])
+           if isinstance(previous, int) and isinstance(current, int)):
+        flags.append("shared_target_frames_not_ordered")
+    if any(not isinstance(ids[index], int) or isinstance(ids[index], bool) or ids[index] < 0
+           for index in range(rows)):
+        flags.append("shared_target_id_invalid")
+    row_arrays = (participant_counts, eligible_counts, ordered_counts, local_counts, attempt_counts, accepted_counts)
+    row_valid = []
+    for index in range(rows):
+        valid = all(isinstance(array[index], int) and not isinstance(array[index], bool) and array[index] >= 0
+                    for array in row_arrays)
+        row_valid.append(valid)
+    if not all(row_valid):
+        flags.append("shared_target_count_invalid")
+    participant_counts_valid = all(isinstance(value, int) and not isinstance(value, bool) and value >= 0
+                                   for value in participant_counts[:rows])
+    if participant_counts_valid and len(participant_ids) != sum(participant_counts[:rows]):
+        flags.append("shared_target_participant_trace_total_mismatch")
+    for index in range(rows):
+        if not row_valid[index]:
+            continue
+        if participant_counts[index] != eligible_counts[index]:
+            flags.append("shared_target_participant_eligible_mismatch")
+        if ordered_counts[index] > eligible_counts[index] or local_counts[index] > eligible_counts[index]:
+            flags.append("shared_target_order_count_exceeds_eligible")
+        if local_counts[index] not in (0, eligible_counts[index]):
+            flags.append("shared_target_local_count_partial")
+        if attempt_counts[index] > participant_counts[index] or accepted_counts[index] > attempt_counts[index]:
+            flags.append("shared_target_accept_count_exceeds_attempts")
+        if not participant_counts_valid:
+            continue
+        start = sum(participant_counts[:index])
+        end = start + participant_counts[index]
+        row_ids = participant_ids[start:end]
+        if len(row_ids) != participant_counts[index]:
+            flags.append("shared_target_participant_trace_mismatch")
+        if all(isinstance(value, int) and not isinstance(value, bool) for value in row_ids) and len(row_ids) != len(set(row_ids)):
+            flags.append("shared_target_participant_ids_duplicate")
+    valid_row_counts = all(row_valid)
+    if values["shared_target_selections"] != rows:
+        flags.append("shared_target_selection_count_mismatch")
+    if valid_row_counts and values["shared_target_attempts"] != sum(attempt_counts[:rows]):
+        flags.append("shared_target_attempt_count_mismatch")
+    if valid_row_counts and values["shared_target_accepted"] != sum(accepted_counts[:rows]):
+        flags.append("shared_target_accepted_count_mismatch")
+    if values["shared_target_rejects"] != values["shared_target_attempts"] - values["shared_target_accepted"]:
+        flags.append("shared_target_reject_count_mismatch")
+    if all(isinstance(value, int) and not isinstance(value, bool) for value in ids[:rows]):
+        expected_switches = sum(previous != current for previous, current in zip(ids[:rows], ids[1:rows]))
+        if values["shared_target_switches"] != expected_switches:
+            flags.append("shared_target_switch_count_mismatch")
+    if values["shared_target_non_zerg_selections"] > values["shared_target_selections"]:
+        flags.append("shared_target_non_zerg_count_exceeds_selections")
+    race = _normalise_race(opponent_race)
+    if race in {"terran", "protoss"} and values["shared_target_non_zerg_selections"] != values["shared_target_selections"]:
+        flags.append("shared_target_non_zerg_sentinel_mismatch")
+    if race == "zerg" and values["shared_target_non_zerg_selections"] != 0:
+        flags.append("shared_target_zerg_sentinel_mismatch")
+    if values["shared_target_illegal_selections"] != 0:
+        flags.append("shared_target_illegal_selection")
+    if values["shared_target_rejects"] != 0:
+        flags.append("shared_target_rejected_command")
+    multi_participant_selections = sum(1 for value in participant_counts[:rows]
+                                       if isinstance(value, int) and not isinstance(value, bool) and value >= 2)
+    coordinated_accepted_selections = sum(
+        1 for index in range(rows)
+        if isinstance(participant_counts[index], int) and not isinstance(participant_counts[index], bool)
+        and participant_counts[index] >= 2
+        and isinstance(accepted_counts[index], int) and not isinstance(accepted_counts[index], bool)
+        and accepted_counts[index] >= 1
+    )
+    max_participants = max((value for value in participant_counts[:rows]
+                            if isinstance(value, int) and not isinstance(value, bool)), default=0)
+    opportunity_notes = []
+    if not rows:
+        opportunity_notes.append("shared_target_opportunity_unobserved")
+    elif not multi_participant_selections:
+        opportunity_notes.append("shared_target_multi_participant_opportunity_unobserved")
+    elif not coordinated_accepted_selections:
+        opportunity_notes.append("shared_target_accepted_command_unobserved")
+    grade = "review" if flags else "pass" if coordinated_accepted_selections else "untested"
+    return {
+        "generation": "v38", "telemetry_status": "complete" if not missing and not invalid else "partial",
+        "fields_present": [name for name in required if name in metadata],
+        "missing_fields": missing, "invalid_fields": invalid,
+        "review_flags": sorted(set(flags)), "opportunity_notes": opportunity_notes,
+        "trace": {name: arrays[name] for name in list_names},
+        "counters": values,
+        "max_participants": max_participants,
+        "multi_participant_selections": multi_participant_selections,
+        "coordinated_accepted_selections": coordinated_accepted_selections,
+        "checks": {
+            "required_fields": not missing and not invalid,
+            "trace_aligned": "shared_target_trace_length_mismatch" not in flags,
+            "frames_ordered": "shared_target_frames_not_ordered" not in flags,
+            "target_ids_valid": "shared_target_id_invalid" not in flags,
+            "participant_trace": not any(flag.startswith("shared_target_participant") for flag in flags),
+            "counts_consistent": not any("count_mismatch" in flag or "exceeds" in flag for flag in flags),
+            "local_count_shape": "shared_target_local_count_partial" not in flags,
+            "multi_participant_opportunity": multi_participant_selections > 0,
+            "switches_consistent": "shared_target_switch_count_mismatch" not in flags,
+            "correction_opportunities": values["shared_target_correction_opportunities"],
+            "no_invalid": values["shared_target_illegal_selections"] == 0 and values["shared_target_rejects"] == 0,
+        },
+        "quantitative_grade": {"grade": grade, "score": 100 if grade in {"pass", "untested"} else 0, "max_score": 100},
     }
 
 
@@ -1670,6 +1844,7 @@ def _diagnostic_summary(metadata: dict[str, object], root: Path, opponent_race: 
     result["probe_reserve"] = _probe_reserve_summary(metadata, opponent_race, generation)
     result["zerg_offense_stage"] = _zerg_offense_stage_summary(metadata, opponent_race, generation)
     result["scaling"] = _scaling_summary(metadata, generation)
+    result["shared_target"] = _shared_target_summary(metadata, opponent_race, generation)
     return result
 
 
@@ -1880,6 +2055,7 @@ def score_kestrel_match(manifest: dict[str, object], manifest_path: Path, screp:
     if (diagnostic.get("probe_reserve") or {}).get("review_flags"): integrity_reasons.append("probe_reserve_review")
     if (diagnostic.get("zerg_offense_stage") or {}).get("review_flags"): integrity_reasons.append("zerg_offense_stage_review")
     if (diagnostic.get("scaling") or {}).get("review_flags"): integrity_reasons.append("scaling_review")
+    if (diagnostic.get("shared_target") or {}).get("review_flags"): integrity_reasons.append("shared_target_review")
     if not candidate_parsed: integrity_reasons.append("candidate_replay_missing")
     if candidate_parsed and not candidate_parsed.get("manifest_hash_matches"): integrity_reasons.append("candidate_replay_hash")
     if any(not item["fidelity"].get("hash_matches") for item in game["replays"]): integrity_reasons.append("replay_hash")
@@ -2112,7 +2288,7 @@ def main() -> int:
     }
     episode_games = [
         (bridge.get("episodes") or {}) for bridge in bridge_games
-        if isinstance(bridge.get("episodes"), dict) and (bridge.get("episodes") or {}).get("generation") in {"v35", "v36", "v37"}
+        if isinstance(bridge.get("episodes"), dict) and (bridge.get("episodes") or {}).get("generation") in {"v35", "v36", "v37", "v38"}
     ]
     aggregate["emergency_bridge"]["episodes"] = _aggregate_emergency_episode_summaries(episode_games)
     stage_games = [g.get("zerg_offense_stage") for g in games if isinstance(g.get("zerg_offense_stage"), dict)]
@@ -2121,7 +2297,7 @@ def main() -> int:
     aggregate["zerg_offense_stage"] = {
         "games": len(stage_games),
         "generations": {generation: sum(stage.get("generation") == generation for stage in stage_games)
-                         for generation in ("v34", "v35", "v36", "v37", "legacy")},
+                         for generation in ("v34", "v35", "v36", "v37", "v38", "legacy")},
         "grades": {grade: sum((stage.get("quantitative_grade") or {}).get("grade") == grade for stage in stage_games)
                    for grade in ("pass", "untested", "review", "legacy_absent")},
         "threshold_observed": sum((stage.get("peak_surplus") or 0) >= 6 for stage in stage_games),
@@ -2149,7 +2325,7 @@ def main() -> int:
     aggregate["construction_pending"] = {
         "games": len(construction_games),
         "generations": {generation: sum(item.get("generation") == generation for item in construction_games)
-                         for generation in ("v35", "v36", "v37", "legacy")},
+                         for generation in ("v35", "v36", "v37", "v38", "legacy")},
         "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade for item in construction_games)
                    for grade in ("pass", "untested", "review", "legacy_absent")},
         "accepted_builds": sum(len((item.get("accepted_builds") or {}).get("rows", [])) for item in construction_games),
@@ -2165,7 +2341,7 @@ def main() -> int:
     aggregate["probe_reserve"] = {
         "games": len(reserve_games),
         "generations": {generation: sum(item.get("generation") == generation for item in reserve_games)
-                         for generation in ("v36", "v37", "legacy")},
+                         for generation in ("v36", "v37", "v38", "legacy")},
         "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade for item in reserve_games)
                    for grade in ("pass", "untested", "review", "legacy_absent")},
         "reserve_blocks": sum((item.get("reserve_blocks") or {}).get("count", 0) for item in reserve_games),
@@ -2182,7 +2358,7 @@ def main() -> int:
     aggregate["scaling"] = {
         "games": len(scaling_games),
         "generations": {generation: sum(item.get("generation") == generation for item in scaling_games)
-                         for generation in ("v37", "legacy_absent")},
+                         for generation in ("v37", "v38", "legacy_absent")},
         "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade for item in scaling_games)
                    for grade in ("pass", "partial", "untested", "review", "legacy_absent")},
         "eligible": sum((item.get("upgrade") or {}).get("range_upgrade_eligibility_frame", -1) >= 0 for item in scaling_games),
@@ -2200,6 +2376,36 @@ def main() -> int:
             scaling_opportunity_notes[note] = scaling_opportunity_notes.get(note, 0) + 1
     aggregate["scaling"]["review_flags"] = dict(sorted(scaling_review_flags.items()))
     aggregate["scaling"]["opportunity_notes"] = dict(sorted(scaling_opportunity_notes.items()))
+    shared_target_games = [g.get("shared_target") for g in games if isinstance(g.get("shared_target"), dict)]
+    shared_target_review_flags: dict[str, int] = {}
+    shared_target_opportunity_notes: dict[str, int] = {}
+    aggregate["shared_target"] = {
+        "games": len(shared_target_games),
+        "generations": {generation: sum(item.get("generation") == generation for item in shared_target_games)
+                         for generation in ("v38", "legacy_absent")},
+        "grades": {grade: sum((item.get("quantitative_grade") or {}).get("grade") == grade for item in shared_target_games)
+                   for grade in ("pass", "untested", "review", "legacy_absent")},
+        "selections": sum((item.get("counters") or {}).get("shared_target_selections", 0) for item in shared_target_games),
+        "attempts": sum((item.get("counters") or {}).get("shared_target_attempts", 0) for item in shared_target_games),
+        "accepted": sum((item.get("counters") or {}).get("shared_target_accepted", 0) for item in shared_target_games),
+        "shared_target_rejects": sum((item.get("counters") or {}).get("shared_target_rejects", 0) for item in shared_target_games),
+        "shared_target_illegal_selections": sum((item.get("counters") or {}).get("shared_target_illegal_selections", 0) for item in shared_target_games),
+        "shared_target_non_zerg_selections": sum((item.get("counters") or {}).get("shared_target_non_zerg_selections", 0) for item in shared_target_games),
+        "switches": sum((item.get("counters") or {}).get("shared_target_switches", 0) for item in shared_target_games),
+        "correction_opportunities": sum((item.get("counters") or {}).get("shared_target_correction_opportunities", 0) for item in shared_target_games),
+        "multi_participant_selections": sum(item.get("multi_participant_selections", 0) for item in shared_target_games),
+        "coordinated_accepted_selections": sum(item.get("coordinated_accepted_selections", 0) for item in shared_target_games),
+        "max_participants": max((item.get("max_participants", 0) for item in shared_target_games), default=0),
+        "review_flags": shared_target_review_flags,
+        "opportunity_notes": shared_target_opportunity_notes,
+    }
+    for item in shared_target_games:
+        for flag in item.get("review_flags", []):
+            shared_target_review_flags[flag] = shared_target_review_flags.get(flag, 0) + 1
+        for note in item.get("opportunity_notes", []):
+            shared_target_opportunity_notes[note] = shared_target_opportunity_notes.get(note, 0) + 1
+    aggregate["shared_target"]["review_flags"] = dict(sorted(shared_target_review_flags.items()))
+    aggregate["shared_target"]["opportunity_notes"] = dict(sorted(shared_target_opportunity_notes.items()))
     output = Path(args.output).resolve() if args.output else experiment_dir / "hillclimb-scorecard.json"
     scorecard = {"schema_version": 1, "experiment_id": args.experiment_id,
                  "candidate_name": candidate_name, "ledger_path": str(ledger_path),

@@ -1,0 +1,233 @@
+--- a/third_party/kestrel-opening-v37-candidate/Kestrel.cpp
++++ b/third_party/kestrel-opening-v38-candidate/Kestrel.cpp
+@@ -104,6 +104,24 @@
+     int fifthGatewayAcceptedFrame_ = -1;
+     int fifthGatewayCurrentFrame_ = -1;
+     int fifthGatewayCompletedFrame_ = -1;
++    int sharedTargetSelections_ = 0;
++    int sharedTargetAttempts_ = 0;
++    int sharedTargetAccepted_ = 0;
++    int sharedTargetNonZergSelections_ = 0;
++    int sharedTargetIllegalSelections_ = 0;
++    int sharedTargetSwitches_ = 0;
++    int sharedTargetRejects_ = 0;
++    int sharedTargetCorrectionOpportunities_ = 0;
++    int sharedTargetPreviousId_ = -1;
++    std::vector<int> sharedTargetFrames_;
++    std::vector<int> sharedTargetIds_;
++    std::vector<int> sharedTargetParticipantCounts_;
++    std::vector<int> sharedTargetEligibleCounts_;
++    std::vector<int> sharedTargetOrderedCounts_;
++    std::vector<int> sharedTargetLocalCounts_;
++    std::vector<int> sharedTargetAttemptCounts_;
++    std::vector<int> sharedTargetAcceptedCounts_;
++    std::vector<int> sharedTargetParticipantIds_;
+     std::unordered_map<int, BWAPI::Position> lastZealotPositions_;
+     std::unordered_map<int, int> zergOffenseStageSuppressedTargets_;
+     std::unordered_map<int, int> zergOffenseStageHomeMoveLastFrame_;
+@@ -342,6 +360,60 @@
+             << ",\"range_upgrade_completions\":" << rangeUpgradeCompletions_
+             << ",\"range_upgrade_max_bank_minerals\":" << rangeUpgradeMaxBankMinerals_
+             << ",\"range_upgrade_max_bank_gas\":" << rangeUpgradeMaxBankGas_
++            << ",\"shared_target_selections\":" << sharedTargetSelections_
++            << ",\"shared_target_attempts\":" << sharedTargetAttempts_
++            << ",\"shared_target_accepted\":" << sharedTargetAccepted_
++            << ",\"shared_target_non_zerg_selections\":" << sharedTargetNonZergSelections_
++            << ",\"shared_target_illegal_selections\":" << sharedTargetIllegalSelections_
++            << ",\"shared_target_switches\":" << sharedTargetSwitches_
++            << ",\"shared_target_rejects\":" << sharedTargetRejects_
++            << ",\"shared_target_correction_opportunities\":" << sharedTargetCorrectionOpportunities_
++            << ",\"shared_target_frames\":[";
++        for (size_t index = 0; index < sharedTargetFrames_.size(); ++index) {
++            if (index) out << ',';
++            out << sharedTargetFrames_[index];
++        }
++        out << "],\"shared_target_ids\":[";
++        for (size_t index = 0; index < sharedTargetIds_.size(); ++index) {
++            if (index) out << ',';
++            out << sharedTargetIds_[index];
++        }
++        out << "],\"shared_target_participant_counts\":[";
++        for (size_t index = 0; index < sharedTargetParticipantCounts_.size(); ++index) {
++            if (index) out << ',';
++            out << sharedTargetParticipantCounts_[index];
++        }
++        out << "],\"shared_target_eligible_counts\":[";
++        for (size_t index = 0; index < sharedTargetEligibleCounts_.size(); ++index) {
++            if (index) out << ',';
++            out << sharedTargetEligibleCounts_[index];
++        }
++        out << "],\"shared_target_ordered_counts\":[";
++        for (size_t index = 0; index < sharedTargetOrderedCounts_.size(); ++index) {
++            if (index) out << ',';
++            out << sharedTargetOrderedCounts_[index];
++        }
++        out << "],\"shared_target_local_counts\":[";
++        for (size_t index = 0; index < sharedTargetLocalCounts_.size(); ++index) {
++            if (index) out << ',';
++            out << sharedTargetLocalCounts_[index];
++        }
++        out << "],\"shared_target_attempt_counts\":[";
++        for (size_t index = 0; index < sharedTargetAttemptCounts_.size(); ++index) {
++            if (index) out << ',';
++            out << sharedTargetAttemptCounts_[index];
++        }
++        out << "],\"shared_target_accepted_counts\":[";
++        for (size_t index = 0; index < sharedTargetAcceptedCounts_.size(); ++index) {
++            if (index) out << ',';
++            out << sharedTargetAcceptedCounts_[index];
++        }
++        out << "],\"shared_target_participant_ids\":[";
++        for (size_t index = 0; index < sharedTargetParticipantIds_.size(); ++index) {
++            if (index) out << ',';
++            out << sharedTargetParticipantIds_[index];
++        }
++        out << "]"
+             << ",\"accepted_build_frames\":[";
+         for (size_t index = 0; index < acceptedBuildFrames_.size(); ++index) {
+             if (index) out << ',';
+@@ -1289,6 +1361,62 @@
+         return target;
+     }
+ 
++    bool ordinarySharedParticipant(BWAPI::Unit unit, const BWAPI::Position& home, int localCompletedZealots) const {
++        if (!unit || !unit->exists() || !unit->isCompleted()) return false;
++        const BWAPI::UnitType type = unit->getType();
++        if (type != BWAPI::UnitTypes::Protoss_Zealot && type != BWAPI::UnitTypes::Protoss_Dragoon) return false;
++        if (isEmergencyDefender(unit->getID())) return false;
++        if (knownZerg_ && isZergReserve(unit->getID())) return false;
++        if (!knownZerg_ && firstHomeThreatFrame_ >= 0 && type == BWAPI::UnitTypes::Protoss_Zealot && localCompletedZealots < 2) return false;
++        (void)home;
++        return true;
++    }
++
++    BWAPI::Unit sharedVisibleEnemyTarget(const BWAPI::Position& home, int localCompletedZealots) {
++        std::vector<BWAPI::Unit> participants;
++        int centroidX = 0;
++        int centroidY = 0;
++        for (auto unit : BWAPI::Broodwar->self()->getUnits()) {
++            if (!ordinarySharedParticipant(unit, home, localCompletedZealots)) continue;
++            participants.push_back(unit);
++            centroidX += unit->getPosition().x;
++            centroidY += unit->getPosition().y;
++        }
++        if (participants.empty()) return nullptr;
++        const BWAPI::Position centroid(centroidX / static_cast<int>(participants.size()),
++                                       centroidY / static_cast<int>(participants.size()));
++        std::vector<BWAPI::Unit> candidates;
++        for (auto enemy : BWAPI::Broodwar->getAllUnits()) {
++            if (!enemy->exists() || !enemy->isVisible() || !enemy->isDetected() || enemy->isFlying()) continue;
++            if (!BWAPI::Broodwar->self()->isEnemy(enemy->getPlayer())) continue;
++            candidates.push_back(enemy);
++        }
++        if (candidates.empty()) return nullptr;
++        std::vector<BWAPI::Unit> localCandidates;
++        for (auto enemy : candidates) {
++            if (enemy->getDistance(home) < 12 * 32) localCandidates.push_back(enemy);
++        }
++        const std::vector<BWAPI::Unit>& ordered = localCandidates.empty() ? candidates : localCandidates;
++        if (knownZerg_ && !zergOffenseReleased_ && localCandidates.empty()) return nullptr;
++        if (sharedTargetPreviousId_ >= 0) {
++            for (auto enemy : ordered) {
++                if (enemy->getID() == sharedTargetPreviousId_) return enemy;
++            }
++        }
++        BWAPI::Unit target = nullptr;
++        int bestDistance = std::numeric_limits<int>::max();
++        int bestId = std::numeric_limits<int>::max();
++        for (auto enemy : ordered) {
++            const int distance = enemy->getDistance(centroid);
++            if (distance < bestDistance || (distance == bestDistance && enemy->getID() < bestId)) {
++                bestDistance = distance;
++                bestId = enemy->getID();
++                target = enemy;
++            }
++        }
++        return target;
++    }
++
+     BWAPI::Position unexploredStart(BWAPI::Unit from) {
+         std::vector<BWAPI::TilePosition> starts(BWAPI::Broodwar->getStartLocations().begin(), BWAPI::Broodwar->getStartLocations().end());
+         std::sort(starts.begin(), starts.end(), [](BWAPI::TilePosition a, BWAPI::TilePosition b) {
+@@ -1330,7 +1458,45 @@
+                     probe->getID() != builderId_ && !isEmergencyDefender(probe->getID()) && !probe->isConstructing()) {
+                     scoutId_ = probe->getID();
+                     break;
++                }
++            }
++        }
++        BWAPI::Unit sharedTarget = sharedVisibleEnemyTarget(home, localCompletedZealots);
++        int sharedSelectionIndex = -1;
++        if (sharedTarget) {
++            int eligibleCount = 0;
++            int orderedCount = 0;
++            int localCount = 0;
++            int divergenceCount = 0;
++            for (auto unit : sorted(BWAPI::Broodwar->self()->getUnits())) {
++                if (!ordinarySharedParticipant(unit, home, localCompletedZealots)) continue;
++                ++eligibleCount;
++                sharedTargetParticipantIds_.push_back(unit->getID());
++                const BWAPI::Unit currentTarget = unit->getOrderTarget();
++                if (currentTarget && currentTarget->getID() == sharedTarget->getID()) {
++                    ++orderedCount;
++                } else if (currentTarget) {
++                    ++divergenceCount;
+                 }
++                if (sharedTarget->getDistance(home) < homeRadius) ++localCount;
++            }
++            if (eligibleCount > 0) {
++                sharedSelectionIndex = static_cast<int>(sharedTargetFrames_.size());
++                sharedTargetFrames_.push_back(frame);
++                sharedTargetIds_.push_back(sharedTarget->getID());
++                sharedTargetParticipantCounts_.push_back(eligibleCount);
++                sharedTargetEligibleCounts_.push_back(eligibleCount);
++                sharedTargetOrderedCounts_.push_back(orderedCount);
++                sharedTargetLocalCounts_.push_back(localCount);
++                sharedTargetAttemptCounts_.push_back(0);
++                sharedTargetAcceptedCounts_.push_back(0);
++                ++sharedTargetSelections_;
++                if (!knownZerg_) ++sharedTargetNonZergSelections_;
++                sharedTargetCorrectionOpportunities_ += divergenceCount;
++                if (sharedTargetPreviousId_ >= 0 && sharedTargetPreviousId_ != sharedTarget->getID()) ++sharedTargetSwitches_;
++                sharedTargetPreviousId_ = sharedTarget->getID();
++            } else {
++                sharedTarget = nullptr;
+             }
+         }
+         for (auto unit : sorted(BWAPI::Broodwar->self()->getUnits())) {
+@@ -1363,6 +1529,8 @@
+                     continue;
+                 }
+             }
++            const bool sharedParticipant = sharedTarget && ordinarySharedParticipant(unit, home, localCompletedZealots) && !defender;
++            if (sharedParticipant) enemy = sharedTarget;
+             if (knownZerg_ && combat && !zergReserve && !zergOffenseReleased_) {
+                 const bool remoteThreat = enemy && enemy->getDistance(home) >= homeRadius;
+                 if (remoteThreat) {
+@@ -1404,7 +1572,8 @@
+                 }
+                 continue;
+             }
+-            if (unit->isAttacking() && unit->getOrderTarget()) continue;
++            if (unit->isAttacking() && unit->getOrderTarget() &&
++                !(sharedParticipant && unit->getOrderTarget()->getID() != sharedTarget->getID())) continue;
+             if (enemy) {
+                 const auto previous = attackRequests_.find(unit->getID());
+                 const bool targetChanged = previous == attackRequests_.end() || previous->second.targetId != enemy->getID();
+@@ -1416,6 +1585,16 @@
+                         if (zergOffenseReleased_) ++zergOffenseStagePostReleaseRemoteAttempts_;
+                     }
+                     const bool accepted = issue(unit->attack(enemy), AttackCommand);
++                    if (sharedParticipant && sharedSelectionIndex >= 0 && enemy->getID() == sharedTarget->getID()) {
++                        ++sharedTargetAttempts_;
++                        ++sharedTargetAttemptCounts_[sharedSelectionIndex];
++                        if (accepted) {
++                            ++sharedTargetAccepted_;
++                            ++sharedTargetAcceptedCounts_[sharedSelectionIndex];
++                        } else {
++                            ++sharedTargetRejects_;
++                        }
++                    }
+                     attackRequests_[unit->getID()] = {enemy->getID(), frame};
+                     if (accepted && knownZerg_ && combat) {
+                         if (zergReserve) {

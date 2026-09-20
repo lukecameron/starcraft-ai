@@ -200,6 +200,30 @@ class KestrelScorecardTests(TestCase):
         })
         return metadata
 
+    @staticmethod
+    def v38_metadata() -> dict[str, object]:
+        metadata = KestrelScorecardTests.v37_metadata()
+        metadata.update({
+            "shared_target_selections": 2,
+            "shared_target_attempts": 2,
+            "shared_target_accepted": 2,
+            "shared_target_non_zerg_selections": 0,
+            "shared_target_illegal_selections": 0,
+            "shared_target_switches": 0,
+            "shared_target_rejects": 0,
+            "shared_target_correction_opportunities": 0,
+            "shared_target_frames": [1300, 1400],
+            "shared_target_ids": [501, 501],
+            "shared_target_participant_counts": [2, 2],
+            "shared_target_eligible_counts": [2, 2],
+            "shared_target_ordered_counts": [0, 2],
+            "shared_target_local_counts": [2, 2],
+            "shared_target_attempt_counts": [2, 0],
+            "shared_target_accepted_counts": [2, 0],
+            "shared_target_participant_ids": [10, 11, 10, 11],
+        })
+        return metadata
+
     def test_v37_scaling_summary_validates_upgrade_caps_and_milestones(self):
         summary = scorer._scaling_summary(self.v37_metadata(), "v37")
         self.assertEqual(summary["quantitative_grade"]["grade"], "pass")
@@ -287,6 +311,121 @@ class KestrelScorecardTests(TestCase):
         self.assertEqual(bridge["release_threshold"], 3)
         self.assertEqual(bridge["episodes"]["generation"], "v37")
         self.assertEqual(scorer._zerg_offense_stage_summary(metadata, "Zerg", "v37")["generation"], "v37")
+
+    def test_v38_shared_target_summary_validates_aligned_trace_and_counters(self):
+        metadata = self.v38_metadata()
+        summary = scorer._shared_target_summary(metadata, "Zerg", "v38")
+        self.assertEqual(summary["quantitative_grade"]["grade"], "pass")
+        self.assertEqual(summary["counters"]["shared_target_attempts"], 2)
+        self.assertTrue(summary["checks"]["trace_aligned"])
+        self.assertTrue(summary["checks"]["switches_consistent"])
+
+    def test_v38_shared_target_without_selection_is_untested(self):
+        metadata = self.v38_metadata()
+        for name in (
+            "shared_target_selections", "shared_target_attempts", "shared_target_accepted",
+            "shared_target_switches", "shared_target_rejects", "shared_target_correction_opportunities",
+        ):
+            metadata[name] = 0
+        for name in (
+            "shared_target_frames", "shared_target_ids", "shared_target_participant_counts",
+            "shared_target_eligible_counts", "shared_target_ordered_counts", "shared_target_local_counts",
+            "shared_target_attempt_counts", "shared_target_accepted_counts", "shared_target_participant_ids",
+        ):
+            metadata[name] = []
+        summary = scorer._shared_target_summary(metadata, "Zerg", "v38")
+        self.assertEqual(summary["quantitative_grade"]["grade"], "untested")
+        self.assertIn("shared_target_opportunity_unobserved", summary["opportunity_notes"])
+
+    def test_v38_shared_target_single_participant_is_untested(self):
+        metadata = self.v38_metadata()
+        metadata["shared_target_participant_counts"] = [1, 1]
+        metadata["shared_target_eligible_counts"] = [1, 1]
+        metadata["shared_target_ordered_counts"] = [1, 1]
+        metadata["shared_target_local_counts"] = [0, 0]
+        metadata["shared_target_attempt_counts"] = [1, 1]
+        metadata["shared_target_accepted_counts"] = [1, 1]
+        metadata["shared_target_participant_ids"] = [10, 10]
+        summary = scorer._shared_target_summary(metadata, "Zerg", "v38")
+        self.assertEqual(summary["quantitative_grade"]["grade"], "untested")
+        self.assertEqual(summary["multi_participant_selections"], 0)
+        self.assertIn("shared_target_multi_participant_opportunity_unobserved", summary["opportunity_notes"])
+
+    def test_v38_shared_target_partial_local_count_is_review(self):
+        metadata = self.v38_metadata()
+        metadata["shared_target_local_counts"] = [1, 0]
+        summary = scorer._shared_target_summary(metadata, "Zerg", "v38")
+        self.assertEqual(summary["quantitative_grade"]["grade"], "review")
+        self.assertIn("shared_target_local_count_partial", summary["review_flags"])
+
+    def test_v38_shared_target_multi_participant_without_accept_is_untested(self):
+        metadata = self.v38_metadata()
+        metadata["shared_target_attempts"] = 0
+        metadata["shared_target_accepted"] = 0
+        metadata["shared_target_attempt_counts"] = [0, 0]
+        metadata["shared_target_accepted_counts"] = [0, 0]
+        summary = scorer._shared_target_summary(metadata, "Zerg", "v38")
+        self.assertEqual(summary["quantitative_grade"]["grade"], "untested")
+        self.assertEqual(summary["multi_participant_selections"], 2)
+        self.assertEqual(summary["coordinated_accepted_selections"], 0)
+        self.assertIn("shared_target_accepted_command_unobserved", summary["opportunity_notes"])
+
+    def test_v38_shared_target_trailing_participant_id_is_review(self):
+        metadata = self.v38_metadata()
+        metadata["shared_target_participant_ids"].append(99)
+        summary = scorer._shared_target_summary(metadata, "Zerg", "v38")
+        self.assertEqual(summary["quantitative_grade"]["grade"], "review")
+        self.assertIn("shared_target_participant_trace_total_mismatch", summary["review_flags"])
+
+    def test_v38_shared_target_summary_exposes_aggregate_counter_fields(self):
+        metadata = self.v38_metadata()
+        metadata["shared_target_rejects"] = 0
+        metadata["shared_target_illegal_selections"] = 0
+        metadata["shared_target_non_zerg_selections"] = 0
+        summary = scorer._shared_target_summary(metadata, "Zerg", "v38")
+        self.assertEqual(summary["counters"]["shared_target_rejects"], 0)
+        self.assertEqual(summary["counters"]["shared_target_illegal_selections"], 0)
+        self.assertEqual(summary["counters"]["shared_target_non_zerg_selections"], 0)
+
+    def test_v38_shared_target_malformed_or_divergent_trace_is_review(self):
+        metadata = self.v38_metadata()
+        del metadata["shared_target_ids"]
+        metadata["shared_target_correction_opportunities"] = 1
+        summary = scorer._shared_target_summary(metadata, "Zerg", "v38")
+        self.assertEqual(summary["quantitative_grade"]["grade"], "review")
+        self.assertIn("shared_target_required_fields_missing", summary["review_flags"])
+        self.assertEqual(summary["counters"]["shared_target_correction_opportunities"], 1)
+
+    def test_v38_shared_target_malformed_row_counts_return_review(self):
+        metadata = self.v38_metadata()
+        metadata["shared_target_participant_counts"] = ["bad", {"count": 2}]
+        metadata["shared_target_eligible_counts"] = [2, 2]
+        summary = scorer._shared_target_summary(metadata, "Zerg", "v38")
+        self.assertEqual(summary["quantitative_grade"]["grade"], "review")
+        self.assertIn("shared_target_count_invalid", summary["review_flags"])
+
+    def test_v38_shared_target_unhashable_participant_ids_return_review(self):
+        metadata = self.v38_metadata()
+        metadata["shared_target_participant_ids"] = [[10], 11, 10, 11]
+        summary = scorer._shared_target_summary(metadata, "Zerg", "v38")
+        self.assertEqual(summary["quantitative_grade"]["grade"], "review")
+        self.assertIn("shared_target_participant_id_type_mismatch", summary["review_flags"])
+
+    def test_v38_shared_target_negative_correction_opportunities_return_review(self):
+        metadata = self.v38_metadata()
+        metadata["shared_target_correction_opportunities"] = -1
+        summary = scorer._shared_target_summary(metadata, "Zerg", "v38")
+        self.assertEqual(summary["quantitative_grade"]["grade"], "review")
+        self.assertIn("shared_target_negative_counter_correction_opportunities", summary["review_flags"])
+
+    def test_v38_candidate_retains_prior_schema_checks_and_generation(self):
+        metadata = self.v38_metadata()
+        self.assertEqual(scorer._diagnostic_generation(metadata, "Kestrel-v38-shared-target"), "v38")
+        self.assertEqual(scorer._construction_pending_summary(metadata, "Zerg", "v38")["generation"], "v38")
+        self.assertEqual(scorer._probe_reserve_summary(metadata, "Zerg", "v38")["generation"], "v38")
+        self.assertEqual(scorer._emergency_episode_summary(metadata, "Zerg", "v38")["generation"], "v38")
+        self.assertEqual(scorer._zerg_offense_stage_summary(metadata, "Zerg", "v38")["generation"], "v38")
+        self.assertEqual(scorer._scaling_summary(metadata, "v38")["generation"], "v38")
 
     def test_v36_probe_reserve_summary_checks_alignment_window_and_resumption(self):
         summary = scorer._probe_reserve_summary(self.v36_metadata(), "Zerg", "v36")
