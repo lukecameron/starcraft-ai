@@ -1223,6 +1223,30 @@
         "origin": "Original",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
       }
+    },
+    {
+      "id": "kestrel-hillclimb-v7",
+      "title": "Kestrel v27 home-rally override hill-climb",
+      "date": "2026-09-20",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Overriding an outbound Zealot order after a public home threat appears will return a defender before the first home loss and improve early-fight conversion.",
+      "notes": "Five reciprocal, replay-verified losses completed. The rally mechanism fired in both Zerg lanes with one accepted order per unique Zealot, but McRave ran at 366.8 fps below the 384 fps gate and the preregistered lifetime-unique versus concurrent-maximum guard failed in two lanes.",
+      "conclusion": "Reject v27 for zero wins and failed engineering gates. Preserve the verified rally mechanism signal, but do not adopt it, update Elo or revise the preregistered bar after observing results.",
+      "evidence_run_ids": [
+        "20260920T140011-ae9b9eb3d29b",
+        "20260920T140011-71d4619443d8",
+        "20260920T140011-4ca2d2d29282",
+        "20260920T140011-2f0d5472f271",
+        "20260920T140011-10876fa16d7a"
+      ],
+      "evidence_experiment_id": "kestrel-hillclimb-v7",
+      "candidate_binary_sha256": "88ce994524e9215bb6dbcfad00a1086408df5fc665a3c3798367a132f89b32e5",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+      }
     }
   ]
 }
