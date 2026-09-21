@@ -26564,9 +26564,116 @@
         }
       },
       "title": "Kestrel Modular v1 builder-commandability recovery"
+    },
+    {
+      "batch_manifest_sha256": "61615ed4ac2698e1459356a8bceea500350b66c39c67aa3e7ad0882a20518d21",
+      "candidate": {
+        "architecture_source": "docs/evaluations/kestrel-modular-v1-architecture.md",
+        "architecture_source_url": "https://github.com/lukecameron/starcraft-ai/blob/main/docs/evaluations/kestrel-modular-v1-architecture.md",
+        "author": "Luke Cameron",
+        "author_url": "https://github.com/lukecameron",
+        "display_name": "Kestrel Modular v1",
+        "origin": "original",
+        "ownership": "project",
+        "provenance_verified": true,
+        "sha256": "b387872d7ec3e9cd5a96041992699699e5606c0c0f9be67ad85cfdfcb769e81a",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1",
+        "upstream_name": null
+      },
+      "candidate_binary_sha256": "b387872d7ec3e9cd5a96041992699699e5606c0c0f9be67ad85cfdfcb769e81a",
+      "candidate_build_sidecar_sha256": "ec080508fbcb1d79d2729684879fc7e66fc8780f51bbbfdc2d61b55eb5b8c3b7",
+      "candidate_diagnostic_sha256": "bf99a79a0e50af77587281ca979a48502ad405d68f0d237a9e98a6a767918a1b",
+      "candidate_source_manifest_sha256": "bf88a5ca1dd21f93635fd2258bc0ac02e54f7ca61099c0ad25b9b65d0b4edd9e",
+      "conclusion": "Rejected under the retained second-completed-Zealot and hold-release gates. Passive home staging exercised correctly but did not keep the first defender present until the second completed. The row is excluded from Elo and the five-game screen does not run.",
+      "date": "2026-09-21",
+      "decision": "REJECT",
+      "evidence_experiment_id": "kestrel-modular-v1-lone-zealot-hold-v1",
+      "evidence_run_ids": [
+        "20260921T022121-822fa892eafd"
+      ],
+      "experiment_manifest_sha256": "4a4951debb4262409d29c6e0b14b32e1d2e50f3c0fe07c50ee3985039cfe0e96",
+      "final_manifest_sha256": "61615ed4ac2698e1459356a8bceea500350b66c39c67aa3e7ad0882a20518d21",
+      "finished_at": "2026-09-21T02:21:23.839809+00:00",
+      "games": [
+        {
+          "candidate_player": 2,
+          "classification": "loss",
+          "index": 1,
+          "map": "sscai/(2)Heartbreak Ridge.scx",
+          "measurements": {
+            "durable_completion_seconds": 1.9746615409385413,
+            "elapsed_seconds": 1.9705974999815226,
+            "logical_frame_count": 5273,
+            "logical_frames_per_wall_second": 2675.838165860579
+          },
+          "opponent": "zzzk",
+          "status": "finished"
+        }
+      ],
+      "hypothesis": "Suppressing target attacks from a lone first Zealot and moving it home until a second completed Zealot exists will create a verified two-defender overlap while retaining commandability and modular opening semantics",
+      "id": "kestrel-modular-v1-lone-zealot-hold-v1",
+      "notes": "The one fixed Heartbreak Ridge row completed validly. The hold suppressed attacks in 188 samples, affected two distinct completed Zealots, accepted both home moves and issued no attack command. Every issued build, gather and train command was accepted, but two completed Zealots never coexisted.",
+      "opponents": {
+        "zzzk": {
+          "architecture_source": null,
+          "architecture_source_url": null,
+          "author": "Chris Coxe",
+          "author_url": "https://github.com/chriscoxe",
+          "display_name": "ZZZKBot",
+          "origin": "port",
+          "ownership": "project",
+          "provenance_verified": true,
+          "race": "Zerg",
+          "source_url": "https://github.com/chriscoxe/ZZZKBot",
+          "upstream_name": "ZZZKBot"
+        }
+      },
+      "plan_sha256": "b8600900ada0d45bd5bb2f28cda4de5dd3b31150df6b7f6a0335af674840f3a3",
+      "provenance": {
+        "author": "Luke Cameron",
+        "origin": "Original",
+        "ownership": "Ours",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1"
+      },
+      "result_path": "docs/evaluations/kestrel-modular-v1-lone-zealot-hold-v1/RESULT.md",
+      "result_sha256": "e4cdd5051110d5088d979229222e2af5ab124b8d68edcaad3c3224950186e9a8",
+      "runner_notes": "Results await evaluation against the registered acceptance criteria. No playing-strength promotion is implied.",
+      "schedule_sha256": "1602c15a3404c7c2f5866e1b36469f4c4cce06f923b871f18e7ad3a6788ae2a7",
+      "started_at": "2026-09-21T02:21:21.758789+00:00",
+      "status": "completed",
+      "summary": {
+        "by_opponent": {
+          "zzzk": {
+            "failures": {},
+            "losses": 1,
+            "relative_elo_95_from_wilson": [
+              "-Infinity",
+              233.798472816109
+            ],
+            "relative_elo_advantage": "-Infinity",
+            "relative_elo_note": "Relative to this opponent only; point estimate is infinite at observed 0% or 100%.",
+            "scheduled_games": 1,
+            "scored_games": 1,
+            "wilson_95": [
+              0.0,
+              0.7934506856227626
+            ],
+            "win_rate": 0.0,
+            "wins": 0
+          }
+        },
+        "pooled_cohort": {
+          "losses": 1,
+          "note": "Descriptive pooled cohort score; no aggregate Elo across heterogeneous opponents.",
+          "scored_games": 1,
+          "win_rate": 0.0,
+          "wins": 0
+        }
+      },
+      "title": "Kestrel Modular v1 lone-Zealot hold"
     }
   ],
-  "generated_at": "2026-09-21T02:12:55+00:00",
+  "generated_at": "2026-09-21T02:26:15+00:00",
   "local_elo_history": [
     {
       "date": "2026-09-20T02:55:16.696228+00:00",
@@ -89673,6 +89780,163 @@
       "status": "completed",
       "termination_reason": "children_exited",
       "throughput": 2730.761387667389
+    },
+    {
+      "durable_completion_seconds": 1.9746615409385413,
+      "durable_throughput": 2670.331036828612,
+      "elapsed_seconds": 1.9705974999815226,
+      "experiment_id": "kestrel-modular-v1-lone-zealot-hold-v1",
+      "finished_at": "2026-09-21T02:21:23.774+00:00",
+      "game_id": "game-0001",
+      "logical_frame_count": 5273,
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "map_sha256": "64527ae691307756dbc2700c68ab5878476eed27c3dfc9a64411955f4107f50b",
+      "outcome_verified": true,
+      "players": [
+        {
+          "architecture_source": null,
+          "architecture_source_url": null,
+          "architecture_systems": [],
+          "author": "Chris Coxe",
+          "author_url": "https://github.com/chriscoxe",
+          "bot": "ZZZKBot",
+          "build_name": "ZZZKBot.dylib",
+          "display_name": "ZZZKBot",
+          "module_sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748",
+          "name": "ZZZKBot",
+          "origin": "port",
+          "ownership": "project",
+          "peak_rss_raw": 44187648,
+          "player": 1,
+          "provenance_verified": true,
+          "race": "Zerg",
+          "result": {
+            "command_count": null,
+            "ended": true,
+            "frame_count": 5273,
+            "latency_frames": 3,
+            "rejected_commands": null,
+            "winner": true
+          },
+          "return_code": 0,
+          "source_revision": "7183e37b6b416ea53c1040c83e639a3a3c395eed",
+          "source_url": "https://github.com/chriscoxe/ZZZKBot",
+          "upstream_name": "ZZZKBot",
+          "user_cpu_seconds": 0.929801
+        },
+        {
+          "architecture_source": "docs/evaluations/kestrel-modular-v1-architecture.md",
+          "architecture_source_url": "https://github.com/lukecameron/starcraft-ai/blob/main/docs/evaluations/kestrel-modular-v1-architecture.md",
+          "architecture_systems": [
+            {
+              "name": "WorldState",
+              "responsibility": "The current self snapshot, visible enemy snapshot, resources and map starts"
+            },
+            {
+              "name": "WorldMemory",
+              "responsibility": "Last-seen enemy positions and a persistent scout target"
+            },
+            {
+              "name": "StrategyPlanner",
+              "responsibility": "Opening phase, reserves, build priorities and attack/scout gates"
+            },
+            {
+              "name": "WorkerAllocator",
+              "responsibility": "Builder selection and mineral/owned-assimilator assignment"
+            },
+            {
+              "name": "ProductionController",
+              "responsibility": "Nexus/Gateway train decisions and Zealot counters"
+            },
+            {
+              "name": "ConstructionController",
+              "responsibility": "One-build-at-a-time lifecycle, baseline and builder ownership"
+            },
+            {
+              "name": "ScoutingController",
+              "responsibility": "Probe selection and exploration movement"
+            },
+            {
+              "name": "SquadController",
+              "responsibility": "Zealot/Dragoon visible-target attacks, lone-Zealot staging, home threat holding and rally"
+            },
+            {
+              "name": "CommandArbiter",
+              "responsibility": "Deduplication, command categories, rejected commands and BWAPI error counts"
+            },
+            {
+              "name": "Telemetry",
+              "responsibility": "Durable diagnostics and architecture identity"
+            }
+          ],
+          "author": "Luke Cameron",
+          "author_url": "https://github.com/lukecameron",
+          "bot": "Kestrel Modular v1",
+          "build_name": "KestrelModular.dylib",
+          "display_name": "Kestrel Modular v1",
+          "module_sha256": "b387872d7ec3e9cd5a96041992699699e5606c0c0f9be67ad85cfdfcb769e81a",
+          "name": "Kestrel Modular v1",
+          "origin": "original",
+          "ownership": "project",
+          "peak_rss_raw": 43433984,
+          "player": 2,
+          "provenance_verified": true,
+          "race": "Protoss",
+          "result": {
+            "command_count": 27,
+            "ended": true,
+            "frame_count": 5242,
+            "latency_frames": null,
+            "rejected_commands": 0,
+            "winner": false
+          },
+          "return_code": 0,
+          "source_revision": null,
+          "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1",
+          "upstream_name": null,
+          "user_cpu_seconds": 0.47319999999999995
+        }
+      ],
+      "purpose": "Real-engine lone-Zealot public-state hold smoke for Kestrel Modular v1",
+      "replays": [
+        {
+          "author": "Chris Coxe",
+          "author_url": "https://github.com/chriscoxe",
+          "bot": "ZZZKBot",
+          "display_name": "ZZZKBot",
+          "ordinal": 1,
+          "origin": "port",
+          "ownership": "project",
+          "player": 1,
+          "replay_path": "replays/20260921T022121-822fa892eafd-1-1.rep",
+          "sha256": "6377273435c8caae2db2a4349847fa8258303e963137403573f98b0e33890af5",
+          "size_bytes": 65452,
+          "source_run": "20260921T022121-822fa892eafd",
+          "source_url": "https://github.com/chriscoxe/ZZZKBot",
+          "upstream_name": "ZZZKBot"
+        },
+        {
+          "author": "Luke Cameron",
+          "author_url": "https://github.com/lukecameron",
+          "bot": "Kestrel Modular v1",
+          "display_name": "Kestrel Modular v1",
+          "ordinal": 2,
+          "origin": "original",
+          "ownership": "project",
+          "player": 2,
+          "replay_path": "replays/20260921T022121-822fa892eafd-2-2.rep",
+          "sha256": "719795f7cea0f87bf8d10bb0c317ef8ad209bc3500f160f57ac1348d076a3197",
+          "size_bytes": 65294,
+          "source_run": "20260921T022121-822fa892eafd",
+          "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1",
+          "upstream_name": null
+        }
+      ],
+      "run_id": "20260921T022121-822fa892eafd",
+      "started_at": "2026-09-21T02:21:21.804+00:00",
+      "status": "completed",
+      "termination_reason": "children_exited",
+      "throughput": 2675.838165860579
     }
   ],
   "schema_version": 1

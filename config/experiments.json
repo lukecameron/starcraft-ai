@@ -1977,6 +1977,37 @@
         "author": "Luke Cameron",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1"
       }
+    },
+    {
+      "id": "kestrel-modular-v1-lone-zealot-hold-v1",
+      "title": "Kestrel Modular v1 lone-Zealot hold",
+      "date": "2026-09-21",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Suppressing target attacks from a lone first Zealot and moving it home until a second completed Zealot exists will create a verified two-defender overlap while retaining commandability and modular opening semantics",
+      "notes": "The one fixed Heartbreak Ridge row completed validly. The hold suppressed attacks in 188 samples, affected two distinct completed Zealots, accepted both home moves and issued no attack command. Every issued build, gather and train command was accepted, but two completed Zealots never coexisted.",
+      "conclusion": "Rejected under the retained second-completed-Zealot and hold-release gates. Passive home staging exercised correctly but did not keep the first defender present until the second completed. The row is excluded from Elo and the five-game screen does not run.",
+      "evidence_run_ids": [
+        "20260921T022121-822fa892eafd"
+      ],
+      "evidence_experiment_id": "kestrel-modular-v1-lone-zealot-hold-v1",
+      "candidate_binary_sha256": "b387872d7ec3e9cd5a96041992699699e5606c0c0f9be67ad85cfdfcb769e81a",
+      "candidate_source_manifest_sha256": "bf88a5ca1dd21f93635fd2258bc0ac02e54f7ca61099c0ad25b9b65d0b4edd9e",
+      "candidate_build_sidecar_sha256": "ec080508fbcb1d79d2729684879fc7e66fc8780f51bbbfdc2d61b55eb5b8c3b7",
+      "plan_sha256": "b8600900ada0d45bd5bb2f28cda4de5dd3b31150df6b7f6a0335af674840f3a3",
+      "schedule_sha256": "1602c15a3404c7c2f5866e1b36469f4c4cce06f923b871f18e7ad3a6788ae2a7",
+      "batch_manifest_sha256": "61615ed4ac2698e1459356a8bceea500350b66c39c67aa3e7ad0882a20518d21",
+      "final_manifest_sha256": "61615ed4ac2698e1459356a8bceea500350b66c39c67aa3e7ad0882a20518d21",
+      "experiment_manifest_sha256": "4a4951debb4262409d29c6e0b14b32e1d2e50f3c0fe07c50ee3985039cfe0e96",
+      "candidate_diagnostic_sha256": "bf99a79a0e50af77587281ca979a48502ad405d68f0d237a9e98a6a767918a1b",
+      "result_sha256": "e4cdd5051110d5088d979229222e2af5ab124b8d68edcaad3c3224950186e9a8",
+      "result_path": "docs/evaluations/kestrel-modular-v1-lone-zealot-hold-v1/RESULT.md",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "author": "Luke Cameron",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1"
+      }
     }
   ]
 }
