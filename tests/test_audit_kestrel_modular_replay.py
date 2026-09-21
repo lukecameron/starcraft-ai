@@ -128,6 +128,72 @@ class KestrelModularReplayAuditTest(unittest.TestCase):
         self.assertIn("pre_release_attack_move:1", result["issues"])
         self.assertIn("close_threat_target_mismatch:10", result["issues"])
 
+    def test_reactivated_hold_epochs_match_later_attack1_rows(self):
+        diagnostic = copy.deepcopy(self.diagnostic)
+        diagnostic.update({
+            "lone_zealot_hold_release_frame": 3537,
+            "lone_zealot_hold_close_threat_events": [
+                {"accepted": True, "frame": 3756, "target_position": {"x": 3747, "y": 1749}},
+                {"accepted": True, "frame": 4485, "target_position": {"x": 3835, "y": 1898}},
+            ],
+            "lone_zealot_hold_unit_lifecycles": [
+                {"unit_id": 160, "first_seen_frame": 2931, "last_seen_frame": 3534},
+                {"unit_id": 166, "first_seen_frame": 3729, "last_seen_frame": 3840},
+                {"unit_id": 174, "first_seen_frame": 4380, "last_seen_frame": 4578},
+            ],
+        })
+        parsed = copy.deepcopy(self.parsed)
+        parsed["commands"] = [
+            # The first release precedes these ordinary attacks.  They must
+            # not be mistaken for hold commands or close-threat evidence.
+            {"PlayerID": 1, "Frame": 3539, "Order": {"Name": "AttackMove"}, "Pos": {"X": 3744, "Y": 1792}},
+            {"PlayerID": 1, "Frame": 3560, "Order": {"Name": "Attack1"}, "Pos": {"X": 3626, "Y": 1518}},
+            {"PlayerID": 1, "Frame": 3731, "Order": {"Name": "Move"}, "Pos": {"X": 100, "Y": 200}},
+            {"PlayerID": 1, "Frame": 3758, "Order": {"Name": "Attack1"}, "Pos": {"X": 3747, "Y": 1749}},
+            {"PlayerID": 1, "Frame": 4382, "Order": {"Name": "Move"}, "Pos": {"X": 100, "Y": 200}},
+            {"PlayerID": 1, "Frame": 4487, "Order": {"Name": "Attack1"}, "Pos": {"X": 3835, "Y": 1898}},
+        ]
+        result = self.run_audit(diagnostic=diagnostic, parsed=parsed)
+        self.assertTrue(result["pass"], result["issues"])
+        mechanism = result["evidence"]["mechanism"]
+        self.assertEqual([event["matches"] for event in mechanism["close_threat_events"]], [1, 1])
+        self.assertEqual(mechanism["hold_active_attack1_frames"], [3758, 4487])
+        self.assertEqual(mechanism["hold_active_attack_move_frames"], [])
+        self.assertEqual(mechanism["pre_release_attack1_frames"], [])
+
+    def test_attack_move_is_rejected_only_inside_hold_interval(self):
+        diagnostic = copy.deepcopy(self.diagnostic)
+        diagnostic.update({
+            "lone_zealot_hold_release_frame": 100,
+            "lone_zealot_hold_unit_lifecycles": [
+                {"unit_id": 55, "first_seen_frame": 10, "last_seen_frame": 20},
+                {"unit_id": 56, "first_seen_frame": 200, "last_seen_frame": 220},
+            ],
+        })
+        parsed = copy.deepcopy(self.parsed)
+        parsed["commands"] = [
+            {"PlayerID": 1, "Frame": 50, "Order": {"Name": "AttackMove"}, "Pos": {"X": 100, "Y": 200}},
+            {"PlayerID": 1, "Frame": 202, "Order": {"Name": "AttackMove"}, "Pos": {"X": 100, "Y": 200}},
+        ]
+        result = self.run_audit(diagnostic=diagnostic, parsed=parsed)
+        self.assertFalse(result["pass"])
+        self.assertIn("pre_release_attack_move:1", result["issues"])
+        self.assertEqual(result["evidence"]["mechanism"]["hold_active_attack_move_frames"], [202])
+
+    def test_release_cutoff_fallback_preserves_legacy_attack_move_gate(self):
+        diagnostic = copy.deepcopy(self.diagnostic)
+        diagnostic["lone_zealot_hold_release_frame"] = 100
+        diagnostic["lone_zealot_hold_unit_lifecycles"] = [{"unit_id": 55}]
+        parsed = copy.deepcopy(self.parsed)
+        parsed["commands"] = [
+            {"PlayerID": 1, "Frame": 50, "Order": {"Name": "AttackMove"}, "Pos": {"X": 100, "Y": 200}},
+            {"PlayerID": 1, "Frame": 101, "Order": {"Name": "AttackMove"}, "Pos": {"X": 100, "Y": 200}},
+        ]
+        result = self.run_audit(diagnostic=diagnostic, parsed=parsed)
+        self.assertFalse(result["pass"])
+        self.assertIn("pre_release_attack_move:1", result["issues"])
+        self.assertEqual(result["evidence"]["mechanism"]["hold_active_attack_move_frames"], [50])
+
     def test_parse_error_race_and_frame_mismatch_fail(self):
         parsed = copy.deepcopy(self.parsed)
         parsed["parse_error_commands"] = [{"Frame": 4}]

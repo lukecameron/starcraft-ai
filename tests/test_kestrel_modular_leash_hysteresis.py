@@ -20,7 +20,7 @@ class KestrelModularLeashHysteresisTest(unittest.TestCase):
             "frame_count": 5000,
             "ended": True,
             "known_zerg": True,
-            "command_count": 6,
+            "command_count": 7,
             "rejected_commands": 0,
             "callback_count": 5000,
             "zerg_four_probe_pylon_accepted": True,
@@ -32,6 +32,7 @@ class KestrelModularLeashHysteresisTest(unittest.TestCase):
             "accepted_zealot_trains": 2,
             "second_zealot_train_frame": 250,
             "second_zealot_completed_frame": 3800,
+            "first_gateway_accepted_frame": 200,
             "reserve_active_frames": [150],
             "reserve_active_minerals": [90],
             "reserve_active_reserves": [50],
@@ -45,9 +46,15 @@ class KestrelModularLeashHysteresisTest(unittest.TestCase):
                 "accepted_frame": 100,
                 "current_frame": 110,
                 "completed_frame": 150,
+            }, {
+                "type_id": 2,
+                "baseline": 0,
+                "accepted_frame": 200,
+                "current_frame": 210,
+                "completed_frame": 250,
             }],
             "command_categories": {
-                "build": {"attempted": 1, "rejected": 0},
+                "build": {"attempted": 2, "rejected": 0},
                 "train": {"attempted": 2, "rejected": 0},
                 "gather": {"attempted": 1, "rejected": 0},
                 "attack": {"attempted": 1, "rejected": 0},
@@ -134,6 +141,34 @@ class KestrelModularLeashHysteresisTest(unittest.TestCase):
         self.assertEqual(result["decision"], "pass-to-five-game-screen")
         self.assertTrue(result["replay_integrity_gates_separate"])
         self.assertFalse(result["elo_eligible"])
+
+    def test_incomplete_required_opening_construction_fails(self):
+        record = self.valid_record()
+        record["construction_events"][0]["completed_frame"] = -1
+        result = SCORER.validate_leash_hysteresis_record(record)
+        self.assertIn(
+            "first_pylon opening construction lifecycle did not complete",
+            result["mechanism_issues"],
+        )
+        self.assertFalse(result["mechanisms_pass"])
+
+    def test_incomplete_optional_late_construction_is_retained_without_failure(self):
+        record = self.valid_record()
+        record["construction_events"].append({
+            "type_id": 3,
+            "baseline": 1,
+            "accepted_frame": 3000,
+            "current_frame": -1,
+            "completed_frame": -1,
+        })
+        record["command_categories"]["build"]["attempted"] += 1
+        record["command_count"] += 1
+        result = SCORER.validate_leash_hysteresis_record(record)
+        self.assertTrue(result["complete"])
+        self.assertTrue(result["mechanisms_pass"])
+        incomplete = result["construction"]["optional_incomplete_construction_events"]
+        self.assertEqual(len(incomplete), 1)
+        self.assertEqual(incomplete[0]["accepted_frame"], 3000)
 
     def test_empty_evidence_is_rejected(self):
         result = SCORER.validate_leash_hysteresis_record({})

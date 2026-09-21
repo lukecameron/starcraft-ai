@@ -227,14 +227,57 @@ def _pos(row: dict[str, Any]) -> tuple[int, int] | None:
     return point["X"], point["Y"]
 
 
+def _hold_active_intervals(diagnostic: dict[str, Any]) -> list[tuple[int, int]] | None:
+    """Return replay-frame windows in which lone-Zealot hold commands apply.
+
+    Lifecycle frames are callback frames.  Replay command rows are recorded
+    two frames later at LF3, so extend each lifecycle's upper bound by two
+    frames.  Older diagnostics only exposed the first release frame; retain
+    that representation as a conservative prefix window and use an unbounded
+    window when no release evidence exists.
+    """
+    lifecycles = diagnostic.get("lone_zealot_hold_unit_lifecycles")
+    intervals: list[tuple[int, int]] = []
+    if isinstance(lifecycles, list):
+        for lifecycle in lifecycles:
+            if not isinstance(lifecycle, dict):
+                continue
+            first = lifecycle.get("first_seen_frame")
+            last = lifecycle.get("last_seen_frame")
+            if _int(first) and _int(last) and first >= 0 and last >= first:
+                intervals.append((first, last + 2))
+    if intervals:
+        return intervals
+
+    release = diagnostic.get("lone_zealot_hold_release_frame")
+    if _int(release) and release >= 0:
+        return [(0, release - 1)]
+    return None
+
+
 def _mechanism_audit(parsed: dict[str, Any], diagnostic: dict[str, Any], owner_id: int | None) -> dict[str, Any]:
     issues: list[str] = []
     release = diagnostic.get("lone_zealot_hold_release_frame")
     release = release if _int(release) and release >= 0 else None
     rows = [r for r in parsed.get("commands", []) if isinstance(r, dict) and r.get("PlayerID") == owner_id] if owner_id is not None else []
-    before = lambda row: release is None or (_int(row.get("Frame")) and row["Frame"] < release)
-    attack_rows = [r for r in rows if before(r) and _is_order(r, "Attack1")]
-    attack_move_rows = [r for r in rows if before(r) and _is_order(r, "AttackMove")]
+    hold_intervals = _hold_active_intervals(diagnostic)
+
+    def hold_active(row: dict[str, Any]) -> bool:
+        frame = row.get("Frame")
+        if not _int(frame):
+            return False
+        return hold_intervals is None or any(start <= frame <= end for start, end in hold_intervals)
+
+    # Accepted close-threat events are diagnostic callback evidence.  Match
+    # their replay commands against every candidate-owned Attack1 row because
+    # later one-Zealot epochs can occur after the first release.  The
+    # hold-only policy checks below still use active lifecycle windows, so
+    # ordinary post-release attacks remain outside the hold gate.
+    attack_rows = [r for r in rows if _is_order(r, "Attack1")]
+    hold_attack_rows = [r for r in attack_rows if hold_active(r)]
+    attack_move_rows = [r for r in rows if hold_active(r) and _is_order(r, "AttackMove")]
+    legacy_before = lambda row: release is None or (_int(row.get("Frame")) and row["Frame"] < release)
+    legacy_attack_move_rows = [r for r in rows if legacy_before(r) and _is_order(r, "AttackMove")]
     events = diagnostic.get("lone_zealot_hold_close_threat_events")
     events = events if isinstance(events, list) else []
     accepted = [e for e in events if isinstance(e, dict) and e.get("accepted") is True]
@@ -268,7 +311,7 @@ def _mechanism_audit(parsed: dict[str, Any], diagnostic: dict[str, Any], owner_i
             elif actual != expected_pos:
                 issues.append(f"close_threat_target_mismatch:{frame}")
         event_evidence.append(evidence)
-    for row in attack_rows:
+    for row in hold_attack_rows:
         if _int(row.get("Frame")) and row["Frame"] not in expected_frames:
             issues.append(f"unmatched_pre_release_attack1:{row['Frame']}")
     if attack_move_rows:
@@ -276,7 +319,7 @@ def _mechanism_audit(parsed: dict[str, Any], diagnostic: dict[str, Any], owner_i
 
     anchor = diagnostic.get("lone_zealot_hold_anchor")
     anchor_pos = (anchor.get("x"), anchor.get("y")) if isinstance(anchor, dict) and _int(anchor.get("x")) and _int(anchor.get("y")) else None
-    move_rows = [r for r in rows if before(r) and _is_order(r, "Move")]
+    move_rows = [r for r in rows if hold_active(r) and _is_order(r, "Move")]
     lifecycle = diagnostic.get("lone_zealot_hold_unit_lifecycles")
     held_ids = {item.get("unit_id") for item in lifecycle or [] if isinstance(item, dict) and _int(item.get("unit_id"))}
     held_ids.update(e.get("held_unit_id") for e in accepted if _int(e.get("held_unit_id")))
@@ -294,8 +337,16 @@ def _mechanism_audit(parsed: dict[str, Any], diagnostic: dict[str, Any], owner_i
     return {
         "owner_id": owner_id,
         "release_frame": release,
-        "pre_release_attack1_frames": [r.get("Frame") for r in attack_rows],
-        "pre_release_attack_move_frames": [r.get("Frame") for r in attack_move_rows],
+        # Keep the legacy fields for consumers of the original report schema.
+        # The interval-scoped fields below are the authoritative hold checks.
+        "pre_release_attack1_frames": [r.get("Frame") for r in attack_rows if release is None or (_int(r.get("Frame")) and r["Frame"] < release)],
+        "pre_release_attack_move_frames": [r.get("Frame") for r in legacy_attack_move_rows],
+        "hold_active_intervals": [
+            {"start_frame": start, "end_frame": end}
+            for start, end in hold_intervals
+        ] if hold_intervals is not None else None,
+        "hold_active_attack1_frames": [r.get("Frame") for r in hold_attack_rows],
+        "hold_active_attack_move_frames": [r.get("Frame") for r in attack_move_rows],
         "close_threat_events": event_evidence,
         "move_commands": [{"frame": r.get("Frame"), "target": _pos(r), "unit_tag": r.get("UnitTag")} for r in move_rows],
         "anchor": anchor_pos,

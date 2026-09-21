@@ -27,6 +27,7 @@ REQUIRED = (
     "accepted_zealot_trains",
     "second_zealot_train_frame",
     "second_zealot_completed_frame",
+    "first_gateway_accepted_frame",
     "reserve_active_frames",
     "reserve_active_minerals",
     "reserve_active_reserves",
@@ -66,6 +67,106 @@ REQUIRED = (
     "lone_zealot_hold_close_threat_events",
     "lone_zealot_hold_unit_lifecycles",
 )
+
+
+# The opening lifecycle has two construction milestones that the rest of the
+# diagnostic depends on: the first Pylon and the first Gateway.  Later builds
+# are useful observations, but a short terminal game can censor their current
+# or completed state without invalidating the opening that was exercised.
+OPENING_CONSTRUCTION_MILESTONES = (
+    ("first_pylon", "first_pylon_accepted_frame"),
+    ("first_gateway", "first_gateway_accepted_frame"),
+)
+
+
+def _construction_summary(record, events, is_int):
+    """Map accepted construction events to required opening milestones.
+
+    The event stream is still structurally checked by ``validate_record``.
+    This helper only decides which valid events are required to complete and
+    which later events should remain terminal-censored observations.
+    """
+
+    issues = []
+    mechanism_issues = []
+    by_accepted_frame = {}
+    for index, event in enumerate(events):
+        if not isinstance(event, dict):
+            continue
+        values = [event.get(key) for key in (
+            "type_id", "baseline", "accepted_frame", "current_frame", "completed_frame"
+        )]
+        if any(not is_int(value) for value in values):
+            continue
+        by_accepted_frame.setdefault(event["accepted_frame"], []).append((index, event))
+
+    used_indexes = set()
+    required = []
+    for name, frame_key in OPENING_CONSTRUCTION_MILESTONES:
+        accepted_frame = record.get(frame_key)
+        entry = {
+            "name": name,
+            "accepted_frame": accepted_frame,
+            "event_index": None,
+            "current_frame": None,
+            "completed_frame": None,
+            "complete": False,
+        }
+        if not is_int(accepted_frame) or accepted_frame < 0:
+            mechanism_issues.append(f"{name} opening milestone was not accepted")
+            required.append(entry)
+            continue
+
+        matches = by_accepted_frame.get(accepted_frame, [])
+        if len(matches) != 1:
+            issues.append(
+                f"{name} opening milestone does not map to exactly one construction event"
+            )
+            required.append(entry)
+            continue
+
+        index, event = matches[0]
+        used_indexes.add(index)
+        entry.update({
+            "event_index": index,
+            "current_frame": event["current_frame"],
+            "completed_frame": event["completed_frame"],
+            "complete": event["current_frame"] >= 0 and event["completed_frame"] >= 0,
+        })
+        if not entry["complete"]:
+            mechanism_issues.append(f"{name} opening construction lifecycle did not complete")
+        required.append(entry)
+
+    optional = []
+    optional_incomplete = []
+    for index, event in enumerate(events):
+        if index in used_indexes or not isinstance(event, dict):
+            continue
+        values = [event.get(key) for key in (
+            "type_id", "baseline", "accepted_frame", "current_frame", "completed_frame"
+        )]
+        if any(not is_int(value) for value in values):
+            continue
+        observed = {
+            "event_index": index,
+            "type_id": event["type_id"],
+            "baseline": event["baseline"],
+            "accepted_frame": event["accepted_frame"],
+            "current_frame": event["current_frame"],
+            "completed_frame": event["completed_frame"],
+            "complete": event["current_frame"] >= 0 and event["completed_frame"] >= 0,
+        }
+        optional.append(observed)
+        if not observed["complete"]:
+            optional_incomplete.append(observed)
+
+    return {
+        "required_opening_milestones": required,
+        "optional_construction_events": optional,
+        "optional_incomplete_construction_events": optional_incomplete,
+        "issues": issues,
+        "mechanism_issues": mechanism_issues,
+    }
 
 
 def validate_record(record):
@@ -575,6 +676,10 @@ def validate_record(record):
             issues.append("construction completion is not ordered after current")
         last_accepted = accepted
 
+    construction_summary = _construction_summary(record, events, is_int)
+    issues.extend(construction_summary["issues"])
+    mechanism_issues.extend(construction_summary["mechanism_issues"])
+
     if record.get("ended") is not True:
         mechanism_issues.append("final ended telemetry was not observed")
     if is_int(record.get("rejected_commands")) and record["rejected_commands"] != 0:
@@ -585,9 +690,6 @@ def validate_record(record):
         mechanism_issues.append("eligible-Nexus reserve blocking was not exercised")
     if not events:
         mechanism_issues.append("construction lifecycle was not exercised")
-    elif any(event.get("current_frame", -1) < 0 or event.get("completed_frame", -1) < 0
-             for event in events if isinstance(event, dict)):
-        mechanism_issues.append("one or more construction events did not complete")
 
     complete = not issues
     return {
@@ -597,6 +699,10 @@ def validate_record(record):
         "decision": "diagnostic-only",
         "issues": issues,
         "mechanism_issues": mechanism_issues,
+        "construction": {
+            key: value for key, value in construction_summary.items()
+            if key not in {"issues", "mechanism_issues"}
+        },
         "elo_eligible": False,
     }
 
