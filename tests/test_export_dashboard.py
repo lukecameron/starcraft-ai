@@ -16,6 +16,32 @@ class ExportDashboardTest(unittest.TestCase):
         self.assertEqual(fork["source_url"], "https://github.com/Cmccrave/McRave")
         self.assertEqual(identity_for("Unknown.dylib", identities, "anything")["ownership"], "unknown")
 
+    def test_named_original_identity_is_used_for_modular_match_and_replay(self):
+        identities = {"KestrelModular.dylib": {
+            "name": "Kestrel Modular v1", "ownership": "project", "origin": "original",
+            "upstream_name": None, "author": "Luke Cameron",
+            "author_url": "https://github.com/lukecameron",
+            "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1",
+        }}
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "manifest.json"
+            path.write_text(json.dumps({
+                "run_id": "modular-run",
+                "inputs": {"players": [{"player": 1, "name": "Kestrel Modular v1",
+                    "race": "Protoss", "bot_module": {"path": "/private/build/KestrelModular.dylib",
+                    "sha256": "m" * 64}}]},
+                "players": [], "replays": [{"player": 1, "size_bytes": 1, "sha256": "r" * 64,
+                    "path": "/private/replay.rep"}],
+            }))
+            public = public_manifest(path, identities)
+            player, replay = public["players"][0], public["replays"][0]
+            self.assertEqual(player["display_name"], "Kestrel Modular v1")
+            self.assertEqual(player["bot"], "Kestrel Modular v1")
+            self.assertEqual(player["ownership"], "project")
+            self.assertEqual(player["origin"], "original")
+            self.assertEqual(replay["display_name"], "Kestrel Modular v1")
+            self.assertEqual(replay["bot"], "Kestrel Modular v1")
+
     def test_startup_attempt_keeps_bot_identity_before_process_launch(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "manifest.json"
@@ -122,6 +148,7 @@ class ExportDashboardTest(unittest.TestCase):
         self.assertIn("Speed unavailable", html)
         self.assertIn("Durable speed is not a valid completed-game measurement.", html)
         self.assertIn("originNames={original:'Original',port:'Port',fork:'Fork'", html)
+        self.assertIn("p.display_name||p.bot", html)
         self.assertIn(".join(' + ')", html)
         self.assertNotIn("Port/Fork", html)
 

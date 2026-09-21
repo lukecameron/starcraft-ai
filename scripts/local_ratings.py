@@ -175,8 +175,8 @@ def extract_game(manifest, public, manifest_path):
             raise ValueError("missing config identity")
         node_id = digest({"module": module["sha256"], "race": player["race"], "ai_files": configs})
         identity = next((p for p in public.get("players", []) if p.get("player") == player["player"]), {})
-        node_data[node_id] = {key: identity.get(key) for key in ("ownership", "origin", "author", "author_url", "source_url")}
-        node_data[node_id].update(id=node_id, name=identity.get("bot") or player.get("name") or "Unknown bot", module_sha256=module["sha256"], race=player["race"], config_sha256=digest(configs))
+        node_data[node_id] = {key: identity.get(key) for key in ("display_name", "ownership", "origin", "author", "author_url", "source_url")}
+        node_data[node_id].update(id=node_id, name=identity.get("display_name") or identity.get("bot") or player.get("name") or "Unknown bot", module_sha256=module["sha256"], race=player["race"], config_sha256=digest(configs))
         nodes.append(node_id)
     if len(set(nodes)) != 2:
         raise ValueError("same exact build/configuration on both sides")

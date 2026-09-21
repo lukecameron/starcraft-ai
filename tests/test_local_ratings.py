@@ -124,6 +124,21 @@ class RatingEvidenceTest(unittest.TestCase):
         rows = [row for row in league["components"][0]["rows"] if row["name"] == "A"]
         self.assertTrue(all(row["games"] == 1 for row in rows))
 
+    def test_named_identity_survives_into_local_league_node(self):
+        self.run_fixture("run1")
+        self.public[0]["players"][0].update({
+            "display_name": "Kestrel Modular v1",
+            "ownership": "project",
+            "origin": "original",
+        })
+        league = self.league()
+        rows = [row for component in league["components"] for row in component["rows"]
+                if row["name"] == "Kestrel Modular v1"]
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["display_name"], "Kestrel Modular v1")
+        self.assertEqual(rows[0]["ownership"], "project")
+        self.assertEqual(rows[0]["origin"], "original")
+
     def test_engine_regimes_and_unselected_diagnostics_are_separate(self):
         self.run_fixture("run1")
         self.run_fixture("run2", engine="other engine")

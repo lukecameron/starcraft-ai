@@ -12,7 +12,8 @@
     "local-calibration-v3-stardust",
     "local-calibration-v3-mcrave",
     "local-anchor-calibration-v4",
-    "kestrel-local-anchor-v3"
+    "kestrel-local-anchor-v3",
+    "kestrel-local-anchor-bridge-v1"
   ],
   "reviewed_runs": {
     "20260920T055755-fa9bfeecf7e3": "cbb786b46f654e4c65edcb119c40c52d8aed6cccd172f44ec1b2dd127c4ba97d",
@@ -99,7 +100,14 @@
     "20260920T193322-e06b675801d6": "f2c7682bdb814779abd8911bd73960fc9f101ffe3301df3684059e5adc0ffce3",
     "20260920T193323-57d4b513e6c4": "463fcf6d223638196fdeefdbb4a33b11108fa691e6228e89ad442be720cc54cb",
     "20260920T193323-eee596f37130": "4cb2ed31839301720ea1aeb868c513ae278eab0348e1ace4a9e9b244fc3e030d",
-    "20260920T193325-889d2802c20d": "7c9ab8d6f1038d75f8faac48ea80165410bda27a2618ce872c1de8be36107244"
+    "20260920T193325-889d2802c20d": "7c9ab8d6f1038d75f8faac48ea80165410bda27a2618ce872c1de8be36107244",
+    "20260921T003252-c07961fc3105": "af0efde2c7ef0bb84741dd99e2ebb98492b0ebd0e1893f90d930b41dab0ebff7",
+    "20260921T003252-ddf0b2f69364": "1e4606ecdecdea7ebcb1750fd5b0940e3d8c5c17c938eac521d79466ab75ccc1",
+    "20260921T003252-525db7f23000": "67bdbc380607bafe8c5eb6eaccf336c5fc156d5a854bfa8f0ce2ed6b6ddc6ad2",
+    "20260921T003252-6a8b1ae20337": "adf02525e2ca3292691c8661328e8f28aff55a02c2b45903d39337d9395ca878",
+    "20260921T003255-b3b88d10112a": "bf3c000984cb599f3c0ab7e4c870341ebd845a76c56f9508ce0c8cf73035b2cd",
+    "20260921T003300-b4e9073c55c8": "2b3d873f9986f6a3dc4ac2d568c475ad03e4d339591e7ba694d5509855f0997d",
+    "20260921T003302-6b230ad32d1d": "798facd61361909ef3902e626bb70f67bc119db9c5e81281108c413f74b5b85a"
   },
   "cohorts": [
     {
@@ -166,6 +174,16 @@
       ],
       "expected_nodes": 3,
       "expected_games": 16
+    },
+    {
+      "id": "kestrel-local-anchor-bridge-v1",
+      "label": "Kestrel v13 \u00b7 UAlbertaBot Protoss bridge",
+      "current": true,
+      "experiment_ids": [
+        "kestrel-local-anchor-bridge-v1"
+      ],
+      "expected_nodes": 3,
+      "expected_games": 8
     }
   ]
 }

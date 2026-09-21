@@ -139,6 +139,15 @@
       "author": "Luke Cameron",
       "author_url": "https://github.com/lukecameron",
       "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
+    },
+    "KestrelModular.dylib": {
+      "name": "Kestrel Modular v1",
+      "ownership": "project",
+      "origin": "original",
+      "upstream_name": null,
+      "author": "Luke Cameron",
+      "author_url": "https://github.com/lukecameron",
+      "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1"
     }
   }
 }

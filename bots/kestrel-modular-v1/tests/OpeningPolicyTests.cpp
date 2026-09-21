@@ -1,0 +1,25 @@
+#include "kestrel/OpeningPolicy.h"
+
+#include <iostream>
+
+int main() {
+    const kestrel::OpeningInputs zerg{true, 4, -1, -1, -1, 0};
+    const kestrel::OpeningDecision beforePylon = kestrel::decideOpening(zerg, 100);
+    if (!beforePylon.suppressProbeBeforeFirstPylon || !beforePylon.requestFirstPylon || beforePylon.probeReserve != 250) return 1;
+
+    const kestrel::OpeningInputs acceptedButNotObserved{true, 4, -1, 120, -1, 0};
+    const kestrel::OpeningDecision afterAcceptance = kestrel::decideOpening(acceptedButNotObserved, 100);
+    if (afterAcceptance.suppressProbeBeforeFirstPylon || afterAcceptance.requestFirstPylon) return 5;
+
+    const kestrel::OpeningInputs afterPylon{true, 5, 120, 120, -1, 0};
+    const kestrel::OpeningDecision beforeSecondGateway = kestrel::decideOpening(afterPylon, 200);
+    if (beforeSecondGateway.suppressProbeBeforeFirstPylon || beforeSecondGateway.probeReserve != 250) return 2;
+
+    const kestrel::OpeningInputs beforeSecondZealot{true, 8, 120, 120, 900, 1};
+    if (kestrel::decideOpening(beforeSecondZealot, 150).probeReserve != 100) return 3;
+
+    const kestrel::OpeningInputs otherRace{false, 4, -1, -1, -1, 0};
+    const kestrel::OpeningDecision neutral = kestrel::decideOpening(otherRace, 100);
+    if (neutral.suppressProbeBeforeFirstPylon || neutral.probeReserve != 0) return 4;
+    return 0;
+}

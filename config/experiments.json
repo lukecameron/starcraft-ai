@@ -1856,6 +1856,39 @@
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel"
       },
       "matched_parent_experiment": "kestrel-hillclimb-v23"
+    },
+    {
+      "id": "kestrel-local-anchor-bridge-v1",
+      "title": "Kestrel v13 local Elo UAlbertaBot Protoss bridge",
+      "date": "2026-09-21",
+      "status": "completed",
+      "decision": "ADOPT",
+      "hypothesis": "Four direct UAlbertaBot Protoss games against Kestrel v13 plus four against ZZZKBot can connect an additional exact node and reduce uncertainty in the 120-second Kestrel rating component.",
+      "notes": "Seven of eight fixed rows were valid. UAlbertaBot Protoss scored 3-0 against Kestrel v13 and 1-3 against ZZZKBot. The remaining Kestrel row timed out with no terminal result or replay and was preserved, excluded, and not replaced.",
+      "conclusion": "Adopted for local rating evidence only. The 35-game exact-build component estimates Kestrel v13 at 340.8 [-101.6, 783.1] relative to arbitrary ZZZKBot=1000, with prior sensitivity 518.9 at SD 200 and 153.3 at SD 800. This is conditional Apple Silicon OpenBW calibration, not BASIL or tournament strength.",
+      "evidence_run_ids": [
+        "20260921T003252-c07961fc3105",
+        "20260921T003252-ddf0b2f69364",
+        "20260921T003252-525db7f23000",
+        "20260921T003252-6a8b1ae20337",
+        "20260921T003255-17ff54c5e582",
+        "20260921T003255-b3b88d10112a",
+        "20260921T003300-b4e9073c55c8",
+        "20260921T003302-6b230ad32d1d"
+      ],
+      "candidate_binary_sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9",
+      "plan_sha256": "bdc150f65b65b125460f133c8717d8c1b6875182fd34fa9f809b4fa35dddd2ef",
+      "registered_schedule_sha256": "baf8cc1322ebb975f0c264143a53c803cdce997d1e7be5928528e8ebb535490c",
+      "schedule_sha256": "20b6cf4f77884b30710f03eaf2cd5f4499c60e1416f8d9821460548a724df53b",
+      "batch_manifest_sha256": "231ef5c2bfc7971580f27f5d32b9f9c51e970312ba246a592b4ba921e977e8d7",
+      "result_sha256": "c5e285ff195be386141a355f0ddf228fb691045c9422915833e684b0829cb050",
+      "result_path": "docs/evaluations/kestrel-local-anchor-bridge-v1/RESULT.md",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Port",
+        "author": "David Churchill",
+        "source_url": "https://github.com/davechurchill/ualbertabot"
+      }
     }
   ]
 }
