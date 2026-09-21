@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "status": "registered-not-run",
+  "experiment_id": "kestrel-modular-v1-second-gateway-safety-v1",
+  "eval_plan": "docs/evaluations/kestrel-modular-v1-second-gateway-safety-v1/EVAL_PLAN.md",
+  "eval_plan_sha256": "70c9ebe3e881df3acca629061762d949c072a2c379ab5ee4bc4494b0834c872d",
+  "registered_at": "2026-09-21T04:48:00Z",
+  "purpose": "One exact native OpenBW mechanism row for public-self-state second-Gateway safety",
+  "hypothesis": "Against known Zerg, deferring the second Gateway until public self-state observes two completed Zealots prevents premature Gateway spending while preserving two-Zealot overlap and the 160-pixel close-threat defense.",
+  "concurrency": 1,
+  "wall_timeout_seconds": 120,
+  "stop_after_consecutive_invalid": 1,
+  "stop_condition": "Run exactly the one fixed row; preserve every artifact and do not retry, reseed, replace, or rerun for any outcome.",
+  "allowed_kill_events": [
+    {"action_id": 87, "source": "controller_not_occupied_after_action"},
+    {"action_id": -1, "source": "transport_callback"}
+  ],
+  "engine_sha256": "eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b",
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "launcher_sha256": "af1682393f9fe43afe885b35a1637e9c464719ef93c83e799d614beed20316c1",
+  "launcher_sidecar": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher.build.json",
+  "launcher_sidecar_sha256": "0beebdd3bb6221a5e6143c015763d14fa20330a8976ede3f997062660b3e7390",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "game_data_files": [
+    {"path": "third_party/game-data/runtime/BrooDat.mpq", "sha256": "c6d810981e24b947b36d531ab047e143fec0284a581fdaad6fc431e1e75e21df"},
+    {"path": "third_party/game-data/runtime/Patch_rt.mpq", "sha256": "a063f069f1abe202b142b08a9dab878eba8ba033bf13a818024a72631c4452be"},
+    {"path": "third_party/game-data/runtime/StarDat.mpq", "sha256": "8845fd871b4f8f242cc5c2b6f6b8b319d86bbbd02bc836356b51f81b5ba8203f"},
+    {"path": "third_party/game-data/runtime/sscai/(2)Heartbreak Ridge.scx", "sha256": "64527ae691307756dbc2700c68ab5878476eed27c3dfc9a64411955f4107f50b"}
+  ],
+  "candidate": {
+    "name": "Kestrel Modular v1",
+    "race": "Protoss",
+    "ownership": "Ours",
+    "origin": "Original",
+    "author": "Luke Cameron",
+    "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1",
+    "source_commit": "f87ef1f93263712ce3121cb2ba6d71a5dcca121f",
+    "path": "artifacts/builds/c81f65b17c047087abc3e8a019028d4a3fde3f3db8361d7d026f986d20c88c31/kestrel-modular-v1-second-gateway-safety/KestrelModular.dylib",
+    "sha256": "c81f65b17c047087abc3e8a019028d4a3fde3f3db8361d7d026f986d20c88c31",
+    "build_sidecar": "artifacts/builds/c81f65b17c047087abc3e8a019028d4a3fde3f3db8361d7d026f986d20c88c31/kestrel-modular-v1-second-gateway-safety/KestrelModular.dylib.build.json",
+    "build_sidecar_sha256": "28d983ad5583efa64db24fea1c60567430e208b71c4388c58cd3eedf6720d9e1",
+    "source_manifest_sha256": "a8d14242e8af8964b0875eab3f3d216bf55f102a0a55be73453e6a88db972c86"
+  },
+  "opponents": {
+    "zzzk": {
+      "name": "ZZZKBot",
+      "race": "Zerg",
+      "ownership": "Ours",
+      "origin": "Port",
+      "author": "Chris Coxe",
+      "source_url": "https://github.com/chriscoxe/ZZZKBot",
+      "source_revision": "7183e37b6b416ea53c1040c83e639a3a3c395eed",
+      "source_patch": "patches/zzzkbot-native-arm64.patch",
+      "source_patch_sha256": "aedeeef6cc664e9d49d181d8a0044e110008fdca720df386e02fadb95c784c2d",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748",
+      "build_sidecar": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib.build.json",
+      "build_sidecar_sha256": "41c03e2c266fc012a6df0e1ec1c8c9efd65e24973490ef3d1980c9cf6b36f4f1"
+    }
+  },
+  "games": [
+    {
+      "index": 1,
+      "opponent": "zzzk",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "candidate_player": 2,
+      "scenario_seed": 12409
+    }
+  ],
+  "provenance_registry": "config/bot-identities.json",
+  "provenance_registry_sha256": "396d5aa588bfb171f48b68efdeb641f7d8574e1b943c3be11886f678d9b65ff9",
+  "required_files": [
+    {"path": "config/bot-identities.json", "sha256": "396d5aa588bfb171f48b68efdeb641f7d8574e1b943c3be11886f678d9b65ff9"},
+    {"path": "docs/evaluations/kestrel-modular-v1-architecture.md", "sha256": "dd8f0c76341ff78e49d55badd5fff9676e8c44116e0f7e2cc6e74a6b219e8d1e"},
+    {"path": "docs/evaluations/kestrel-modular-v1-second-gateway-safety-v1/EVAL_PLAN.md", "sha256": "70c9ebe3e881df3acca629061762d949c072a2c379ab5ee4bc4494b0834c872d"},
+    {"path": "scripts/build_kestrel_modular.sh", "sha256": "fb3ed1cbcfa5f5ac9f8326a69d9187581490999987887534142029cbfb82811d"},
+    {"path": "scripts/run_batch.py", "sha256": "fd461f22e2ef2c6ff1bd03c03ef395b811cec5f405fc87f64732cce25363cc44"},
+    {"path": "scripts/run_match.py", "sha256": "c96ac4512f7ab40aedb8da2cba3a8667028b4115a2961519c9618d884edee766"},
+    {"path": "scripts/score_kestrel_modular_v1.py", "sha256": "ce68b53d267a5dd35b5ff47f407d831fb096b6d216f9badee9ff3638332e14c5"},
+    {"path": "scripts/score_kestrel_modular_recovery.py", "sha256": "d947bb011342329fe463920423be003695ebb7b8188531f4eb42c18927d0344c"},
+    {"path": "scripts/score_kestrel_modular_hold.py", "sha256": "1c3c1bc0fa5131e0ee3db632a5b6a5c8a0bb6bc7b83889e299de3e5524d8a062"},
+    {"path": "scripts/score_kestrel_modular_leash_hysteresis.py", "sha256": "12819facbf44a2fbe56175794d0916f8565b7a0c331633d7aa11667d3d796460"},
+    {"path": "scripts/score_kestrel_modular_second_gateway_safety.py", "sha256": "924ccdf5caf0ce5a50a39dc3abf4d4ac80913afe1515a3770d6644592e628c6e"},
+    {"path": "scripts/audit_kestrel_modular_replay.py", "sha256": "cd39ae0cd5aaf7a89064869e9f80ed1322840065bc35547928d674c49556ac01"},
+    {"path": "tests/test_score_kestrel_modular_second_gateway_safety.py", "sha256": "92e6ab0660d346435d3c23d1b85296002d56371b7988b1ccb8ed3836b44f04a6"},
+    {"path": "artifacts/builds/c81f65b17c047087abc3e8a019028d4a3fde3f3db8361d7d026f986d20c88c31/kestrel-modular-v1-second-gateway-safety/KestrelModular.dylib", "sha256": "c81f65b17c047087abc3e8a019028d4a3fde3f3db8361d7d026f986d20c88c31"},
+    {"path": "artifacts/builds/c81f65b17c047087abc3e8a019028d4a3fde3f3db8361d7d026f986d20c88c31/kestrel-modular-v1-second-gateway-safety/KestrelModular.dylib.build.json", "sha256": "28d983ad5583efa64db24fea1c60567430e208b71c4388c58cd3eedf6720d9e1"}
+  ]
+}
