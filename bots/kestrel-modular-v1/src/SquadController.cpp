@@ -2,6 +2,8 @@
 
 #include "kestrel/CombatPolicy.h"
 
+#include <algorithm>
+
 namespace kestrel {
 
 SquadController::HeldUnitLifecycle& SquadController::lifecycleFor(int unitId, int frame) {
@@ -48,6 +50,36 @@ void SquadController::tick(const WorldSnapshot& state, WorldMemory& memory, Comm
             ++stats_.loneHoldSuppressionSamples;
             if (suppressedUnits_.insert(unit->getID()).second)
                 stats_.loneHoldUniqueUnits = static_cast<int>(suppressedUnits_.size());
+
+            const int anchorDistance = unit->getDistance(loneHoldHome);
+            lifecycle.maxAnchorDistance = std::max(lifecycle.maxAnchorDistance, anchorDistance);
+            stats_.loneHoldMaxAnchorDistance = std::max(stats_.loneHoldMaxAnchorDistance, anchorDistance);
+            if (anchorDistance > loneZealotLeashRadius) {
+                ++stats_.loneHoldLeashBlockSamples;
+                ++lifecycle.leashBlockSamples;
+                bool issued = false;
+                const bool accepted = commands.move(unit, loneHoldHome, state.frame, &issued);
+                if (issued) {
+                    ++stats_.loneHoldLeashMoveAttempts;
+                    ++lifecycle.leashMoveAttempts;
+                    if (accepted) {
+                        ++stats_.loneHoldLeashMoveAccepted;
+                        ++lifecycle.leashMoveAccepted;
+                    } else {
+                        ++stats_.loneHoldLeashMoveRejected;
+                        ++lifecycle.leashMoveRejected;
+                    }
+                } else {
+                    ++stats_.loneHoldLeashMoveCoalesced;
+                    ++lifecycle.leashMoveCoalesced;
+                }
+                ++stats_.loneHoldHomeMoveAttempts;
+                if (accepted) {
+                    ++stats_.loneHoldHomeMoveAccepted;
+                    stats_.loneHoldAcceptedHomeMoveTargets.push_back(loneHoldHome);
+                }
+                continue;
+            }
 
             BWAPI::Unit closeThreat = nullptr;
             int nearestThreat = 1 << 30;

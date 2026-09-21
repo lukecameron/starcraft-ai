@@ -31,6 +31,12 @@ public:
         int lastCloseThreatFrame = -1;
         int anchorMoveAttempts = 0;
         int anchorMoveAccepted = 0;
+        int leashBlockSamples = 0;
+        int leashMoveAttempts = 0;
+        int leashMoveAccepted = 0;
+        int leashMoveRejected = 0;
+        int leashMoveCoalesced = 0;
+        int maxAnchorDistance = 0;
     };
 
     struct Stats {
@@ -41,6 +47,12 @@ public:
         int loneHoldHomeMoveAccepted = 0;
         int loneHoldReleaseFrame = -1;
         std::vector<BWAPI::Position> loneHoldAcceptedHomeMoveTargets;
+        int loneHoldLeashBlockSamples = 0;
+        int loneHoldLeashMoveAttempts = 0;
+        int loneHoldLeashMoveAccepted = 0;
+        int loneHoldLeashMoveRejected = 0;
+        int loneHoldLeashMoveCoalesced = 0;
+        int loneHoldMaxAnchorDistance = 0;
         int loneHoldCloseThreatSamples = 0;
         int loneHoldCloseThreatFirstFrame = -1;
         int loneHoldCloseThreatAttackAttempts = 0;

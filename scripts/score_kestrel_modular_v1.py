@@ -36,8 +36,16 @@ REQUIRED = (
     "reserve_block_pre_acceptance_flags",
     "construction_events",
     "command_categories",
+    "lone_zealot_hold_leash_radius",
+    "lone_zealot_hold_leash_block_samples",
+    "lone_zealot_hold_leash_move_attempts",
+    "lone_zealot_hold_leash_move_accepted",
+    "lone_zealot_hold_leash_move_rejected",
+    "lone_zealot_hold_leash_move_coalesced",
+    "lone_zealot_hold_leash_max_anchor_distance",
     "lone_zealot_hold_close_threat_samples",
     "lone_zealot_hold_close_threat_radius",
+    "lone_zealot_hold_close_threat_attack_origins_within_leash",
     "lone_zealot_hold_close_threat_first_frame",
     "lone_zealot_hold_close_threat_attack_attempts",
     "lone_zealot_hold_close_threat_attack_accepted",
@@ -101,6 +109,21 @@ def validate_record(record):
     if is_int(record.get("lone_zealot_hold_close_threat_radius")) and record["lone_zealot_hold_close_threat_radius"] != 256:
         issues.append("lone_zealot_hold_close_threat_radius must equal 256")
     require_int("lone_zealot_hold_close_threat_first_frame", -1)
+    for key in (
+        "lone_zealot_hold_leash_radius",
+        "lone_zealot_hold_leash_block_samples",
+        "lone_zealot_hold_leash_move_attempts",
+        "lone_zealot_hold_leash_move_accepted",
+        "lone_zealot_hold_leash_move_rejected",
+        "lone_zealot_hold_leash_move_coalesced",
+        "lone_zealot_hold_leash_max_anchor_distance",
+    ):
+        require_int(key, 0)
+    if (is_int(record.get("lone_zealot_hold_leash_radius"))
+            and record["lone_zealot_hold_leash_radius"] != 96):
+        issues.append("lone_zealot_hold_leash_radius must equal 96")
+    if not isinstance(record.get("lone_zealot_hold_close_threat_attack_origins_within_leash"), bool):
+        issues.append("lone_zealot_hold_close_threat_attack_origins_within_leash is not boolean")
     for key in ("ended", "known_zerg", "zerg_four_probe_pylon_accepted"):
         if not isinstance(record.get(key), bool):
             issues.append(f"{key} is not boolean")
@@ -246,7 +269,9 @@ def validate_record(record):
         for key in ("unit_id", "first_seen_frame", "last_seen_frame", "close_threat_samples",
                     "close_threat_attack_attempts", "close_threat_attack_accepted",
                     "close_threat_attack_rejected", "first_close_threat_frame",
-                    "last_close_threat_frame", "anchor_move_attempts", "anchor_move_accepted"):
+                    "last_close_threat_frame", "anchor_move_attempts", "anchor_move_accepted",
+                    "leash_block_samples", "leash_move_attempts", "leash_move_accepted",
+                    "leash_move_rejected", "leash_move_coalesced", "max_anchor_distance"):
             if not is_int(lifecycle.get(key)):
                 issues.append(f"held-unit lifecycle has invalid {key}")
         if (is_int(lifecycle.get("unit_id")) and lifecycle["unit_id"] in lifecycle_ids):
@@ -258,7 +283,10 @@ def validate_record(record):
             issues.append("held-unit lifecycle ends before it starts")
         counts = [lifecycle.get(key) for key in ("close_threat_samples", "close_threat_attack_attempts",
                                                    "close_threat_attack_accepted", "close_threat_attack_rejected",
-                                                   "anchor_move_attempts", "anchor_move_accepted")]
+                                                   "anchor_move_attempts", "anchor_move_accepted",
+                                                   "leash_block_samples", "leash_move_attempts",
+                                                   "leash_move_accepted", "leash_move_rejected",
+                                                   "leash_move_coalesced", "max_anchor_distance")]
         if all(is_int(value) and value >= 0 for value in counts):
             if lifecycle["close_threat_attack_attempts"] > lifecycle["close_threat_samples"]:
                 issues.append("held-unit close-threat attempts exceed samples")
@@ -266,6 +294,12 @@ def validate_record(record):
                 issues.append("held-unit close-threat attempts do not reconcile")
             if lifecycle["anchor_move_accepted"] > lifecycle["anchor_move_attempts"]:
                 issues.append("held-unit accepted anchor moves exceed attempts")
+            if lifecycle["leash_move_accepted"] + lifecycle["leash_move_rejected"] != lifecycle["leash_move_attempts"]:
+                issues.append("held-unit leash moves do not reconcile")
+            if lifecycle["leash_move_attempts"] + lifecycle["leash_move_coalesced"] != lifecycle["leash_block_samples"]:
+                issues.append("held-unit leash blocks do not reconcile with move outcomes")
+            if lifecycle["max_anchor_distance"] < 0:
+                issues.append("held-unit maximum anchor distance is negative")
     has_close_threat_evidence = bool(close_samples or close_attempts or close_events)
     if has_close_threat_evidence and not lifecycles:
         issues.append("close-threat evidence has no held-unit lifecycle records")
@@ -280,10 +314,62 @@ def validate_record(record):
             issues.append("held-unit lifecycle accepted attacks do not reconcile")
         if sum(item["close_threat_attack_rejected"] for item in lifecycles) != close_rejected:
             issues.append("held-unit lifecycle rejected attacks do not reconcile")
+    leash_fields = (
+        "leash_block_samples", "leash_move_attempts", "leash_move_accepted",
+        "leash_move_rejected", "leash_move_coalesced")
+    aggregate_leash_fields = {
+        "leash_block_samples": "lone_zealot_hold_leash_block_samples",
+        "leash_move_attempts": "lone_zealot_hold_leash_move_attempts",
+        "leash_move_accepted": "lone_zealot_hold_leash_move_accepted",
+        "leash_move_rejected": "lone_zealot_hold_leash_move_rejected",
+        "leash_move_coalesced": "lone_zealot_hold_leash_move_coalesced",
+    }
+    if all(isinstance(item, dict) and all(is_int(item.get(key)) for key in leash_fields)
+           for item in lifecycles):
+        for key, aggregate_key in aggregate_leash_fields.items():
+            if sum(item[key] for item in lifecycles) != record.get(aggregate_key):
+                issues.append(f"held-unit lifecycle {key} do not reconcile")
+                break
+    if lifecycles and all(is_int(item.get("max_anchor_distance")) for item in lifecycles):
+        maximum = max(item["max_anchor_distance"] for item in lifecycles)
+        if maximum != record.get("lone_zealot_hold_leash_max_anchor_distance"):
+            issues.append("held-unit maximum anchor distances do not reconcile")
     for event in close_events:
         if isinstance(event, dict) and is_int(event.get("held_unit_id")) and event["held_unit_id"] not in lifecycle_by_id:
             issues.append("close-threat event has no held-unit lifecycle")
             break
+
+    leash_block_samples = record.get("lone_zealot_hold_leash_block_samples")
+    leash_attempts = record.get("lone_zealot_hold_leash_move_attempts")
+    leash_accepted = record.get("lone_zealot_hold_leash_move_accepted")
+    leash_rejected = record.get("lone_zealot_hold_leash_move_rejected")
+    leash_coalesced = record.get("lone_zealot_hold_leash_move_coalesced")
+    if all(is_int(value) and value >= 0 for value in (
+            leash_block_samples, leash_attempts, leash_accepted, leash_rejected, leash_coalesced)):
+        if leash_accepted + leash_rejected != leash_attempts:
+            issues.append("leash move attempts do not reconcile with acceptance and rejection")
+        if leash_attempts + leash_coalesced != leash_block_samples:
+            issues.append("leash blocks do not reconcile with actual and coalesced moves")
+
+    anchor = record.get("lone_zealot_hold_anchor")
+    anchor_x = anchor.get("x") if isinstance(anchor, dict) else None
+    anchor_y = anchor.get("y") if isinstance(anchor, dict) else None
+    leash_radius = record.get("lone_zealot_hold_leash_radius")
+    origins_within_leash = True
+    if (is_int(anchor_x) and is_int(anchor_y) and is_int(leash_radius)
+            and leash_radius >= 0):
+        for event in close_events:
+            if not isinstance(event, dict) or not valid_position(event.get("held_unit_position")):
+                continue
+            dx = event["held_unit_position"]["x"] - anchor_x
+            dy = event["held_unit_position"]["y"] - anchor_y
+            if dx * dx + dy * dy > leash_radius * leash_radius:
+                origins_within_leash = False
+                issues.append("close-threat attack origin exceeded leash radius")
+                break
+    if isinstance(record.get("lone_zealot_hold_close_threat_attack_origins_within_leash"), bool):
+        if record["lone_zealot_hold_close_threat_attack_origins_within_leash"] != origins_within_leash:
+            issues.append("close-threat attack origin leash flag does not match event positions")
 
     categories = record.get("command_categories", {})
     if not isinstance(categories, dict):

@@ -44,12 +44,14 @@ bool CommandArbiter::attackMove(BWAPI::Unit unit, BWAPI::Position target, int fr
     return accepted;
 }
 
-bool CommandArbiter::move(BWAPI::Unit unit, BWAPI::Position target, int frame) {
+bool CommandArbiter::move(BWAPI::Unit unit, BWAPI::Position target, int frame, bool* issued) {
+    if (issued) *issued = false;
     if (!unit || !target.isValid()) return false;
     const auto previous = attacks_.find(unit->getID());
     if (previous != attacks_.end() && previous->second.kind == CommandKind::Scout &&
         previous->second.targetId < 0 && previous->second.target == target &&
         frame - previous->second.frame < 96) return true;
+    if (issued) *issued = true;
     const bool accepted = issue(unit->move(target), CommandKind::Scout);
     if (accepted) attacks_[unit->getID()] = {-1, target, frame, CommandKind::Scout};
     return accepted;

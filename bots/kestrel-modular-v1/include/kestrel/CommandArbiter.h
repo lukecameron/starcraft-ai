@@ -23,7 +23,9 @@ public:
     // The default keeps existing callers source-compatible.
     bool attack(BWAPI::Unit unit, BWAPI::Unit target, int frame, bool* issued = nullptr);
     bool attackMove(BWAPI::Unit unit, BWAPI::Position target, int frame);
-    bool move(BWAPI::Unit unit, BWAPI::Position target, int frame);
+    // `issued` distinguishes a real BWAPI move call from local coalescing.
+    // The default keeps existing callers source-compatible.
+    bool move(BWAPI::Unit unit, BWAPI::Position target, int frame, bool* issued = nullptr);
     const Stats& stats() const { return stats_; }
 
 private:

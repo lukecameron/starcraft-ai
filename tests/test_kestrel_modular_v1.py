@@ -71,6 +71,9 @@ class KestrelModularV1Test(unittest.TestCase):
         self.assertIn("allowRallyAttack", squad)
         self.assertIn("getDistance(home) > 400", squad)
         self.assertIn("currentTargetIsHomeThreat", squad)
+        self.assertIn("loneZealotLeashRadius", squad)
+        self.assertIn("anchorDistance > loneZealotLeashRadius", squad)
+        self.assertIn("loneHoldLeashBlockSamples", squad)
         self.assertIn("candidate->getDistance(loneHoldHome) > loneZealotCloseThreatRadius", squad)
         self.assertIn("candidate->getType().groundWeapon() == BWAPI::WeaponTypes::None", squad)
         self.assertIn("commands.attack(unit, closeThreat, state.frame, &issued)", squad)
@@ -79,6 +82,7 @@ class KestrelModularV1Test(unittest.TestCase):
         arbiter_header = (SOURCE / "include/kestrel/CommandArbiter.h").read_text()
         self.assertIn("bool* issued", arbiter_source)
         self.assertIn("bool* issued = nullptr", arbiter_header)
+        self.assertIn("bool CommandArbiter::move", arbiter_source)
         self.assertIn("scoutPresent", (SOURCE / "src/ScoutingController.cpp").read_text())
         self.assertIn("scoutId = -1", (SOURCE / "src/ScoutingController.cpp").read_text())
         self.assertIn("!probe->isGatheringGas()", (SOURCE / "src/ScoutingController.cpp").read_text())
@@ -108,8 +112,16 @@ class KestrelModularV1Test(unittest.TestCase):
             "lone_zealot_hold_release_frame",
             "lone_zealot_hold_anchor",
             "lone_zealot_hold_home_move_accepted_targets",
+            "lone_zealot_hold_leash_radius",
+            "lone_zealot_hold_leash_block_samples",
+            "lone_zealot_hold_leash_move_attempts",
+            "lone_zealot_hold_leash_move_accepted",
+            "lone_zealot_hold_leash_move_rejected",
+            "lone_zealot_hold_leash_move_coalesced",
+            "lone_zealot_hold_leash_max_anchor_distance",
             "lone_zealot_hold_close_threat_samples",
             "lone_zealot_hold_close_threat_radius",
+            "lone_zealot_hold_close_threat_attack_origins_within_leash",
             "lone_zealot_hold_close_threat_first_frame",
             "lone_zealot_hold_close_threat_attack_attempts",
             "lone_zealot_hold_close_threat_attack_accepted",
@@ -203,6 +215,15 @@ class KestrelModularV1Test(unittest.TestCase):
             "telemetry_schema": "kestrel-modular-v1",
             "lone_zealot_hold_close_threat_samples": 2,
             "lone_zealot_hold_close_threat_radius": 256,
+            "lone_zealot_hold_leash_radius": 96,
+            "lone_zealot_hold_leash_block_samples": 0,
+            "lone_zealot_hold_leash_move_attempts": 0,
+            "lone_zealot_hold_leash_move_accepted": 0,
+            "lone_zealot_hold_leash_move_rejected": 0,
+            "lone_zealot_hold_leash_move_coalesced": 0,
+            "lone_zealot_hold_leash_max_anchor_distance": 60,
+            "lone_zealot_hold_close_threat_attack_origins_within_leash": True,
+            "lone_zealot_hold_anchor": {"start_tile_x": 117, "start_tile_y": 56, "x": 3808, "y": 1840},
             "lone_zealot_hold_close_threat_first_frame": 90,
             "lone_zealot_hold_close_threat_attack_attempts": 1,
             "lone_zealot_hold_close_threat_attack_accepted": 1,
@@ -223,6 +244,9 @@ class KestrelModularV1Test(unittest.TestCase):
                 "close_threat_attack_accepted": 1, "close_threat_attack_rejected": 0,
                 "first_close_threat_frame": 90, "last_close_threat_frame": 100,
                 "anchor_move_attempts": 0, "anchor_move_accepted": 0,
+                "leash_block_samples": 0, "leash_move_attempts": 0,
+                "leash_move_accepted": 0, "leash_move_rejected": 0,
+                "leash_move_coalesced": 0, "max_anchor_distance": 60,
             }],
         }
 
@@ -276,6 +300,29 @@ class KestrelModularV1Test(unittest.TestCase):
         }
         result = module.validate_record(record)
         self.assertIn("close-threat attempts exceed issued attack commands", result["issues"])
+
+    def test_leash_scorecard_reconciles_moves_and_attack_origins(self):
+        module = self._load_close_threat_scorecard()
+        record = self._close_threat_record()
+        record["lone_zealot_hold_leash_block_samples"] = 3
+        record["lone_zealot_hold_leash_move_attempts"] = 1
+        record["lone_zealot_hold_leash_move_accepted"] = 1
+        record["lone_zealot_hold_leash_move_coalesced"] = 2
+        record["lone_zealot_hold_unit_lifecycles"][0].update({
+            "leash_block_samples": 3, "leash_move_attempts": 1,
+            "leash_move_accepted": 1, "leash_move_rejected": 0,
+            "leash_move_coalesced": 2, "max_anchor_distance": 100,
+        })
+        record["lone_zealot_hold_leash_max_anchor_distance"] = 100
+        result = module.validate_record(record)
+        self.assertFalse(any("leash" in issue for issue in result["issues"]))
+        record["lone_zealot_hold_leash_move_coalesced"] = 1
+        result = module.validate_record(record)
+        self.assertIn("leash blocks do not reconcile with actual and coalesced moves", result["issues"])
+        record = self._close_threat_record()
+        record["lone_zealot_hold_close_threat_events"][0]["held_unit_position"] = {"x": 3700, "y": 1840}
+        result = module.validate_record(record)
+        self.assertIn("close-threat attack origin exceeded leash radius", result["issues"])
 
     def test_recovery_scorecard_requires_and_reconciles_worker_commandability(self):
         spec = importlib.util.spec_from_file_location(

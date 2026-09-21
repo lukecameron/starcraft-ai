@@ -37,6 +37,15 @@ void Telemetry::write(const WorldSnapshot& state, const CommandArbiter& commands
     const auto& stats = commands.stats();
     const auto& policy = strategy.telemetry();
     const char* categoryNames[] = {"build", "train", "gather", "attack", "scout"};
+    bool closeThreatOriginsWithinLeash = true;
+    for (const auto& event : squads.stats().loneHoldCloseThreatEvents) {
+        const int dx = event.heldUnitPosition.x - loneZealotHoldAnchor(state.home).x;
+        const int dy = event.heldUnitPosition.y - loneZealotHoldAnchor(state.home).y;
+        if (dx * dx + dy * dy > loneZealotLeashRadius * loneZealotLeashRadius) {
+            closeThreatOriginsWithinLeash = false;
+            break;
+        }
+    }
     auto writeArray = [&out](const std::vector<int>& values) {
         out << '[';
         for (size_t i = 0; i < values.size(); ++i) {
@@ -72,7 +81,16 @@ void Telemetry::write(const WorldSnapshot& state, const CommandArbiter& commands
         << ",\"lone_zealot_hold_home_move_attempts\":" << squads.stats().loneHoldHomeMoveAttempts
         << ",\"lone_zealot_hold_home_move_accepted\":" << squads.stats().loneHoldHomeMoveAccepted
         << ",\"lone_zealot_hold_release_frame\":" << squads.stats().loneHoldReleaseFrame
+        << ",\"lone_zealot_hold_leash_radius\":" << loneZealotLeashRadius
+        << ",\"lone_zealot_hold_leash_block_samples\":" << squads.stats().loneHoldLeashBlockSamples
+        << ",\"lone_zealot_hold_leash_move_attempts\":" << squads.stats().loneHoldLeashMoveAttempts
+        << ",\"lone_zealot_hold_leash_move_accepted\":" << squads.stats().loneHoldLeashMoveAccepted
+        << ",\"lone_zealot_hold_leash_move_rejected\":" << squads.stats().loneHoldLeashMoveRejected
+        << ",\"lone_zealot_hold_leash_move_coalesced\":" << squads.stats().loneHoldLeashMoveCoalesced
+        << ",\"lone_zealot_hold_leash_max_anchor_distance\":" << squads.stats().loneHoldMaxAnchorDistance
         << ",\"lone_zealot_hold_close_threat_radius\":" << loneZealotCloseThreatRadius
+        << ",\"lone_zealot_hold_close_threat_attack_origins_within_leash\":"
+        << (closeThreatOriginsWithinLeash ? "true" : "false")
         << ",\"lone_zealot_hold_anchor\":{\"start_tile_x\":" << state.home.x
         << ",\"start_tile_y\":" << state.home.y
         << ",\"x\":" << loneZealotHoldAnchor(state.home).x
@@ -126,7 +144,13 @@ void Telemetry::write(const WorldSnapshot& state, const CommandArbiter& commands
             << ",\"first_close_threat_frame\":" << lifecycle.firstCloseThreatFrame
             << ",\"last_close_threat_frame\":" << lifecycle.lastCloseThreatFrame
             << ",\"anchor_move_attempts\":" << lifecycle.anchorMoveAttempts
-            << ",\"anchor_move_accepted\":" << lifecycle.anchorMoveAccepted << '}';
+            << ",\"anchor_move_accepted\":" << lifecycle.anchorMoveAccepted
+            << ",\"leash_block_samples\":" << lifecycle.leashBlockSamples
+            << ",\"leash_move_attempts\":" << lifecycle.leashMoveAttempts
+            << ",\"leash_move_accepted\":" << lifecycle.leashMoveAccepted
+            << ",\"leash_move_rejected\":" << lifecycle.leashMoveRejected
+            << ",\"leash_move_coalesced\":" << lifecycle.leashMoveCoalesced
+            << ",\"max_anchor_distance\":" << lifecycle.maxAnchorDistance << '}';
     }
     out << ']'
         << ",\"max_probes\":" << maxProbes_
