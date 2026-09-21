@@ -23,6 +23,11 @@ int main() {
     const kestrel::OpeningDecision neutral = kestrel::decideOpening(otherRace, 100);
     if (neutral.suppressProbeBeforeFirstPylon || neutral.probeReserve != 0) return 4;
 
+    if (kestrel::canRequestKnownZergSecondGateway(true, 900, -1, -1)) return 14;
+    if (!kestrel::canRequestKnownZergSecondGateway(true, 900, -1, 1600)) return 15;
+    if (kestrel::canRequestKnownZergSecondGateway(true, 900, 1700, 1600)) return 16;
+    if (kestrel::canRequestKnownZergSecondGateway(false, 900, -1, 1600)) return 17;
+
     if (!kestrel::holdLoneZealot(true, 0)) return 6;
     if (!kestrel::holdLoneZealot(true, 1)) return 7;
     if (kestrel::holdLoneZealot(true, 2)) return 8;

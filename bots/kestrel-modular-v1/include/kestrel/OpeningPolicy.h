@@ -19,6 +19,19 @@ struct OpeningDecision {
     int probeReserve = 0;
 };
 
+// The known-Zerg opening must have observed the second completed Zealot before
+// it commits minerals to the second Gateway. The completion frame is latched
+// by StrategyPlanner from public self-state, so a later disappearance does not
+// undo an observation that already occurred.
+inline bool canRequestKnownZergSecondGateway(
+    bool knownZerg,
+    int firstGatewayCurrentFrame,
+    int secondGatewayCurrentFrame,
+    int secondZealotCompletedFrame) {
+    return knownZerg && firstGatewayCurrentFrame >= 0 &&
+           secondGatewayCurrentFrame < 0 && secondZealotCompletedFrame >= 0;
+}
+
 inline OpeningDecision decideOpening(const OpeningInputs& state, int minerals) {
     OpeningDecision result;
     if (!state.knownZerg) return result;

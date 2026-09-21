@@ -74,8 +74,11 @@ Plan StrategyPlanner::decide(const WorldSnapshot& state, bool constructionPendin
         result.build = {BWAPI::UnitTypes::Protoss_Gateway, home};
     } else if (!constructionPending && !state.knownZerg && state.supplyUsed >= 18 && gateways < 1 && state.canSpend(150)) {
         result.build = {BWAPI::UnitTypes::Protoss_Gateway, home};
-    } else if (!constructionPending && state.knownZerg && firstGatewayCurrentFrame_ >= 0 &&
-               opening_.secondGatewayCurrentFrame < 0 && state.canSpend(150)) {
+    } else if (!constructionPending &&
+               canRequestKnownZergSecondGateway(
+                   state.knownZerg, firstGatewayCurrentFrame_,
+                   opening_.secondGatewayCurrentFrame, secondZealotCompletedFrame_) &&
+               state.canSpend(150)) {
         result.build = {BWAPI::UnitTypes::Protoss_Gateway, home};
     } else if (!constructionPending && !state.knownZerg && state.supplyUsed >= 26 && gateways < 2 && state.canSpend(150)) {
         result.build = {BWAPI::UnitTypes::Protoss_Gateway, home};

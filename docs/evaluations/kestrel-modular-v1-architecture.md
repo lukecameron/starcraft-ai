@@ -35,6 +35,10 @@ Pylon and Gateways.
 The opening retains the strongest proven behavior that can be carried forward:
 the Zerg four-Probe first-Pylon gate from v45, the 250-mineral pre-second-
 Gateway reserve, and the 100-mineral reserve until the second Zealot train.
+Against known Zerg, the second Gateway request is additionally gated on a
+public self-state observation of the second completed Zealot; the completion
+frame is latched once observed. Other races retain their existing supply-based
+second-Gateway path.
 Those mechanics are isolated in `OpeningPolicy.h`, which has a standalone unit
 test including the acceptance boundary: the Probe freeze ends when the Pylon
 command is accepted, even if the building has not appeared in the next
