@@ -2131,6 +2131,38 @@
         "author": "Luke Cameron",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1"
       }
+    },
+    {
+      "id": "kestrel-modular-v1-tight-close-threat-v1",
+      "title": "Kestrel Modular v1 tight close-threat defense",
+      "date": "2026-09-21",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Tightening the held lone Zealot close-threat anchor radius from 256 to 160 pixels while retaining 96/48 return hysteresis will close the remaining first/second defender gap and preserve commandability",
+      "notes": "The fixed Heartbreak Ridge row completed validly and reached two simultaneous Zealots with hold release at frame 3537. Later construction remained incomplete, and the frozen replay auditor could not match nine later reactivated-hold attacks because it filtered commands to before the first release.",
+      "conclusion": "Rejected under the frozen scorecard and replay-audit gates. Direct replay inspection confirms all nine claimed attacks at the expected LF3 offset, but the preregistered evaluator did not pass; no five-game screen or Elo update follows.",
+      "evidence_run_ids": [
+        "20260921T042715-19076dbafd78"
+      ],
+      "evidence_experiment_id": "kestrel-modular-v1-tight-close-threat-v1",
+      "candidate_binary_sha256": "396f6c66088fc1dadb3ecb1dee7850712bad49dbf683ce14d54c73e7b70bf33b",
+      "candidate_source_manifest_sha256": "428dce70e38365a390801bf30a3bc7a6594548509ee69bf00b091b56cbb3edce",
+      "candidate_build_sidecar_sha256": "a450cdc64ff071b91afa82d023ea604e893afd54141bb43fdef22b5d9db60fba",
+      "plan_sha256": "6852fefb32f132a1f3c6eddd9dfd0f3053a4bd9ed3a5a08f5bff7eba70ffec17",
+      "schedule_sha256": "a781873c84425944c0a1ca9c2a02c2f2e47cd38465d675d179e905cf2f12fa3d",
+      "batch_manifest_sha256": "8bdf4dd177819f2f294c1166aaa3c8257275e57f28193493bacd332f2933edc7",
+      "final_manifest_sha256": "407c386245c0d4623f343f64ae6b58e3a4d4debb96b4265bd93c56c419f660d3",
+      "experiment_manifest_sha256": "8bdf4dd177819f2f294c1166aaa3c8257275e57f28193493bacd332f2933edc7",
+      "candidate_diagnostic_sha256": "36ff59335499e79878bb003cc08f03c679bf0aa2b7f19916c69567bb29309e07",
+      "replay_audit_sha256": "554fd87dcfe784a9c24eb78aa4a89d5deb325a14d1f7ccd740a7f581aee26de2",
+      "result_sha256": "b3e83efeb995effb100be22924a8987de9547a2b9ecfc505e460ca3fd112925a",
+      "result_path": "docs/evaluations/kestrel-modular-v1-tight-close-threat-v1/RESULT.md",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "author": "Luke Cameron",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1"
+      }
     }
   ]
 }
