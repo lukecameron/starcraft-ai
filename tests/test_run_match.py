@@ -1,5 +1,8 @@
+import contextlib
 import json
 import hashlib
+import io
+import importlib.util
 from pathlib import Path
 import signal
 import subprocess
@@ -7,10 +10,15 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNNER = ROOT / "scripts" / "run_match.py"
+SPEC = importlib.util.spec_from_file_location("run_match", RUNNER)
+run_match = importlib.util.module_from_spec(SPEC)
+assert SPEC.loader is not None
+SPEC.loader.exec_module(run_match)
 
 
 FAKE_LAUNCHER = '''#!/usr/bin/env python3
@@ -57,6 +65,54 @@ class RunMatchTest(unittest.TestCase):
 
     def manifests(self):
         return list((self.root / "artifacts/runs").glob("*/game-0001/manifest.json"))
+
+    def test_socket_preflight_preserves_restricted_bind_error(self):
+        class RestrictedSocket:
+            def __init__(self, family, kind):
+                self.family = family
+                self.kind = kind
+                self.closed = False
+
+            def bind(self, path):
+                self.path = path
+                raise PermissionError(1, "Operation not permitted")
+
+            def close(self):
+                self.closed = True
+
+        socket_dir = self.root / "socket"
+        socket_dir.mkdir()
+        with patch.object(run_match.socket, "socket", RestrictedSocket):
+            with self.assertRaisesRegex(OSError, r"OpenBW AF_UNIX socket preflight failed.*game\.socket") as raised:
+                run_match.preflight_socket_directory(socket_dir)
+        self.assertIn("Operation not permitted", str(raised.exception))
+        self.assertFalse((socket_dir / "game.socket").exists())
+
+    def test_socket_preflight_failure_is_durable_before_popen(self):
+        with patch.object(run_match, "preflight_socket_directory",
+                          side_effect=OSError("OpenBW AF_UNIX socket preflight failed for test/game.socket: EPERM")):
+            with contextlib.redirect_stdout(io.StringIO()):
+                result = run_match.main(self.command()[2:])
+        self.assertEqual(result, 1)
+        manifest = json.loads(self.manifests()[0].read_text())
+        self.assertEqual(manifest["status"], "failed")
+        self.assertEqual(manifest["termination_reason"], "launch_error")
+        self.assertEqual(manifest["players"], [])
+        self.assertIn("AF_UNIX socket preflight failed", manifest["launch_error"])
+
+    def test_socket_preflight_removes_successfully_bound_probe(self):
+        class ProbeSocket:
+            def bind(self, path):
+                Path(path).write_bytes(b"probe")
+
+            def close(self):
+                pass
+
+        socket_dir = self.root / "socket"
+        socket_dir.mkdir()
+        with patch.object(run_match.socket, "socket", return_value=ProbeSocket()):
+            run_match.preflight_socket_directory(socket_dir)
+        self.assertFalse((socket_dir / "game.socket").exists())
 
     def test_success_archives_real_emitted_bytes_and_metadata(self):
         completed = subprocess.run(self.command(), text=True, capture_output=True)

@@ -13,6 +13,7 @@ from pathlib import Path
 import resource
 import shutil
 import signal
+import socket
 import subprocess
 import sys
 import tempfile
@@ -23,6 +24,7 @@ SCHEMA_VERSION = 1
 RACES = ("Terran", "Protoss", "Zerg", "Random")
 REQUIRED_MPQS = ("Patch_rt.mpq", "StarDat.mpq", "BrooDat.mpq")
 RECORDED_RUNTIME_ENV = {"DYLD_LIBRARY_PATH", "DYLD_INSERT_LIBRARIES", "ASAN_OPTIONS", "UBSAN_OPTIONS", "LSAN_OPTIONS"}
+LOCAL_SOCKET_NAME = "game.socket"
 
 
 def sha256(path: Path) -> str:
@@ -116,6 +118,29 @@ def snapshot_ai_data(bot: Path, work: Path, player_input: dict[str, object]) -> 
             raise ValueError(f"Missing or changed AI file for {bot.name}: {expected['path']}")
 
 
+def preflight_socket_directory(socket_dir: Path) -> None:
+    """Verify that OpenBW can bind its configured local transport socket."""
+    socket_path = socket_dir / LOCAL_SOCKET_NAME
+    probe = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    bound = False
+    bind_error: OSError | None = None
+    try:
+        try:
+            probe.bind(str(socket_path))
+            bound = True
+        except OSError as error:
+            bind_error = error
+    finally:
+        probe.close()
+        if bound:
+            try:
+                socket_path.unlink()
+            except FileNotFoundError:
+                pass
+    if bind_error is not None:
+        raise OSError(f"OpenBW AF_UNIX socket preflight failed for {socket_path}: {bind_error}") from bind_error
+
+
 def player_environment(args: argparse.Namespace, player: int, work: Path, socket_dir: Path) -> tuple[dict[str, str], Path, Path]:
     bot = (args.bot1 if player == 1 else args.bot2).resolve()
     race = args.race1 if player == 1 else args.race2
@@ -130,7 +155,7 @@ def player_environment(args: argparse.Namespace, player: int, work: Path, socket
             # One known peer per game: avoid LOCAL_AUTO's directory discovery,
             # which can leave two simultaneous launchers waiting in the lobby.
             "OPENBW_LAN_MODE": "LOCAL",
-            "OPENBW_LOCAL_PATH": str(socket_dir / "game.socket"),
+            "OPENBW_LOCAL_PATH": str(socket_dir / LOCAL_SOCKET_NAME),
             "BWAPI_CONFIG_AI__AI": str(bot),
             "BWAPI_CONFIG_AUTO_MENU__AUTO_MENU": "LAN",
             "BWAPI_CONFIG_AUTO_MENU__RACE": race,
@@ -357,6 +382,7 @@ def main(argv: list[str] | None = None) -> int:
             control = module.get("build_provenance", {}).get("bot_rng_control", {})
             if control.get("env") != "MATCH_BOT_SEED":
                 raise ValueError(f"--bot-seed{number} requires a binary-matched sidecar declaring bot_rng_control.env MATCH_BOT_SEED")
+        preflight_socket_directory(socket_dir)
         for number in (1, 2):
             work = game_dir / f"player-{number}"
             link_game_data(args.game_data_dir.resolve(), work)

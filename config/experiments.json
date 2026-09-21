@@ -2008,6 +2008,36 @@
         "author": "Luke Cameron",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1"
       }
+    },
+    {
+      "id": "kestrel-modular-v1-lone-zealot-hold-base-center-v1",
+      "title": "Kestrel Modular v1 base-center lone-Zealot hold",
+      "date": "2026-09-21",
+      "status": "completed",
+      "decision": "INCONCLUSIVE",
+      "hypothesis": "Moving the suppressed lone first Zealot to the public start tile-derived base center instead of its top-left pixel will create a verified two-defender overlap while retaining commandability and modular opening semantics",
+      "notes": "The one fixed Heartbreak Ridge attempt ended before frame zero because the restricted execution context denied the OpenBW local Unix-socket bind. Both children printed the same connect error; neither emitted metadata, diagnostics, or a replay.",
+      "conclusion": "Infrastructure-inconclusive under the registered rule. The preserved row is not retried or replaced, the base-center mechanism remains untested, and no five-game screen or Elo update follows. The match runner now preflights the exact AF_UNIX transport capability before child launch.",
+      "evidence_run_ids": [
+        "20260921T024505-382cb4682f1f"
+      ],
+      "evidence_experiment_id": "kestrel-modular-v1-lone-zealot-hold-base-center-v1",
+      "candidate_binary_sha256": "4f840d64291cec481fd2a8b8ce09ab9a5e9eb85ea70da159a84c92bba19fcf5a",
+      "candidate_source_manifest_sha256": "ba03c138618c3289d815f91ee84b2d1bde70836c012c06cf58614050b3f9ef52",
+      "candidate_build_sidecar_sha256": "47b2a1cd5780f048f4aabf5d467ec4153f50ef4fa76f94b62d99731e07eaf443",
+      "plan_sha256": "921699a2b849a35f08c30c55de32f95501c49741c33dae53a416d1ce54e27fee",
+      "schedule_sha256": "dce3cac3351424262f8bf1864615fe75e79d64215e433dbfb529fcbff41892bf",
+      "batch_manifest_sha256": "4c9c037f1b4b4f8a8bb67c5d0a0898e8d66366326acd6d78bb012d6bf5d3bef8",
+      "final_manifest_sha256": "81cdcf5e769d64583c367db30dd9a4d9e48512ade3e6884091e3e81210f93bb9",
+      "experiment_manifest_sha256": "4c9c037f1b4b4f8a8bb67c5d0a0898e8d66366326acd6d78bb012d6bf5d3bef8",
+      "result_sha256": "bbd1c8098cf47e132508654a4fead4f9253695504e15637966b08715f6d1b9bb",
+      "result_path": "docs/evaluations/kestrel-modular-v1-lone-zealot-hold-base-center-v1/RESULT.md",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "author": "Luke Cameron",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1"
+      }
     }
   ]
 }
