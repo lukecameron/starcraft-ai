@@ -194,7 +194,13 @@ def validate_record(record):
     accepted_target_positions = position_arrays["lone_zealot_hold_close_threat_accepted_target_positions"]
     accepted_arrays = (accepted_frames, accepted_unit_ids, accepted_target_ids,
                        accepted_unit_positions, accepted_target_positions)
-    if any(len(values) != len(accepted_frames) for values in accepted_arrays[1:]):
+    if is_int(close_accepted):
+        for name, values in zip(
+                ("frames", "held unit ids", "target ids", "held positions", "target positions"),
+                accepted_arrays):
+            if len(values) != close_accepted:
+                issues.append(f"accepted close-threat {name} length does not match accepted attacks")
+    if len(set(len(values) for values in accepted_arrays)) > 1:
         issues.append("accepted close-threat arrays have different lengths")
     if accepted_frames != sorted(accepted_frames):
         issues.append("accepted close-threat frames are unordered")
@@ -260,7 +266,10 @@ def validate_record(record):
                 issues.append("held-unit close-threat attempts do not reconcile")
             if lifecycle["anchor_move_accepted"] > lifecycle["anchor_move_attempts"]:
                 issues.append("held-unit accepted anchor moves exceed attempts")
-    if lifecycles and all(isinstance(item, dict) and all(is_int(item.get(key)) for key in (
+    has_close_threat_evidence = bool(close_samples or close_attempts or close_events)
+    if has_close_threat_evidence and not lifecycles:
+        issues.append("close-threat evidence has no held-unit lifecycle records")
+    if all(isinstance(item, dict) and all(is_int(item.get(key)) for key in (
             "close_threat_samples", "close_threat_attack_attempts", "close_threat_attack_accepted",
             "close_threat_attack_rejected")) for item in lifecycles):
         if sum(item["close_threat_samples"] for item in lifecycles) != close_samples:
@@ -271,10 +280,10 @@ def validate_record(record):
             issues.append("held-unit lifecycle accepted attacks do not reconcile")
         if sum(item["close_threat_attack_rejected"] for item in lifecycles) != close_rejected:
             issues.append("held-unit lifecycle rejected attacks do not reconcile")
-        for event in close_events:
-            if isinstance(event, dict) and is_int(event.get("held_unit_id")) and event["held_unit_id"] not in lifecycle_by_id:
-                issues.append("close-threat event has no held-unit lifecycle")
-                break
+    for event in close_events:
+        if isinstance(event, dict) and is_int(event.get("held_unit_id")) and event["held_unit_id"] not in lifecycle_by_id:
+            issues.append("close-threat event has no held-unit lifecycle")
+            break
 
     categories = record.get("command_categories", {})
     if not isinstance(categories, dict):
@@ -297,6 +306,20 @@ def validate_record(record):
         issues.append("command category attempts do not sum to command_count")
     if is_int(record.get("rejected_commands")) and rejected_total != record["rejected_commands"]:
         issues.append("command category rejections do not sum to rejected_commands")
+
+    attack_entry = categories.get("attack")
+    if (isinstance(attack_entry, dict)
+            and all(is_int(attack_entry.get(key)) for key in ("attempted", "rejected"))
+            and all(is_int(value) and value >= 0 for value in (
+                close_attempts, close_accepted, close_rejected))):
+        attack_attempted = attack_entry["attempted"]
+        attack_rejected = attack_entry["rejected"]
+        if close_attempts > attack_attempted:
+            issues.append("close-threat attempts exceed issued attack commands")
+        if close_rejected > attack_rejected:
+            issues.append("close-threat rejections exceed rejected attack commands")
+        if close_accepted > attack_attempted - attack_rejected:
+            issues.append("close-threat acceptances exceed accepted attack commands")
 
     probe_frames = arrays["accepted_probe_train_frames"]
     if any(frame < 0 for frame in probe_frames) or probe_frames != sorted(probe_frames):

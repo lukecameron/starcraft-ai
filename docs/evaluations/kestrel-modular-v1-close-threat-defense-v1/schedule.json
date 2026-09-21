@@ -25,7 +25,7 @@
   "concurrency": 1,
   "engine_sha256": "eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b",
   "eval_plan": "docs/evaluations/kestrel-modular-v1-close-threat-defense-v1/EVAL_PLAN.md",
-  "eval_plan_sha256": "304b5f335fcdabbac5532274c15e501ccfd12b9113ef84084d9179dab15a26d2",
+  "eval_plan_sha256": "83bd6c578807c3ed35fd2b487142c668f713e033c624d921609c1a9920f1e45e",
   "experiment_id": "kestrel-modular-v1-close-threat-defense-v1",
   "game_data_dir": "third_party/game-data/runtime",
   "game_data_files": [
@@ -93,7 +93,7 @@
     },
     {
       "path": "docs/evaluations/kestrel-modular-v1-close-threat-defense-v1/EVAL_PLAN.md",
-      "sha256": "304b5f335fcdabbac5532274c15e501ccfd12b9113ef84084d9179dab15a26d2"
+      "sha256": "83bd6c578807c3ed35fd2b487142c668f713e033c624d921609c1a9920f1e45e"
     },
     {
       "path": "scripts/build_kestrel_modular.sh",
@@ -109,7 +109,7 @@
     },
     {
       "path": "scripts/score_kestrel_modular_v1.py",
-      "sha256": "cd5932ae599b4e05e7ec8d1fae5fe564c7c9a21a591ccb66f599c39ba22e2ada"
+      "sha256": "821724e5eba51438a436e3196536dfec517bc13f95bbde2d02434b4bdbc8cfc3"
     },
     {
       "path": "scripts/score_kestrel_modular_recovery.py",

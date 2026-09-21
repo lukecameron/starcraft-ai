@@ -71,16 +71,24 @@ one actually issued and accepted defensive attack. The recorded close-threat
 radius must equal 256. Samples, actual issue attempts, accepted/rejected
 outcomes, events, arrays, positions, unit IDs, target IDs, and per-held-unit
 lifecycle counters must reconcile. Coalesced repeated requests count as
-samples but not actual issue attempts.
+samples but not actual issue attempts. Because the aggregate attack category
+may also contain post-release squad orders, close-threat issued attempts,
+rejections, and acceptances must each be no greater than the corresponding
+total issued, rejected, and accepted attack commands; equality is not
+required.
 
 Every accepted retreat target must equal the recorded base-center anchor and
 none may equal the old start-tile top-left. Public self-state must observe two
 completed Zealots simultaneously, and the hold release frame must equal the
 second completion frame. Owner-filtered replay commands may contain no
-pre-release `AttackMove`. Every pre-release held-Zealot `Attack1` must match an
-actually issued accepted close-threat event by frame, unit and target. Any
-pre-release held-Zealot `Move` must target the registered anchor. Unrelated
-scout moves are exempt. Replay checks remain evaluator-only.
+pre-release `AttackMove`. At LF3, every pre-release held-Zealot `Attack1` must
+match an actually issued accepted close-threat event at replay frame
+`event_frame + 2`, with the same held-unit and target identity when those
+fields are exposed by the public command stream. When identity is unavailable,
+the frame-and-order match remains mandatory and the identity sub-gate is
+recorded as unsupported. Any pre-release held-Zealot `Move` must target the
+registered anchor. Unrelated scout moves are exempt. Replay checks remain
+evaluator-only.
 
 ## Decision
 

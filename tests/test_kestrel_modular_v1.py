@@ -198,12 +198,8 @@ class KestrelModularV1Test(unittest.TestCase):
         self.assertFalse(result["complete"])
         self.assertTrue(any("exactly four" in issue for issue in result["issues"]))
 
-    def test_close_threat_scorecard_reconciles_attempts_and_events(self):
-        spec = importlib.util.spec_from_file_location(
-            "modular_score_close_threat", ROOT / "scripts/score_kestrel_modular_v1.py")
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        record = {
+    def _close_threat_record(self):
+        return {
             "telemetry_schema": "kestrel-modular-v1",
             "lone_zealot_hold_close_threat_samples": 2,
             "lone_zealot_hold_close_threat_radius": 256,
@@ -229,6 +225,17 @@ class KestrelModularV1Test(unittest.TestCase):
                 "anchor_move_attempts": 0, "anchor_move_accepted": 0,
             }],
         }
+
+    def _load_close_threat_scorecard(self):
+        spec = importlib.util.spec_from_file_location(
+            "modular_score_close_threat", ROOT / "scripts/score_kestrel_modular_v1.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def test_close_threat_scorecard_reconciles_attempts_and_events(self):
+        module = self._load_close_threat_scorecard()
+        record = self._close_threat_record()
         result = module.validate_record(record)
         self.assertFalse(any("close-threat" in issue for issue in result["issues"]))
         record["lone_zealot_hold_close_threat_attack_rejected"] = 1
@@ -238,6 +245,37 @@ class KestrelModularV1Test(unittest.TestCase):
         record["lone_zealot_hold_close_threat_radius"] = 255
         result = module.validate_record(record)
         self.assertIn("lone_zealot_hold_close_threat_radius must equal 256", result["issues"])
+
+    def test_close_threat_scorecard_rejects_accepted_event_with_empty_arrays(self):
+        module = self._load_close_threat_scorecard()
+        record = self._close_threat_record()
+        for key in (
+                "lone_zealot_hold_close_threat_accepted_frames",
+                "lone_zealot_hold_close_threat_accepted_held_unit_ids",
+                "lone_zealot_hold_close_threat_accepted_target_ids",
+                "lone_zealot_hold_close_threat_accepted_held_positions",
+                "lone_zealot_hold_close_threat_accepted_target_positions"):
+            record[key] = []
+        result = module.validate_record(record)
+        self.assertTrue(any("length does not match accepted attacks" in issue for issue in result["issues"]))
+
+    def test_close_threat_scorecard_rejects_empty_lifecycles(self):
+        module = self._load_close_threat_scorecard()
+        record = self._close_threat_record()
+        record["lone_zealot_hold_unit_lifecycles"] = []
+        result = module.validate_record(record)
+        self.assertIn("close-threat evidence has no held-unit lifecycle records", result["issues"])
+        self.assertIn("close-threat event has no held-unit lifecycle", result["issues"])
+
+    def test_close_threat_scorecard_reconciles_command_category(self):
+        module = self._load_close_threat_scorecard()
+        record = self._close_threat_record()
+        record["command_categories"] = {
+            category: {"attempted": 0, "rejected": 0}
+            for category in ("build", "train", "gather", "attack", "scout")
+        }
+        result = module.validate_record(record)
+        self.assertIn("close-threat attempts exceed issued attack commands", result["issues"])
 
     def test_recovery_scorecard_requires_and_reconciles_worker_commandability(self):
         spec = importlib.util.spec_from_file_location(
