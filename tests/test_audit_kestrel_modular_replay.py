@@ -46,6 +46,7 @@ class KestrelModularReplayAuditTest(unittest.TestCase):
         }
         self.diagnostic = {
             "ended": True,
+            "known_zerg": True,
             "winner": False,
             "frame_count": 100,
             "lone_zealot_hold_release_frame": -1,
@@ -88,8 +89,51 @@ class KestrelModularReplayAuditTest(unittest.TestCase):
         result = self.run_audit()
         self.assertTrue(result["pass"], result["issues"])
         mechanism = result["evidence"]["mechanism"]
+        self.assertEqual(mechanism["policy_applicability"], "applicable")
+        self.assertEqual(mechanism["policy_status"], "applicable")
         self.assertEqual(mechanism["unit_identity_matching"], "unsupported")
         self.assertEqual(mechanism["close_threat_events"][0]["matches"], 1)
+
+    def test_non_zerg_long_attack_stream_skips_zerg_policy_checks(self):
+        manifest = copy.deepcopy(self.manifest)
+        manifest["players"][0]["name"] = "PurpleWave Protoss"
+        manifest["players"][0]["race"] = "Protoss"
+        parsed = copy.deepcopy(self.parsed)
+        parsed["header_players"][0] = {"ID": 0, "Name": "PurpleWave Protoss", "Race": {"Name": "Protoss"}}
+        diagnostic = copy.deepcopy(self.diagnostic)
+        diagnostic["known_zerg"] = False
+        diagnostic["lone_zealot_hold_release_frame"] = 100
+        diagnostic["lone_zealot_hold_close_threat_events"] = [{
+            "accepted": True, "frame": 10, "target_position": {"x": 999, "y": 999},
+        }]
+        parsed["commands"] = [
+            {"PlayerID": 1, "Frame": frame, "Order": {"Name": "AttackMove"}, "Pos": {"X": 10, "Y": 20}}
+            for frame in range(10, 400, 10)
+        ] + [
+            {"PlayerID": 1, "Frame": frame, "Order": {"Name": "Attack1"}, "Pos": {"X": 300, "Y": 400}}
+            for frame in range(400, 1200, 10)
+        ]
+        result = self.run_audit(manifest=manifest, diagnostic=diagnostic, parsed=parsed)
+        self.assertTrue(result["pass"], result["issues"])
+        mechanism = result["evidence"]["mechanism"]
+        self.assertFalse(mechanism["known_zerg"])
+        self.assertEqual(mechanism["policy_applicability"], "not_applicable")
+        self.assertEqual(mechanism["policy_status"], "not_applicable_non_zerg")
+        self.assertEqual(mechanism["policy_status_reason"], "diagnostic_known_zerg_false")
+        self.assertEqual(mechanism["issues"], [])
+
+    def test_non_zerg_row_still_enforces_replay_integrity(self):
+        manifest = copy.deepcopy(self.manifest)
+        manifest["players"][0]["name"] = "PurpleWave Protoss"
+        manifest["players"][0]["race"] = "Protoss"
+        diagnostic = copy.deepcopy(self.diagnostic)
+        diagnostic["known_zerg"] = False
+        manifest["replays"][1]["sha256"] = "0" * 64
+        result = self.run_audit(manifest=manifest, diagnostic=diagnostic)
+        self.assertFalse(result["pass"])
+        self.assertEqual(result["evidence"]["mechanism"]["policy_status"], "not_applicable_non_zerg")
+        self.assertIn("source_replay_hash_mismatch:2", result["issues"])
+        self.assertIn("archive_replay_hash_mismatch:2", result["issues"])
 
     def test_nonzero_exit_and_nonreciprocal_winner_fail(self):
         manifest = copy.deepcopy(self.manifest)

@@ -256,6 +256,40 @@ def _hold_active_intervals(diagnostic: dict[str, Any]) -> list[tuple[int, int]] 
 
 
 def _mechanism_audit(parsed: dict[str, Any], diagnostic: dict[str, Any], owner_id: int | None) -> dict[str, Any]:
+    known_zerg = diagnostic.get("known_zerg")
+    policy_status = (
+        "applicable"
+        if known_zerg is True
+        else "not_applicable_non_zerg"
+        if known_zerg is False
+        else "checked_without_race_metadata"
+    )
+    # The lone-Zealot hold and close-threat checks describe the Zerg-specific
+    # opening policy.  A non-Zerg row can legitimately contain long streams of
+    # ordinary Attack1/AttackMove commands; do not classify those commands as
+    # policy violations.  Keep all replay integrity checks in audit_match,
+    # which run independently of this optional mechanism policy.
+    if known_zerg is False:
+        return {
+            "owner_id": owner_id,
+            "known_zerg": False,
+            "policy_applicability": "not_applicable",
+            "policy_status": policy_status,
+            "policy_status_reason": "diagnostic_known_zerg_false",
+            "release_frame": None,
+            "pre_release_attack1_frames": [],
+            "pre_release_attack_move_frames": [],
+            "hold_active_intervals": None,
+            "hold_active_attack1_frames": [],
+            "hold_active_attack_move_frames": [],
+            "close_threat_events": [],
+            "move_commands": [],
+            "anchor": None,
+            "unit_identity_matching": "not_applicable",
+            "unit_identity_note": "Zerg-specific hold policy was not evaluated",
+            "issues": [],
+        }
+
     issues: list[str] = []
     release = diagnostic.get("lone_zealot_hold_release_frame")
     release = release if _int(release) and release >= 0 else None
@@ -336,6 +370,10 @@ def _mechanism_audit(parsed: dict[str, Any], diagnostic: dict[str, Any], owner_i
         issues.append(f"held_move_target_mismatch:{len(bad_moves)}")
     return {
         "owner_id": owner_id,
+        "known_zerg": known_zerg,
+        "policy_applicability": "applicable" if known_zerg is True else "unknown",
+        "policy_status": policy_status,
+        "policy_status_reason": "diagnostic_known_zerg_true" if known_zerg is True else "diagnostic_missing_known_zerg",
         "release_frame": release,
         # Keep the legacy fields for consumers of the original report schema.
         # The interval-scoped fields below are the authoritative hold checks.
