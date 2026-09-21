@@ -72,8 +72,9 @@ Public self-state must observe two completed Zealots simultaneously. The hold
 release frame must equal the public self-state second-Zealot completion frame.
 In the owner-filtered replay command stream there must be no candidate
 `Attack1` or `AttackMove` order before replay frame `hold_release_frame + 2`.
-Pre-release `Move` orders may target only the registered base-center anchor.
-Replay checks are evaluator-only and never enter gameplay.
+Pre-release `Move` orders from the held Zealot may target only the registered
+base-center anchor; unrelated scout moves are exempt. Replay checks are
+evaluator-only and never enter gameplay.
 
 ## Decision
 

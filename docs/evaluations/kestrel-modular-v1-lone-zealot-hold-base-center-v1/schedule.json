@@ -25,7 +25,7 @@
   "concurrency": 1,
   "engine_sha256": "eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b",
   "eval_plan": "docs/evaluations/kestrel-modular-v1-lone-zealot-hold-base-center-v1/EVAL_PLAN.md",
-  "eval_plan_sha256": "73710a6621e9116ed5eec012e5af1dc1a91245d9cd7e4865eebfbfdab8c971d0",
+  "eval_plan_sha256": "921699a2b849a35f08c30c55de32f95501c49741c33dae53a416d1ce54e27fee",
   "experiment_id": "kestrel-modular-v1-lone-zealot-hold-base-center-v1",
   "game_data_dir": "third_party/game-data/runtime",
   "game_data_files": [
@@ -81,7 +81,7 @@
   "provenance_registry": "config/bot-identities.json",
   "provenance_registry_sha256": "396d5aa588bfb171f48b68efdeb641f7d8574e1b943c3be11886f678d9b65ff9",
   "purpose": "Real-engine base-center lone-Zealot public-state hold smoke for Kestrel Modular v1",
-  "registered_at": "2026-09-21T02:40:00Z",
+  "registered_at": "2026-09-21T02:36:00Z",
   "required_files": [
     {
       "path": "config/bot-identities.json",
@@ -93,7 +93,7 @@
     },
     {
       "path": "docs/evaluations/kestrel-modular-v1-lone-zealot-hold-base-center-v1/EVAL_PLAN.md",
-      "sha256": "73710a6621e9116ed5eec012e5af1dc1a91245d9cd7e4865eebfbfdab8c971d0"
+      "sha256": "921699a2b849a35f08c30c55de32f95501c49741c33dae53a416d1ce54e27fee"
     },
     {
       "path": "scripts/build_kestrel_modular.sh",
