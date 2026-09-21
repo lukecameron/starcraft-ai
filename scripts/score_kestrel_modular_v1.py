@@ -17,6 +17,7 @@ REQUIRED = (
     "known_zerg",
     "command_count",
     "rejected_commands",
+    "callback_count",
     "zerg_four_probe_pylon_accepted",
     "zerg_four_probe_pylon_accepted_frame",
     "zerg_four_probe_pylon_completed_probe_count",
@@ -62,8 +63,11 @@ def validate_record(record):
         if not is_int(value) or (minimum is not None and value < minimum):
             issues.append(f"{key} is not a valid integer")
 
-    for key in ("frame_count", "command_count", "rejected_commands", "accepted_zealot_trains"):
+    for key in ("frame_count", "command_count", "rejected_commands", "callback_count", "accepted_zealot_trains"):
         require_int(key, 0)
+    for key in ("command_count", "callback_count"):
+        if is_int(record.get(key)) and record[key] == 0:
+            issues.append(f"{key} must be positive")
     for key in (
         "zerg_four_probe_pylon_accepted_frame",
         "zerg_four_probe_pylon_completed_probe_count",
@@ -148,6 +152,8 @@ def validate_record(record):
     if record.get("known_zerg"):
         if not record.get("zerg_four_probe_pylon_accepted"):
             mechanism_issues.append("Zerg four-Probe Pylon mechanism was not exercised successfully")
+        elif completed_frame < accepted_frame:
+            mechanism_issues.append("Zerg four-Probe Pylon completion was not observed")
     elif record.get("zerg_four_probe_pylon_accepted"):
         issues.append("non-Zerg record reports Zerg four-Probe Pylon acceptance")
 
@@ -159,6 +165,10 @@ def validate_record(record):
         issues.append("two accepted Zealots have no second train frame")
     if second_complete >= 0 and (second_train < 0 or second_complete < second_train):
         issues.append("second Zealot completion is not ordered after its train frame")
+    if is_int(record.get("accepted_zealot_trains")) and record["accepted_zealot_trains"] < 2:
+        mechanism_issues.append("second Zealot train was not exercised")
+    elif second_complete < second_train:
+        mechanism_issues.append("second Zealot completion was not observed")
 
     active = list(zip(arrays["reserve_active_frames"], arrays["reserve_active_minerals"], arrays["reserve_active_reserves"]))
     blocks = list(zip(arrays["reserve_block_frames"], arrays["reserve_block_minerals"],

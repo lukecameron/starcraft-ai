@@ -124,7 +124,8 @@ class KestrelModularV1Test(unittest.TestCase):
         record = {
             "telemetry_schema": "kestrel-modular-v1", "frame_count": 1000,
             "ended": True, "known_zerg": True, "command_count": 1,
-            "rejected_commands": 0, "zerg_four_probe_pylon_accepted": True,
+            "rejected_commands": 0, "callback_count": 1,
+            "zerg_four_probe_pylon_accepted": True,
             "zerg_four_probe_pylon_accepted_frame": 100,
             "zerg_four_probe_pylon_completed_probe_count": 5,
             "zerg_four_probe_pylon_completed_frame": 200,

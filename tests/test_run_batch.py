@@ -111,6 +111,31 @@ class BatchSummaryTests(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 run_batch.verify_schedule_inputs(argparse.ArgumentParser(), schedule)
 
+    def test_optional_source_manifest_is_recomputed_before_launch(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.cpp"
+            source.write_text("frozen source\n")
+            source_hash = hashlib.sha256(source.read_bytes()).hexdigest()
+            manifest_hash = hashlib.sha256(f"{source_hash}  {source}\n".encode()).hexdigest()
+            sidecar = root / "build.json"
+            sidecar.write_text(json.dumps({
+                "binary_sha256": "module",
+                "source_files": [str(source)],
+                "source_manifest_sha256": manifest_hash,
+            }))
+            identity = {
+                "name": "c", "race": "Zerg", "sha256": "module",
+                "build_sidecar": str(sidecar),
+                "build_sidecar_sha256": hashlib.sha256(sidecar.read_bytes()).hexdigest(),
+                "source_manifest_sha256": manifest_hash,
+            }
+            schedule = {"candidate": identity, "opponents": {}}
+            run_batch.verify_schedule_inputs(argparse.ArgumentParser(), schedule)
+            source.write_text("drifted source\n")
+            with self.assertRaises(SystemExit):
+                run_batch.verify_schedule_inputs(argparse.ArgumentParser(), schedule)
+
 
 class BatchLifecycleTests(unittest.TestCase):
     def test_schedule_is_persisted_and_results_are_incremental(self):

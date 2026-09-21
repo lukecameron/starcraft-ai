@@ -68,6 +68,21 @@ def verify_identity_files(parser, identity, label):
             parser.error(f"{label} build sidecar is unreadable: {error}")
         if sidecar.get("binary_sha256") != identity.get("sha256"):
             parser.error(f"{label} build sidecar does not identify the frozen module")
+        source_manifest = identity.get("source_manifest_sha256")
+        if source_manifest is not None:
+            if sidecar.get("source_manifest_sha256") != source_manifest:
+                parser.error(f"{label} build sidecar does not identify the frozen source manifest")
+            source_files = sidecar.get("source_files")
+            if not isinstance(source_files, list) or not source_files or any(not isinstance(path, str) for path in source_files):
+                parser.error(f"{label} build sidecar lacks a source file manifest")
+            digest = hashlib.sha256()
+            for source_name in source_files:
+                source_path = Path(source_name)
+                if not source_path.is_file():
+                    parser.error(f"{label} source manifest file is missing: {source_name}")
+                digest.update(f"{sha256(source_path)}  {source_name}\n".encode())
+            if digest.hexdigest() != source_manifest:
+                parser.error(f"{label} source manifest SHA-256 mismatch")
 
 
 def verify_schedule_inputs(parser, schedule):
@@ -205,6 +220,10 @@ def validate_schedule(parser, schedule):
         parser.error("schedule has no games")
     if "concurrency" in schedule and (type(schedule["concurrency"]) is not int or schedule["concurrency"] < 1):
         parser.error("schedule concurrency must be a positive integer")
+    if "stop_after_consecutive_invalid" in schedule and (
+            type(schedule["stop_after_consecutive_invalid"]) is not int or
+            schedule["stop_after_consecutive_invalid"] < 1):
+        parser.error("schedule stop_after_consecutive_invalid must be a positive integer")
     for index, game in enumerate(schedule["games"], 1):
         if game.get("opponent") not in schedule["opponents"]:
             parser.error(f"game {index} names an unknown opponent")
@@ -306,12 +325,13 @@ def main():
                 "candidate_player": game["candidate_player"], "status": "pending"}
                for index, game in enumerate(schedule["games"], 1)]
     batch_started = time.monotonic()
+    invalid_stop = schedule.get("stop_after_consecutive_invalid", 2)
     ledger = {"schema_version": 1, "experiment_id": schedule["experiment_id"], "started_at": utc_now(),
               "finished_at": None, "status": "running", "hypothesis": schedule["hypothesis"],
               "stop_condition": schedule["stop_condition"], "candidate": {"path": str(candidate), "sha256": candidate_hash},
               "opponents": opponent_identities,
               "schedule": {"path": str(persisted_schedule), "sha256": sha256(persisted_schedule)},
-              "concurrency": args.concurrency, "infrastructure_stop_after_consecutive": 2,
+              "concurrency": args.concurrency, "infrastructure_stop_after_consecutive": invalid_stop,
               "measurement_scope": "Batch wall time includes runner launch, games, and incremental archival; per-game measurements come from run_match.",
               "games": records, "summary": summarize([], schedule["opponents"])}
     atomic_json(manifest_path, ledger)
@@ -338,7 +358,7 @@ def main():
     infrastructure_classes = {"crash", "timeout", "missing_or_inconsistent_metadata", "launcher_failure"}
     try:
         while next_game < len(records) or running:
-            while not stopping and consecutive_infrastructure_failures < 2 and next_game < len(records) and len(running) < args.concurrency:
+            while not stopping and consecutive_infrastructure_failures < invalid_stop and next_game < len(records) and len(running) < args.concurrency:
                 game = schedule["games"][next_game]
                 opponent = schedule["opponents"][game["opponent"]]
                 command = command_for(args, schedule, game, candidate, opponent)
@@ -363,7 +383,7 @@ def main():
                                     "stdout_path": stdout_path}
                 next_game += 1
                 atomic_json(manifest_path, ledger)
-            if consecutive_infrastructure_failures >= 2 and not running:
+            if consecutive_infrastructure_failures >= invalid_stop and not running:
                 stopped_by_failure_rule = True
                 for record in records[next_game:]:
                     record.update({"status": "skipped", "classification": "stopped_after_repeated_infrastructure_failure"})

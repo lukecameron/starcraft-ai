@@ -1,0 +1,119 @@
+{
+  "allowed_kill_events": [
+    {
+      "action_id": 87,
+      "source": "controller_not_occupied_after_action"
+    },
+    {
+      "action_id": -1,
+      "source": "transport_callback"
+    }
+  ],
+  "candidate": {
+    "author": "Luke Cameron",
+    "build_sidecar": "artifacts/builds/8134235c5ce2c589e5b6c890008cc9a2a086df7a715ddcdacfeef4aa5bd36cca/kestrel-modular-v1/KestrelModular.dylib.build.json",
+    "build_sidecar_sha256": "37366a664cbc030fb776968b655cd3ee06c62de068d5ad5f94e66e18cb51ccb3",
+    "name": "Kestrel Modular v1",
+    "origin": "Original",
+    "ownership": "Ours",
+    "path": "artifacts/builds/8134235c5ce2c589e5b6c890008cc9a2a086df7a715ddcdacfeef4aa5bd36cca/kestrel-modular-v1/KestrelModular.dylib",
+    "race": "Protoss",
+    "sha256": "8134235c5ce2c589e5b6c890008cc9a2a086df7a715ddcdacfeef4aa5bd36cca",
+    "source_manifest_sha256": "4f848a72d4086badc400ce1ec2be61d4663f2cf1823577c40de1b436fab94f67",
+    "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1"
+  },
+  "concurrency": 1,
+  "engine_sha256": "eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b",
+  "eval_plan": "docs/evaluations/kestrel-modular-v1-smoke/EVAL_PLAN.md",
+  "eval_plan_sha256": "e3cf963d355a6c787a5c78362efd9859353e727fc7b9243f9a45152263b0be68",
+  "experiment_id": "kestrel-modular-v1-smoke",
+  "game_data_dir": "third_party/game-data/runtime",
+  "game_data_files": [
+    {
+      "path": "third_party/game-data/runtime/BrooDat.mpq",
+      "sha256": "c6d810981e24b947b36d531ab047e143fec0284a581fdaad6fc431e1e75e21df"
+    },
+    {
+      "path": "third_party/game-data/runtime/Patch_rt.mpq",
+      "sha256": "a063f069f1abe202b142b08a9dab878eba8ba033bf13a818024a72631c4452be"
+    },
+    {
+      "path": "third_party/game-data/runtime/StarDat.mpq",
+      "sha256": "8845fd871b4f8f242cc5c2b6f6b8b319d86bbbd02bc836356b51f81b5ba8203f"
+    },
+    {
+      "path": "third_party/game-data/runtime/sscai/(2)Benzene.scx",
+      "sha256": "45764b9baa72f83a5eb2eab49ddea46c6af21da75bc42e687e6dab93e4e4044e"
+    }
+  ],
+  "games": [
+    {
+      "candidate_player": 1,
+      "index": 1,
+      "map": "sscai/(2)Benzene.scx",
+      "opponent": "zzzk",
+      "scenario_seed": 12400
+    }
+  ],
+  "hypothesis": "The composed Kestrel Modular v1 systems can complete one real Zerg game lifecycle with legal commands, replay integrity, and coherent opening, reserve, construction, and command telemetry",
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "launcher_sha256": "af1682393f9fe43afe885b35a1637e9c464719ef93c83e799d614beed20316c1",
+  "launcher_sidecar": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher.build.json",
+  "launcher_sidecar_sha256": "0beebdd3bb6221a5e6143c015763d14fa20330a8976ede3f997062660b3e7390",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "opponents": {
+    "zzzk": {
+      "author": "Chris Coxe",
+      "build_sidecar": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib.build.json",
+      "build_sidecar_sha256": "41c03e2c266fc012a6df0e1ec1c8c9efd65e24973490ef3d1980c9cf6b36f4f1",
+      "name": "ZZZKBot",
+      "origin": "Port",
+      "ownership": "Ours",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "race": "Zerg",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748",
+      "source_patch": "patches/zzzkbot-native-arm64.patch",
+      "source_patch_sha256": "aedeeef6cc664e9d49d181d8a0044e110008fdca720df386e02fadb95c784c2d",
+      "source_revision": "7183e37b6b416ea53c1040c83e639a3a3c395eed",
+      "source_url": "https://github.com/chriscoxe/ZZZKBot"
+    }
+  },
+  "provenance_registry": "config/bot-identities.json",
+  "provenance_registry_sha256": "be60410c8faa64d58fc784ca6c319ecd15548659037e00187ee2c18d67a58c30",
+  "purpose": "Real-engine lifecycle and semantic telemetry smoke for Kestrel Modular v1",
+  "registered_at": "2026-09-21T00:50:00Z",
+  "required_files": [
+    {
+      "path": "docs/evaluations/kestrel-modular-v1-smoke/EVAL_PLAN.md",
+      "sha256": "e3cf963d355a6c787a5c78362efd9859353e727fc7b9243f9a45152263b0be68"
+    },
+    {
+      "path": "scripts/run_batch.py",
+      "sha256": "fd461f22e2ef2c6ff1bd03c03ef395b811cec5f405fc87f64732cce25363cc44"
+    },
+    {
+      "path": "scripts/run_match.py",
+      "sha256": "d0a0eee0d932fc279b2ee53831ddf82accf7042a8b7be52e73f144deeb191cbe"
+    },
+    {
+      "path": "scripts/score_kestrel_modular_v1.py",
+      "sha256": "7d0feb139cabd5d8bcf1efc96c1de3e599149e0fbe87437a65f92ef1c83fdb1c"
+    },
+    {
+      "path": "scripts/build_kestrel_modular.sh",
+      "sha256": "fb3ed1cbcfa5f5ac9f8326a69d9187581490999987887534142029cbfb82811d"
+    },
+    {
+      "path": "docs/evaluations/kestrel-modular-v1-architecture.md",
+      "sha256": "70579b7e70e2d87064b5e641d4dd30c94f5420e75ed05e643264377b4d8a3a24"
+    },
+    {
+      "path": "config/bot-identities.json",
+      "sha256": "be60410c8faa64d58fc784ca6c319ecd15548659037e00187ee2c18d67a58c30"
+    }
+  ],
+  "schema_version": 1,
+  "stop_after_consecutive_invalid": 1,
+  "stop_condition": "Run the one fixed row exactly once at concurrency one; preserve every artifact; do not retry, reseed, replace, or rerun for any outcome",
+  "wall_timeout_seconds": 120
+}
