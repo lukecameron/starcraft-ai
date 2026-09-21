@@ -72,7 +72,10 @@ class KestrelModularV1Test(unittest.TestCase):
         self.assertIn("getDistance(home) > 400", squad)
         self.assertIn("currentTargetIsHomeThreat", squad)
         self.assertIn("loneZealotLeashRadius", squad)
+        self.assertIn("loneZealotReturnReleaseRadius", squad)
         self.assertIn("anchorDistance > loneZealotLeashRadius", squad)
+        self.assertIn("returningToAnchor_", (SOURCE / "include/kestrel/SquadController.h").read_text())
+        self.assertIn("loneZealotReturnReleaseRadius", squad)
         self.assertIn("loneHoldLeashBlockSamples", squad)
         self.assertIn("candidate->getDistance(loneHoldHome) > loneZealotCloseThreatRadius", squad)
         self.assertIn("candidate->getType().groundWeapon() == BWAPI::WeaponTypes::None", squad)
@@ -119,6 +122,14 @@ class KestrelModularV1Test(unittest.TestCase):
             "lone_zealot_hold_leash_move_rejected",
             "lone_zealot_hold_leash_move_coalesced",
             "lone_zealot_hold_leash_max_anchor_distance",
+            "lone_zealot_hold_return_release_radius",
+            "lone_zealot_hold_return_entries",
+            "lone_zealot_hold_return_active_samples",
+            "lone_zealot_hold_return_releases",
+            "lone_zealot_hold_return_move_attempts",
+            "lone_zealot_hold_return_move_accepted",
+            "lone_zealot_hold_return_move_rejected",
+            "lone_zealot_hold_return_move_coalesced",
             "lone_zealot_hold_close_threat_samples",
             "lone_zealot_hold_close_threat_radius",
             "lone_zealot_hold_close_threat_attack_origins_within_leash",
@@ -222,6 +233,14 @@ class KestrelModularV1Test(unittest.TestCase):
             "lone_zealot_hold_leash_move_rejected": 0,
             "lone_zealot_hold_leash_move_coalesced": 0,
             "lone_zealot_hold_leash_max_anchor_distance": 60,
+            "lone_zealot_hold_return_release_radius": 48,
+            "lone_zealot_hold_return_entries": 0,
+            "lone_zealot_hold_return_active_samples": 0,
+            "lone_zealot_hold_return_releases": 0,
+            "lone_zealot_hold_return_move_attempts": 0,
+            "lone_zealot_hold_return_move_accepted": 0,
+            "lone_zealot_hold_return_move_rejected": 0,
+            "lone_zealot_hold_return_move_coalesced": 0,
             "lone_zealot_hold_close_threat_attack_origins_within_leash": True,
             "lone_zealot_hold_anchor": {"start_tile_x": 117, "start_tile_y": 56, "x": 3808, "y": 1840},
             "lone_zealot_hold_close_threat_first_frame": 90,
@@ -247,6 +266,10 @@ class KestrelModularV1Test(unittest.TestCase):
                 "leash_block_samples": 0, "leash_move_attempts": 0,
                 "leash_move_accepted": 0, "leash_move_rejected": 0,
                 "leash_move_coalesced": 0, "max_anchor_distance": 60,
+                "return_entries": 0, "return_active_samples": 0,
+                "return_releases": 0, "return_move_attempts": 0,
+                "return_move_accepted": 0, "return_move_rejected": 0,
+                "return_move_coalesced": 0,
             }],
         }
 
@@ -308,10 +331,20 @@ class KestrelModularV1Test(unittest.TestCase):
         record["lone_zealot_hold_leash_move_attempts"] = 1
         record["lone_zealot_hold_leash_move_accepted"] = 1
         record["lone_zealot_hold_leash_move_coalesced"] = 2
+        record["lone_zealot_hold_return_entries"] = 1
+        record["lone_zealot_hold_return_active_samples"] = 3
+        record["lone_zealot_hold_return_releases"] = 1
+        record["lone_zealot_hold_return_move_attempts"] = 1
+        record["lone_zealot_hold_return_move_accepted"] = 1
+        record["lone_zealot_hold_return_move_coalesced"] = 2
         record["lone_zealot_hold_unit_lifecycles"][0].update({
             "leash_block_samples": 3, "leash_move_attempts": 1,
             "leash_move_accepted": 1, "leash_move_rejected": 0,
             "leash_move_coalesced": 2, "max_anchor_distance": 100,
+            "return_entries": 1, "return_active_samples": 3,
+            "return_releases": 1, "return_move_attempts": 1,
+            "return_move_accepted": 1, "return_move_rejected": 0,
+            "return_move_coalesced": 2,
         })
         record["lone_zealot_hold_leash_max_anchor_distance"] = 100
         result = module.validate_record(record)
@@ -323,6 +356,42 @@ class KestrelModularV1Test(unittest.TestCase):
         record["lone_zealot_hold_close_threat_events"][0]["held_unit_position"] = {"x": 3700, "y": 1840}
         result = module.validate_record(record)
         self.assertIn("close-threat attack origin exceeded leash radius", result["issues"])
+
+    def test_return_hysteresis_scorecard_reconciles_and_does_not_require_activity(self):
+        module = self._load_close_threat_scorecard()
+        record = self._close_threat_record()
+        record["lone_zealot_hold_return_entries"] = 1
+        record["lone_zealot_hold_return_active_samples"] = 3
+        record["lone_zealot_hold_return_releases"] = 1
+        record["lone_zealot_hold_return_move_attempts"] = 1
+        record["lone_zealot_hold_return_move_accepted"] = 1
+        record["lone_zealot_hold_return_move_coalesced"] = 2
+        record["lone_zealot_hold_leash_block_samples"] = 3
+        record["lone_zealot_hold_leash_move_attempts"] = 1
+        record["lone_zealot_hold_leash_move_accepted"] = 1
+        record["lone_zealot_hold_leash_move_coalesced"] = 2
+        record["lone_zealot_hold_leash_max_anchor_distance"] = 100
+        record["lone_zealot_hold_unit_lifecycles"][0].update({
+            "return_entries": 1, "return_active_samples": 3,
+            "return_releases": 1, "return_move_attempts": 1,
+            "return_move_accepted": 1, "return_move_rejected": 0,
+            "return_move_coalesced": 2,
+            "leash_block_samples": 3, "leash_move_attempts": 1,
+            "leash_move_accepted": 1, "leash_move_rejected": 0,
+            "leash_move_coalesced": 2, "max_anchor_distance": 100,
+        })
+        result = module.validate_record(record)
+        self.assertFalse(any("return" in issue for issue in result["issues"]))
+
+        record["lone_zealot_hold_return_move_coalesced"] = 1
+        result = module.validate_record(record)
+        self.assertIn("return active samples do not reconcile with move outcomes", result["issues"])
+
+        record = self._close_threat_record()
+        record["lone_zealot_hold_return_releases"] = 1
+        result = module.validate_record(record)
+        self.assertIn("return releases exceed return entries", result["issues"])
+        self.assertFalse(any("return activity was not observed" in issue for issue in result["mechanism_issues"]))
 
     def test_recovery_scorecard_requires_and_reconciles_worker_commandability(self):
         spec = importlib.util.spec_from_file_location(

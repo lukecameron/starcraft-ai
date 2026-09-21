@@ -88,6 +88,14 @@ void Telemetry::write(const WorldSnapshot& state, const CommandArbiter& commands
         << ",\"lone_zealot_hold_leash_move_rejected\":" << squads.stats().loneHoldLeashMoveRejected
         << ",\"lone_zealot_hold_leash_move_coalesced\":" << squads.stats().loneHoldLeashMoveCoalesced
         << ",\"lone_zealot_hold_leash_max_anchor_distance\":" << squads.stats().loneHoldMaxAnchorDistance
+        << ",\"lone_zealot_hold_return_release_radius\":" << loneZealotReturnReleaseRadius
+        << ",\"lone_zealot_hold_return_entries\":" << squads.stats().loneHoldReturnEntries
+        << ",\"lone_zealot_hold_return_active_samples\":" << squads.stats().loneHoldReturnActiveSamples
+        << ",\"lone_zealot_hold_return_releases\":" << squads.stats().loneHoldReturnReleases
+        << ",\"lone_zealot_hold_return_move_attempts\":" << squads.stats().loneHoldReturnMoveAttempts
+        << ",\"lone_zealot_hold_return_move_accepted\":" << squads.stats().loneHoldReturnMoveAccepted
+        << ",\"lone_zealot_hold_return_move_rejected\":" << squads.stats().loneHoldReturnMoveRejected
+        << ",\"lone_zealot_hold_return_move_coalesced\":" << squads.stats().loneHoldReturnMoveCoalesced
         << ",\"lone_zealot_hold_close_threat_radius\":" << loneZealotCloseThreatRadius
         << ",\"lone_zealot_hold_close_threat_attack_origins_within_leash\":"
         << (closeThreatOriginsWithinLeash ? "true" : "false")
@@ -150,6 +158,13 @@ void Telemetry::write(const WorldSnapshot& state, const CommandArbiter& commands
             << ",\"leash_move_accepted\":" << lifecycle.leashMoveAccepted
             << ",\"leash_move_rejected\":" << lifecycle.leashMoveRejected
             << ",\"leash_move_coalesced\":" << lifecycle.leashMoveCoalesced
+            << ",\"return_entries\":" << lifecycle.returnEntries
+            << ",\"return_active_samples\":" << lifecycle.returnActiveSamples
+            << ",\"return_releases\":" << lifecycle.returnReleases
+            << ",\"return_move_attempts\":" << lifecycle.returnMoveAttempts
+            << ",\"return_move_accepted\":" << lifecycle.returnMoveAccepted
+            << ",\"return_move_rejected\":" << lifecycle.returnMoveRejected
+            << ",\"return_move_coalesced\":" << lifecycle.returnMoveCoalesced
             << ",\"max_anchor_distance\":" << lifecycle.maxAnchorDistance << '}';
     }
     out << ']'

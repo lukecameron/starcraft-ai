@@ -3,6 +3,7 @@
 #include "kestrel/CombatPolicy.h"
 
 #include <algorithm>
+#include <set>
 
 namespace kestrel {
 
@@ -35,6 +36,18 @@ void SquadController::tick(const WorldSnapshot& state, WorldMemory& memory, Comm
     }
     const BWAPI::Position home(state.home);
     const BWAPI::Position loneHoldHome = loneZealotHoldAnchor(state.home);
+    std::set<int> presentUnitIds;
+    for (auto unit : state.ownUnits) {
+        if (unit && unit->exists()) presentUnitIds.insert(unit->getID());
+    }
+    for (auto it = returningToAnchor_.begin(); it != returningToAnchor_.end();) {
+        if (presentUnitIds.find(it->first) == presentUnitIds.end()) {
+            it = returningToAnchor_.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    if (!loneZealotHold) returningToAnchor_.clear();
     bool homeThreat = false;
     for (auto enemy : state.visibleEnemies) {
         if (enemy && enemy->getDistance(home) <= 400) { homeThreat = true; break; }
@@ -54,22 +67,46 @@ void SquadController::tick(const WorldSnapshot& state, WorldMemory& memory, Comm
             const int anchorDistance = unit->getDistance(loneHoldHome);
             lifecycle.maxAnchorDistance = std::max(lifecycle.maxAnchorDistance, anchorDistance);
             stats_.loneHoldMaxAnchorDistance = std::max(stats_.loneHoldMaxAnchorDistance, anchorDistance);
-            if (anchorDistance > loneZealotLeashRadius) {
+            auto returnState = returningToAnchor_.find(unit->getID());
+            bool returningToAnchor = returnState != returningToAnchor_.end() && returnState->second;
+            if (!returningToAnchor && anchorDistance > loneZealotLeashRadius) {
+                returningToAnchor_[unit->getID()] = true;
+                returningToAnchor = true;
+                ++stats_.loneHoldReturnEntries;
+                ++lifecycle.returnEntries;
+            }
+            if (returningToAnchor && anchorDistance <= loneZealotReturnReleaseRadius) {
+                returningToAnchor_.erase(unit->getID());
+                returningToAnchor = false;
+                ++stats_.loneHoldReturnReleases;
+                ++lifecycle.returnReleases;
+            }
+            if (returningToAnchor) {
+                ++stats_.loneHoldReturnActiveSamples;
+                ++lifecycle.returnActiveSamples;
                 ++stats_.loneHoldLeashBlockSamples;
                 ++lifecycle.leashBlockSamples;
                 bool issued = false;
                 const bool accepted = commands.move(unit, loneHoldHome, state.frame, &issued);
                 if (issued) {
+                    ++stats_.loneHoldReturnMoveAttempts;
+                    ++lifecycle.returnMoveAttempts;
                     ++stats_.loneHoldLeashMoveAttempts;
                     ++lifecycle.leashMoveAttempts;
                     if (accepted) {
+                        ++stats_.loneHoldReturnMoveAccepted;
+                        ++lifecycle.returnMoveAccepted;
                         ++stats_.loneHoldLeashMoveAccepted;
                         ++lifecycle.leashMoveAccepted;
                     } else {
+                        ++stats_.loneHoldReturnMoveRejected;
+                        ++lifecycle.returnMoveRejected;
                         ++stats_.loneHoldLeashMoveRejected;
                         ++lifecycle.leashMoveRejected;
                     }
                 } else {
+                    ++stats_.loneHoldReturnMoveCoalesced;
+                    ++lifecycle.returnMoveCoalesced;
                     ++stats_.loneHoldLeashMoveCoalesced;
                     ++lifecycle.leashMoveCoalesced;
                 }

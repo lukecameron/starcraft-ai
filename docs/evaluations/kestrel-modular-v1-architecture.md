@@ -64,9 +64,14 @@ tie-breaker. Builder preflight skips and cargo deferrals are reported
 separately from issued build commands.
 Against a publicly known Zerg opponent, `CombatPolicy.h` keeps the first
 completed Zealot at home and suppresses its target attacks until a second
-completed Zealot exists. The pure hold predicate is unit-tested separately
-from BWAPI. `SquadController` records hold samples, unique affected units,
-home-move attempts and acceptances, and the public-state release frame.
+completed Zealot exists. During that hold, each completed Zealot enters a
+deterministic per-unit return state after exceeding the 96-pixel base-center
+leash. The state keeps issuing or coalescing anchor moves until that unit is
+within the named 48-pixel release radius; only then may close-threat selection
+run. State is keyed by unit ID and removed when the unit disappears or the
+hold ends. The pure hold predicate is unit-tested separately from BWAPI.
+`SquadController` records hold samples, unique affected units, return entries,
+active samples, releases, move outcomes and the public-state release frame.
 
 Telemetry is explicitly tagged `kestrel-modular-v1`. It preserves the exact
 four-Probe Pylon acceptance/completion boundary, ordered accepted Probe train

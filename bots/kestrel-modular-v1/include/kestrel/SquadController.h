@@ -3,6 +3,7 @@
 #include "kestrel/CommandArbiter.h"
 #include "kestrel/WorldMemory.h"
 
+#include <map>
 #include <unordered_set>
 #include <vector>
 
@@ -36,6 +37,13 @@ public:
         int leashMoveAccepted = 0;
         int leashMoveRejected = 0;
         int leashMoveCoalesced = 0;
+        int returnEntries = 0;
+        int returnActiveSamples = 0;
+        int returnReleases = 0;
+        int returnMoveAttempts = 0;
+        int returnMoveAccepted = 0;
+        int returnMoveRejected = 0;
+        int returnMoveCoalesced = 0;
         int maxAnchorDistance = 0;
     };
 
@@ -53,6 +61,13 @@ public:
         int loneHoldLeashMoveRejected = 0;
         int loneHoldLeashMoveCoalesced = 0;
         int loneHoldMaxAnchorDistance = 0;
+        int loneHoldReturnEntries = 0;
+        int loneHoldReturnActiveSamples = 0;
+        int loneHoldReturnReleases = 0;
+        int loneHoldReturnMoveAttempts = 0;
+        int loneHoldReturnMoveAccepted = 0;
+        int loneHoldReturnMoveRejected = 0;
+        int loneHoldReturnMoveCoalesced = 0;
         int loneHoldCloseThreatSamples = 0;
         int loneHoldCloseThreatFirstFrame = -1;
         int loneHoldCloseThreatAttackAttempts = 0;
@@ -71,6 +86,7 @@ public:
         holdUntilFrame_ = -1;
         loneHoldWasActive_ = false;
         suppressedUnits_.clear();
+        returningToAnchor_.clear();
         stats_ = Stats{};
     }
     void tick(const WorldSnapshot& state, WorldMemory& memory, CommandArbiter& commands,
@@ -83,6 +99,7 @@ private:
     int holdUntilFrame_ = -1;
     bool loneHoldWasActive_ = false;
     std::unordered_set<int> suppressedUnits_;
+    std::map<int, bool> returningToAnchor_;
     Stats stats_;
 };
 
