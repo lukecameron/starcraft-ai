@@ -15,6 +15,8 @@ WORKER_FIELDS = (
     "worker_gather_preflight_skips",
     "worker_cargo_deferrals",
     "worker_accepted_gather_commands",
+    "worker_builder_preflight_skips",
+    "worker_builder_cargo_deferrals",
 )
 
 
@@ -39,6 +41,19 @@ def validate_recovery_record(record):
             issues.append("worker accepted gather count does not reconcile with command accounting")
         if accepted == 0:
             mechanism_issues.append("no gather assignment was accepted")
+
+    build = categories.get("build", {}) if isinstance(categories, dict) else {}
+    build_attempted = build.get("attempted") if isinstance(build, dict) else None
+    build_rejected = build.get("rejected") if isinstance(build, dict) else None
+    events = record.get("construction_events") if isinstance(record, dict) else None
+    if (isinstance(build_attempted, int) and not isinstance(build_attempted, bool)
+            and isinstance(build_rejected, int) and not isinstance(build_rejected, bool)
+            and isinstance(events, list)):
+        accepted_builds = build_attempted - build_rejected
+        if len(events) != accepted_builds:
+            issues.append("construction events do not reconcile with accepted build commands")
+        if accepted_builds == 0:
+            mechanism_issues.append("no build command was accepted")
 
     complete = not issues
     return {

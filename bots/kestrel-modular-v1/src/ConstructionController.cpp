@@ -38,8 +38,6 @@ bool ConstructionController::tick(const WorldSnapshot& state, const BuildIntent&
     if (pendingType_ != BWAPI::UnitTypes::None && state.count(pendingType_) > baseline_) clear(builderId);
     if (pendingType_ != BWAPI::UnitTypes::None && state.frame - acceptedFrame_ >= 480) clear(builderId);
     if (pending(state) || !intent.valid()) return false;
-    BWAPI::Unit builder = workers.findBuilder(state, scoutId, builderId);
-    if (!builder) return false;
     BWAPI::TilePosition tile = intent.near;
     if (intent.type == BWAPI::UnitTypes::Protoss_Assimilator) {
         BWAPI::Unit best = nullptr;
@@ -62,6 +60,8 @@ bool ConstructionController::tick(const WorldSnapshot& state, const BuildIntent&
         tile = BWAPI::Broodwar->getBuildLocation(intent.type, intent.near, 32, false);
     }
     if (!tile.isValid()) return false;
+    BWAPI::Unit builder = workers.findBuilder(state, scoutId, builderId, intent.type, tile);
+    if (!builder) return false;
     const bool accepted = commands.issue(builder->build(intent.type, tile), CommandKind::Build);
     if (!accepted) return false;
     builderId = builder->getID();

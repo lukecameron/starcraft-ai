@@ -90,6 +90,8 @@ class KestrelModularV1Test(unittest.TestCase):
             "worker_gather_preflight_skips",
             "worker_cargo_deferrals",
             "worker_accepted_gather_commands",
+            "worker_builder_preflight_skips",
+            "worker_builder_cargo_deferrals",
         ):
             self.assertIn(field, telemetry)
         construction_header = (SOURCE / "include/kestrel/ConstructionController.h").read_text()

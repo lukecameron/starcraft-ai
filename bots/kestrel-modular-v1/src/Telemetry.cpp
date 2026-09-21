@@ -54,6 +54,8 @@ void Telemetry::write(const WorldSnapshot& state, const CommandArbiter& commands
         << ",\"worker_gather_preflight_skips\":" << workers.stats().gatherPreflightSkips
         << ",\"worker_cargo_deferrals\":" << workers.stats().cargoDeferrals
         << ",\"worker_accepted_gather_commands\":" << workers.stats().acceptedGatherCommands
+        << ",\"worker_builder_preflight_skips\":" << workers.stats().builderPreflightSkips
+        << ",\"worker_builder_cargo_deferrals\":" << workers.stats().builderCargoDeferrals
         << ",\"max_probes\":" << maxProbes_
         << ",\"max_pylons\":" << maxPylons_
         << ",\"max_gateways\":" << maxGateways_

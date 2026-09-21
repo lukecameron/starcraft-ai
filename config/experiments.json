@@ -1918,6 +1918,35 @@
         "author": "Luke Cameron",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1"
       }
+    },
+    {
+      "id": "kestrel-modular-v1-commandability-recovery-v1",
+      "title": "Kestrel Modular v1 gather-commandability recovery",
+      "date": "2026-09-21",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Public BWAPI gather preflight and cargo preservation eliminate the Unit_Busy worker-assignment rejections while retaining the modular opening and lifecycle semantics",
+      "notes": "The fixed Benzene row completed validly. Gather accounting passed at 14 accepted of 14 attempts, with seven public preflight skips and zero gather rejections. One of four build commands was rejected as Unit_Busy, and two completed Zealots were never observed together.",
+      "conclusion": "Rejected under the registered zero-command-rejection and retained second-completed-Zealot gates. The gather defect is fixed in this row; exact builder preflight is the next separately registered recovery.",
+      "evidence_run_ids": [
+        "20260921T011400-20158638681c"
+      ],
+      "evidence_experiment_id": "kestrel-modular-v1-commandability-recovery-v1",
+      "candidate_binary_sha256": "8758914724960797e48c30c5e73885571c08e8a96fd432e7ee8b0b62d7e70e36",
+      "candidate_source_manifest_sha256": "16d857585753b2379800880e818d0a19c60f2230041db8c477da817afcf0013f",
+      "plan_sha256": "3022345cb37b10cc96112ba67725a0774e0995bf24eaca9c33caf74db503cdcf",
+      "schedule_sha256": "c83c06ba0562883a3eba38752026e60fe415b6503ffc1590f8102002839940d4",
+      "batch_manifest_sha256": "8760ae59f7f6c6a1af2f47306c8c4699d2e88a0b549805e1f62d7c6c0ebd53fe",
+      "final_manifest_sha256": "98ae6a6a460bf3468e15d58f2b417174d269a54fb4bd203efb785d481c879ae4",
+      "candidate_diagnostic_sha256": "f334496b6614d140fcd3d21a0835f4825db63b57bd51a3767ce95bbaa05e6148",
+      "result_sha256": "4faecca37dffda4f97a833219b224a519e5878d605bbf3e806dedd20bba9b7d9",
+      "result_path": "docs/evaluations/kestrel-modular-v1-commandability-recovery-v1/RESULT.md",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "author": "Luke Cameron",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1"
+      }
     }
   ]
 }

@@ -57,6 +57,11 @@ resource target with BWAPI's public `canGather` predicate. Temporarily
 uninterruptible workers are skipped instead of producing rejected commands.
 Telemetry separates these preflight skips and cargo deferrals from actual
 gather command attempts and accepted assignments.
+Builder selection follows the same commandability boundary: after the exact
+build tile is known, it preserves cargo returns, checks `canBuild(type, tile)`,
+and chooses the nearest eligible Probe with unit ID as the deterministic
+tie-breaker. Builder preflight skips and cargo deferrals are reported
+separately from issued build commands.
 
 Telemetry is explicitly tagged `kestrel-modular-v1`. It preserves the exact
 four-Probe Pylon acceptance/completion boundary, ordered accepted Probe train

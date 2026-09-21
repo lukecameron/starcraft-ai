@@ -21,14 +21,31 @@ bool WorkerAllocator::gather(BWAPI::Unit worker, BWAPI::Unit target, CommandArbi
     return true;
 }
 
-BWAPI::Unit WorkerAllocator::findBuilder(const WorldSnapshot& state, int scoutId, int builderId) const {
+BWAPI::Unit WorkerAllocator::findBuilder(const WorldSnapshot& state, int scoutId, int builderId,
+                                         BWAPI::UnitType type, BWAPI::TilePosition tile) {
+    BWAPI::Unit best = nullptr;
+    int bestDistance = std::numeric_limits<int>::max();
+    const BWAPI::Position position(tile);
     for (auto worker : state.ownUnits) {
         if (!worker || !worker->exists() || !worker->isCompleted() ||
             worker->getType() != BWAPI::UnitTypes::Protoss_Probe) continue;
         if (worker->getID() == scoutId || worker->getID() == builderId || worker->isConstructing() || worker->isGatheringGas()) continue;
-        return worker;
+        if (worker->isCarryingMinerals() || worker->isCarryingGas()) {
+            ++stats_.builderCargoDeferrals;
+            continue;
+        }
+        if (!worker->canBuild(type, tile)) {
+            ++stats_.builderPreflightSkips;
+            continue;
+        }
+        const int distance = worker->getDistance(position);
+        if (!best || distance < bestDistance ||
+            (distance == bestDistance && worker->getID() < best->getID())) {
+            best = worker;
+            bestDistance = distance;
+        }
     }
-    return nullptr;
+    return best;
 }
 
 void WorkerAllocator::tick(const WorldSnapshot& state, int scoutId, int builderId, CommandArbiter& commands) {
