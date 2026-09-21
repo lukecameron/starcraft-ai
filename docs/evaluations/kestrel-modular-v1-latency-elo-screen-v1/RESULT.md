@@ -6,7 +6,7 @@ The nominal Wilson 95% interval for its observed win rate is 0–43.4%. This is
 a small exact-build screen, so the interval is wide and the result is not a
 tournament-strength claim.
 
-| Opponent | Map | Result | Frames | Durable frames/s | Army peak | Commands / rejected |
+| Opponent | Map | Result | Candidate callback frames | Durable frames/s | Army peak | Commands / rejected |
 | --- | --- | --- | ---: | ---: | --- | ---: |
 | ZZZKBot | Benzene | Loss | 5,924 | 665.89 | 3 Zealots | 55 / 0 |
 | McRave memo fork | Circuit Breaker | Loss | 18,417 | 247.75 | 13 Zealots | 586 / 0 |
