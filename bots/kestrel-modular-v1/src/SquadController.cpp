@@ -4,6 +4,21 @@
 
 namespace kestrel {
 
+SquadController::HeldUnitLifecycle& SquadController::lifecycleFor(int unitId, int frame) {
+    for (auto& lifecycle : stats_.loneHoldUnitLifecycles) {
+        if (lifecycle.unitId == unitId) {
+            lifecycle.lastSeenFrame = frame;
+            return lifecycle;
+        }
+    }
+    HeldUnitLifecycle lifecycle;
+    lifecycle.unitId = unitId;
+    lifecycle.firstSeenFrame = frame;
+    lifecycle.lastSeenFrame = frame;
+    stats_.loneHoldUnitLifecycles.push_back(lifecycle);
+    return stats_.loneHoldUnitLifecycles.back();
+}
+
 void SquadController::tick(const WorldSnapshot& state, WorldMemory& memory, CommandArbiter& commands,
                            bool allowRallyAttack) {
     const int army = state.count(BWAPI::UnitTypes::Protoss_Zealot, true) +
@@ -29,13 +44,69 @@ void SquadController::tick(const WorldSnapshot& state, WorldMemory& memory, Comm
         const BWAPI::UnitType type = unit->getType();
         if (type != BWAPI::UnitTypes::Protoss_Zealot && type != BWAPI::UnitTypes::Protoss_Dragoon) continue;
         if (loneZealotHold && type == BWAPI::UnitTypes::Protoss_Zealot) {
+            HeldUnitLifecycle& lifecycle = lifecycleFor(unit->getID(), state.frame);
             ++stats_.loneHoldSuppressionSamples;
             if (suppressedUnits_.insert(unit->getID()).second)
                 stats_.loneHoldUniqueUnits = static_cast<int>(suppressedUnits_.size());
+
+            BWAPI::Unit closeThreat = nullptr;
+            int nearestThreat = 1 << 30;
+            for (auto candidate : state.visibleEnemies) {
+                if (!candidate || !candidate->exists() || !candidate->isVisible() || !candidate->isDetected()) continue;
+                if (type.groundWeapon() == BWAPI::WeaponTypes::None ||
+                    candidate->isFlying() || candidate->getType().groundWeapon() == BWAPI::WeaponTypes::None) continue;
+                if (candidate->getDistance(loneHoldHome) > loneZealotCloseThreatRadius) continue;
+                const int distance = unit->getDistance(candidate);
+                if (distance < nearestThreat ||
+                    (distance == nearestThreat && closeThreat && candidate->getID() < closeThreat->getID())) {
+                    nearestThreat = distance;
+                    closeThreat = candidate;
+                }
+            }
+
+            if (closeThreat) {
+                ++stats_.loneHoldCloseThreatSamples;
+                if (stats_.loneHoldCloseThreatFirstFrame < 0)
+                    stats_.loneHoldCloseThreatFirstFrame = state.frame;
+                ++lifecycle.closeThreatSamples;
+                if (lifecycle.firstCloseThreatFrame < 0)
+                    lifecycle.firstCloseThreatFrame = state.frame;
+                lifecycle.lastCloseThreatFrame = state.frame;
+                bool issued = false;
+                const bool accepted = commands.attack(unit, closeThreat, state.frame, &issued);
+                if (issued) {
+                    ++stats_.loneHoldCloseThreatAttackAttempts;
+                    ++lifecycle.closeThreatAttackAttempts;
+                    CloseThreatEvent event;
+                    event.frame = state.frame;
+                    event.heldUnitId = unit->getID();
+                    event.targetId = closeThreat->getID();
+                    event.heldUnitPosition = unit->getPosition();
+                    event.targetPosition = closeThreat->getPosition();
+                    event.accepted = accepted;
+                    stats_.loneHoldCloseThreatEvents.push_back(event);
+                    if (accepted) {
+                        ++stats_.loneHoldCloseThreatAttackAccepted;
+                        ++lifecycle.closeThreatAttackAccepted;
+                        stats_.loneHoldCloseThreatAcceptedFrames.push_back(state.frame);
+                        stats_.loneHoldCloseThreatAcceptedHeldUnitIds.push_back(unit->getID());
+                        stats_.loneHoldCloseThreatAcceptedTargetIds.push_back(closeThreat->getID());
+                        stats_.loneHoldCloseThreatAcceptedHeldPositions.push_back(unit->getPosition());
+                        stats_.loneHoldCloseThreatAcceptedTargetPositions.push_back(closeThreat->getPosition());
+                    } else {
+                        ++stats_.loneHoldCloseThreatAttackRejected;
+                        ++lifecycle.closeThreatAttackRejected;
+                    }
+                }
+                continue;
+            }
+
             if (unit->getDistance(home) > 128 && !unit->isMoving()) {
                 ++stats_.loneHoldHomeMoveAttempts;
+                ++lifecycle.anchorMoveAttempts;
                 if (commands.move(unit, loneHoldHome, state.frame)) {
                     ++stats_.loneHoldHomeMoveAccepted;
+                    ++lifecycle.anchorMoveAccepted;
                     stats_.loneHoldAcceptedHomeMoveTargets.push_back(loneHoldHome);
                 }
             }

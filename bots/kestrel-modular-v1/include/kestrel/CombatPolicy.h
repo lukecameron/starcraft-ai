@@ -4,6 +4,8 @@
 
 namespace kestrel {
 
+constexpr int loneZealotCloseThreatRadius = 256;
+
 inline bool holdLoneZealot(bool knownZerg, int completedZealots) {
     return knownZerg && completedZealots < 2;
 }

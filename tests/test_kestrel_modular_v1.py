@@ -71,6 +71,14 @@ class KestrelModularV1Test(unittest.TestCase):
         self.assertIn("allowRallyAttack", squad)
         self.assertIn("getDistance(home) > 400", squad)
         self.assertIn("currentTargetIsHomeThreat", squad)
+        self.assertIn("candidate->getDistance(loneHoldHome) > loneZealotCloseThreatRadius", squad)
+        self.assertIn("candidate->getType().groundWeapon() == BWAPI::WeaponTypes::None", squad)
+        self.assertIn("commands.attack(unit, closeThreat, state.frame, &issued)", squad)
+        self.assertNotIn("commands.attackMove(unit, loneHoldHome", squad)
+        arbiter_source = (SOURCE / "src/CommandArbiter.cpp").read_text()
+        arbiter_header = (SOURCE / "include/kestrel/CommandArbiter.h").read_text()
+        self.assertIn("bool* issued", arbiter_source)
+        self.assertIn("bool* issued = nullptr", arbiter_header)
         self.assertIn("scoutPresent", (SOURCE / "src/ScoutingController.cpp").read_text())
         self.assertIn("scoutId = -1", (SOURCE / "src/ScoutingController.cpp").read_text())
         self.assertIn("!probe->isGatheringGas()", (SOURCE / "src/ScoutingController.cpp").read_text())
@@ -100,6 +108,19 @@ class KestrelModularV1Test(unittest.TestCase):
             "lone_zealot_hold_release_frame",
             "lone_zealot_hold_anchor",
             "lone_zealot_hold_home_move_accepted_targets",
+            "lone_zealot_hold_close_threat_samples",
+            "lone_zealot_hold_close_threat_radius",
+            "lone_zealot_hold_close_threat_first_frame",
+            "lone_zealot_hold_close_threat_attack_attempts",
+            "lone_zealot_hold_close_threat_attack_accepted",
+            "lone_zealot_hold_close_threat_attack_rejected",
+            "lone_zealot_hold_close_threat_accepted_frames",
+            "lone_zealot_hold_close_threat_accepted_held_unit_ids",
+            "lone_zealot_hold_close_threat_accepted_target_ids",
+            "lone_zealot_hold_close_threat_accepted_held_positions",
+            "lone_zealot_hold_close_threat_accepted_target_positions",
+            "lone_zealot_hold_close_threat_events",
+            "lone_zealot_hold_unit_lifecycles",
         ):
             self.assertIn(field, telemetry)
         construction_header = (SOURCE / "include/kestrel/ConstructionController.h").read_text()
@@ -152,6 +173,19 @@ class KestrelModularV1Test(unittest.TestCase):
             "reserve_active_reserves": [], "reserve_block_frames": [],
             "reserve_block_minerals": [], "reserve_block_reserves": [],
             "reserve_block_pre_acceptance_flags": [], "construction_events": [],
+            "lone_zealot_hold_close_threat_samples": 0,
+            "lone_zealot_hold_close_threat_radius": 256,
+            "lone_zealot_hold_close_threat_first_frame": -1,
+            "lone_zealot_hold_close_threat_attack_attempts": 0,
+            "lone_zealot_hold_close_threat_attack_accepted": 0,
+            "lone_zealot_hold_close_threat_attack_rejected": 0,
+            "lone_zealot_hold_close_threat_accepted_frames": [],
+            "lone_zealot_hold_close_threat_accepted_held_unit_ids": [],
+            "lone_zealot_hold_close_threat_accepted_target_ids": [],
+            "lone_zealot_hold_close_threat_accepted_held_positions": [],
+            "lone_zealot_hold_close_threat_accepted_target_positions": [],
+            "lone_zealot_hold_close_threat_events": [],
+            "lone_zealot_hold_unit_lifecycles": [],
             "command_categories": {
                 "build": {"attempted": 1, "rejected": 0},
                 "train": {"attempted": 0, "rejected": 0},
@@ -163,6 +197,47 @@ class KestrelModularV1Test(unittest.TestCase):
         result = module.validate_record(record)
         self.assertFalse(result["complete"])
         self.assertTrue(any("exactly four" in issue for issue in result["issues"]))
+
+    def test_close_threat_scorecard_reconciles_attempts_and_events(self):
+        spec = importlib.util.spec_from_file_location(
+            "modular_score_close_threat", ROOT / "scripts/score_kestrel_modular_v1.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        record = {
+            "telemetry_schema": "kestrel-modular-v1",
+            "lone_zealot_hold_close_threat_samples": 2,
+            "lone_zealot_hold_close_threat_radius": 256,
+            "lone_zealot_hold_close_threat_first_frame": 90,
+            "lone_zealot_hold_close_threat_attack_attempts": 1,
+            "lone_zealot_hold_close_threat_attack_accepted": 1,
+            "lone_zealot_hold_close_threat_attack_rejected": 0,
+            "lone_zealot_hold_close_threat_accepted_frames": [100],
+            "lone_zealot_hold_close_threat_accepted_held_unit_ids": [7],
+            "lone_zealot_hold_close_threat_accepted_target_ids": [42],
+            "lone_zealot_hold_close_threat_accepted_held_positions": [{"x": 3800, "y": 1800}],
+            "lone_zealot_hold_close_threat_accepted_target_positions": [{"x": 3860, "y": 1800}],
+            "lone_zealot_hold_close_threat_events": [{
+                "frame": 100, "held_unit_id": 7, "target_id": 42,
+                "held_unit_position": {"x": 3800, "y": 1800},
+                "target_position": {"x": 3860, "y": 1800}, "accepted": True,
+            }],
+            "lone_zealot_hold_unit_lifecycles": [{
+                "unit_id": 7, "first_seen_frame": 90, "last_seen_frame": 100,
+                "close_threat_samples": 2, "close_threat_attack_attempts": 1,
+                "close_threat_attack_accepted": 1, "close_threat_attack_rejected": 0,
+                "first_close_threat_frame": 90, "last_close_threat_frame": 100,
+                "anchor_move_attempts": 0, "anchor_move_accepted": 0,
+            }],
+        }
+        result = module.validate_record(record)
+        self.assertFalse(any("close-threat" in issue for issue in result["issues"]))
+        record["lone_zealot_hold_close_threat_attack_rejected"] = 1
+        result = module.validate_record(record)
+        self.assertIn("close-threat attack attempts do not reconcile with acceptance and rejection", result["issues"])
+        record["lone_zealot_hold_close_threat_attack_rejected"] = 0
+        record["lone_zealot_hold_close_threat_radius"] = 255
+        result = module.validate_record(record)
+        self.assertIn("lone_zealot_hold_close_threat_radius must equal 256", result["issues"])
 
     def test_recovery_scorecard_requires_and_reconciles_worker_commandability(self):
         spec = importlib.util.spec_from_file_location(

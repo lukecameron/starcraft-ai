@@ -45,6 +45,14 @@ void Telemetry::write(const WorldSnapshot& state, const CommandArbiter& commands
         }
         out << ']';
     };
+    auto writePositions = [&out](const std::vector<BWAPI::Position>& values) {
+        out << '[';
+        for (size_t i = 0; i < values.size(); ++i) {
+            if (i) out << ',';
+            out << "{\"x\":" << values[i].x << ",\"y\":" << values[i].y << '}';
+        }
+        out << ']';
+    };
     out << "{\"schema_version\":3,\"telemetry_schema\":\"kestrel-modular-v1\",\"bot\":\"Kestrel Modular v1\""
         << ",\"frame_count\":" << state.frame
         << ",\"known_zerg\":" << (state.knownZerg ? "true" : "false")
@@ -64,6 +72,7 @@ void Telemetry::write(const WorldSnapshot& state, const CommandArbiter& commands
         << ",\"lone_zealot_hold_home_move_attempts\":" << squads.stats().loneHoldHomeMoveAttempts
         << ",\"lone_zealot_hold_home_move_accepted\":" << squads.stats().loneHoldHomeMoveAccepted
         << ",\"lone_zealot_hold_release_frame\":" << squads.stats().loneHoldReleaseFrame
+        << ",\"lone_zealot_hold_close_threat_radius\":" << loneZealotCloseThreatRadius
         << ",\"lone_zealot_hold_anchor\":{\"start_tile_x\":" << state.home.x
         << ",\"start_tile_y\":" << state.home.y
         << ",\"x\":" << loneZealotHoldAnchor(state.home).x
@@ -73,6 +82,51 @@ void Telemetry::write(const WorldSnapshot& state, const CommandArbiter& commands
         if (i) out << ',';
         const BWAPI::Position target = squads.stats().loneHoldAcceptedHomeMoveTargets[i];
         out << "{\"x\":" << target.x << ",\"y\":" << target.y << '}';
+    }
+    out << ']'
+        << ",\"lone_zealot_hold_close_threat_samples\":" << squads.stats().loneHoldCloseThreatSamples
+        << ",\"lone_zealot_hold_close_threat_first_frame\":" << squads.stats().loneHoldCloseThreatFirstFrame
+        << ",\"lone_zealot_hold_close_threat_attack_attempts\":" << squads.stats().loneHoldCloseThreatAttackAttempts
+        << ",\"lone_zealot_hold_close_threat_attack_accepted\":" << squads.stats().loneHoldCloseThreatAttackAccepted
+        << ",\"lone_zealot_hold_close_threat_attack_rejected\":" << squads.stats().loneHoldCloseThreatAttackRejected
+        << ",\"lone_zealot_hold_close_threat_accepted_frames\":";
+    writeArray(squads.stats().loneHoldCloseThreatAcceptedFrames);
+    out << ",\"lone_zealot_hold_close_threat_accepted_held_unit_ids\":";
+    writeArray(squads.stats().loneHoldCloseThreatAcceptedHeldUnitIds);
+    out << ",\"lone_zealot_hold_close_threat_accepted_target_ids\":";
+    writeArray(squads.stats().loneHoldCloseThreatAcceptedTargetIds);
+    out << ",\"lone_zealot_hold_close_threat_accepted_held_positions\":";
+    writePositions(squads.stats().loneHoldCloseThreatAcceptedHeldPositions);
+    out << ",\"lone_zealot_hold_close_threat_accepted_target_positions\":";
+    writePositions(squads.stats().loneHoldCloseThreatAcceptedTargetPositions);
+    out << ",\"lone_zealot_hold_close_threat_events\":[";
+    for (size_t i = 0; i < squads.stats().loneHoldCloseThreatEvents.size(); ++i) {
+        if (i) out << ',';
+        const auto& event = squads.stats().loneHoldCloseThreatEvents[i];
+        out << "{\"frame\":" << event.frame
+            << ",\"held_unit_id\":" << event.heldUnitId
+            << ",\"target_id\":" << event.targetId
+            << ",\"held_unit_position\":{\"x\":" << event.heldUnitPosition.x
+            << ",\"y\":" << event.heldUnitPosition.y << '}'
+            << ",\"target_position\":{\"x\":" << event.targetPosition.x
+            << ",\"y\":" << event.targetPosition.y << '}'
+            << ",\"accepted\":" << (event.accepted ? "true" : "false") << '}';
+    }
+    out << "],\"lone_zealot_hold_unit_lifecycles\":[";
+    for (size_t i = 0; i < squads.stats().loneHoldUnitLifecycles.size(); ++i) {
+        if (i) out << ',';
+        const auto& lifecycle = squads.stats().loneHoldUnitLifecycles[i];
+        out << "{\"unit_id\":" << lifecycle.unitId
+            << ",\"first_seen_frame\":" << lifecycle.firstSeenFrame
+            << ",\"last_seen_frame\":" << lifecycle.lastSeenFrame
+            << ",\"close_threat_samples\":" << lifecycle.closeThreatSamples
+            << ",\"close_threat_attack_attempts\":" << lifecycle.closeThreatAttackAttempts
+            << ",\"close_threat_attack_accepted\":" << lifecycle.closeThreatAttackAccepted
+            << ",\"close_threat_attack_rejected\":" << lifecycle.closeThreatAttackRejected
+            << ",\"first_close_threat_frame\":" << lifecycle.firstCloseThreatFrame
+            << ",\"last_close_threat_frame\":" << lifecycle.lastCloseThreatFrame
+            << ",\"anchor_move_attempts\":" << lifecycle.anchorMoveAttempts
+            << ",\"anchor_move_accepted\":" << lifecycle.anchorMoveAccepted << '}';
     }
     out << ']'
         << ",\"max_probes\":" << maxProbes_

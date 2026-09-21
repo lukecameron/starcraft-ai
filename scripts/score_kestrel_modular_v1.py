@@ -36,6 +36,19 @@ REQUIRED = (
     "reserve_block_pre_acceptance_flags",
     "construction_events",
     "command_categories",
+    "lone_zealot_hold_close_threat_samples",
+    "lone_zealot_hold_close_threat_radius",
+    "lone_zealot_hold_close_threat_first_frame",
+    "lone_zealot_hold_close_threat_attack_attempts",
+    "lone_zealot_hold_close_threat_attack_accepted",
+    "lone_zealot_hold_close_threat_attack_rejected",
+    "lone_zealot_hold_close_threat_accepted_frames",
+    "lone_zealot_hold_close_threat_accepted_held_unit_ids",
+    "lone_zealot_hold_close_threat_accepted_target_ids",
+    "lone_zealot_hold_close_threat_accepted_held_positions",
+    "lone_zealot_hold_close_threat_accepted_target_positions",
+    "lone_zealot_hold_close_threat_events",
+    "lone_zealot_hold_unit_lifecycles",
 )
 
 
@@ -77,6 +90,17 @@ def validate_record(record):
         "second_zealot_completed_frame",
     ):
         require_int(key, -1)
+    for key in (
+        "lone_zealot_hold_close_threat_samples",
+        "lone_zealot_hold_close_threat_attack_attempts",
+        "lone_zealot_hold_close_threat_attack_accepted",
+        "lone_zealot_hold_close_threat_attack_rejected",
+    ):
+        require_int(key, 0)
+    require_int("lone_zealot_hold_close_threat_radius", 0)
+    if is_int(record.get("lone_zealot_hold_close_threat_radius")) and record["lone_zealot_hold_close_threat_radius"] != 256:
+        issues.append("lone_zealot_hold_close_threat_radius must equal 256")
+    require_int("lone_zealot_hold_close_threat_first_frame", -1)
     for key in ("ended", "known_zerg", "zerg_four_probe_pylon_accepted"):
         if not isinstance(record.get(key), bool):
             issues.append(f"{key} is not boolean")
@@ -86,6 +110,9 @@ def validate_record(record):
         "reserve_active_minerals", "reserve_active_reserves",
         "reserve_block_frames", "reserve_block_minerals",
         "reserve_block_reserves", "reserve_block_pre_acceptance_flags",
+        "lone_zealot_hold_close_threat_accepted_frames",
+        "lone_zealot_hold_close_threat_accepted_held_unit_ids",
+        "lone_zealot_hold_close_threat_accepted_target_ids",
     )
     arrays = {}
     for key in array_names:
@@ -105,6 +132,149 @@ def validate_record(record):
     ):
         if len(frames) != len(values):
             issues.append(f"{name} frame/value lengths differ")
+
+    def valid_position(value):
+        return (isinstance(value, dict)
+                and is_int(value.get("x"))
+                and is_int(value.get("y")))
+
+    position_arrays = {}
+    for key in ("lone_zealot_hold_close_threat_accepted_held_positions",
+                "lone_zealot_hold_close_threat_accepted_target_positions"):
+        value = record.get(key)
+        if not isinstance(value, list) or any(not valid_position(item) for item in value):
+            issues.append(f"{key} is not a position array")
+            position_arrays[key] = []
+        else:
+            position_arrays[key] = value
+
+    close_events = record.get("lone_zealot_hold_close_threat_events")
+    if not isinstance(close_events, list):
+        issues.append("lone_zealot_hold_close_threat_events is not an array")
+        close_events = []
+    accepted_events = []
+    previous_event_frame = -1
+    for event in close_events:
+        if not isinstance(event, dict):
+            issues.append("close-threat event is not an object")
+            continue
+        values = [event.get(key) for key in ("frame", "held_unit_id", "target_id")]
+        if any(not is_int(value) for value in values) or any(value < 0 for value in values):
+            issues.append("close-threat event has invalid identity or frame")
+            continue
+        if event["frame"] < previous_event_frame:
+            issues.append("close-threat event frames are unordered")
+        previous_event_frame = event["frame"]
+        if not valid_position(event.get("held_unit_position")):
+            issues.append("close-threat event has invalid held-unit position")
+        if not valid_position(event.get("target_position")):
+            issues.append("close-threat event has invalid target position")
+        if not isinstance(event.get("accepted"), bool):
+            issues.append("close-threat event acceptance is not boolean")
+        elif event["accepted"]:
+            accepted_events.append(event)
+
+    close_samples = record.get("lone_zealot_hold_close_threat_samples")
+    close_attempts = record.get("lone_zealot_hold_close_threat_attack_attempts")
+    close_accepted = record.get("lone_zealot_hold_close_threat_attack_accepted")
+    close_rejected = record.get("lone_zealot_hold_close_threat_attack_rejected")
+    if all(is_int(value) for value in (close_samples, close_attempts, close_accepted, close_rejected)):
+        if close_attempts > close_samples:
+            issues.append("close-threat attempts exceed close-threat samples")
+        if close_accepted + close_rejected != close_attempts:
+            issues.append("close-threat attack attempts do not reconcile with acceptance and rejection")
+        if len(close_events) != close_attempts:
+            issues.append("close-threat events do not reconcile with attack attempts")
+        if len(accepted_events) != close_accepted:
+            issues.append("accepted close-threat events do not reconcile with accepted attacks")
+    accepted_frames = arrays["lone_zealot_hold_close_threat_accepted_frames"]
+    accepted_unit_ids = arrays["lone_zealot_hold_close_threat_accepted_held_unit_ids"]
+    accepted_target_ids = arrays["lone_zealot_hold_close_threat_accepted_target_ids"]
+    accepted_unit_positions = position_arrays["lone_zealot_hold_close_threat_accepted_held_positions"]
+    accepted_target_positions = position_arrays["lone_zealot_hold_close_threat_accepted_target_positions"]
+    accepted_arrays = (accepted_frames, accepted_unit_ids, accepted_target_ids,
+                       accepted_unit_positions, accepted_target_positions)
+    if any(len(values) != len(accepted_frames) for values in accepted_arrays[1:]):
+        issues.append("accepted close-threat arrays have different lengths")
+    if accepted_frames != sorted(accepted_frames):
+        issues.append("accepted close-threat frames are unordered")
+    if len(accepted_events) == len(accepted_frames):
+        for index, event in enumerate(accepted_events):
+            if (accepted_frames[index], accepted_unit_ids[index], accepted_target_ids[index]) != (
+                    event["frame"], event["held_unit_id"], event["target_id"]):
+                issues.append("accepted close-threat arrays do not match accepted events")
+                break
+            if (accepted_unit_positions[index]["x"], accepted_unit_positions[index]["y"]) != (
+                    event["held_unit_position"]["x"], event["held_unit_position"]["y"]):
+                issues.append("accepted close-threat held positions do not match events")
+                break
+            if (accepted_target_positions[index]["x"], accepted_target_positions[index]["y"]) != (
+                    event["target_position"]["x"], event["target_position"]["y"]):
+                issues.append("accepted close-threat target positions do not match events")
+                break
+    first_close_frame = record.get("lone_zealot_hold_close_threat_first_frame")
+    if is_int(first_close_frame) and is_int(close_samples):
+        expected_first_close_frame = -1 if close_samples == 0 else None
+        if close_samples > 0 and first_close_frame < 0:
+            issues.append("close-threat samples have no first frame")
+        if close_samples == 0 and first_close_frame != expected_first_close_frame:
+            issues.append("close-threat first frame is set without a sample")
+        first_event_frame = next(
+            (event["frame"] for event in close_events
+             if isinstance(event, dict) and is_int(event.get("frame")) and event["frame"] >= 0),
+            None,
+        )
+        if first_event_frame is not None and close_samples > 0 and first_close_frame > first_event_frame:
+            issues.append("close-threat first frame follows the first issued event")
+
+    lifecycles = record.get("lone_zealot_hold_unit_lifecycles")
+    if not isinstance(lifecycles, list):
+        issues.append("lone_zealot_hold_unit_lifecycles is not an array")
+        lifecycles = []
+    lifecycle_ids = set()
+    lifecycle_by_id = {}
+    for lifecycle in lifecycles:
+        if not isinstance(lifecycle, dict):
+            issues.append("held-unit lifecycle is not an object")
+            continue
+        for key in ("unit_id", "first_seen_frame", "last_seen_frame", "close_threat_samples",
+                    "close_threat_attack_attempts", "close_threat_attack_accepted",
+                    "close_threat_attack_rejected", "first_close_threat_frame",
+                    "last_close_threat_frame", "anchor_move_attempts", "anchor_move_accepted"):
+            if not is_int(lifecycle.get(key)):
+                issues.append(f"held-unit lifecycle has invalid {key}")
+        if (is_int(lifecycle.get("unit_id")) and lifecycle["unit_id"] in lifecycle_ids):
+            issues.append("held-unit lifecycle repeats a unit id")
+        elif is_int(lifecycle.get("unit_id")):
+            lifecycle_ids.add(lifecycle["unit_id"])
+            lifecycle_by_id[lifecycle["unit_id"]] = lifecycle
+        if is_int(lifecycle.get("first_seen_frame")) and is_int(lifecycle.get("last_seen_frame")) and lifecycle["last_seen_frame"] < lifecycle["first_seen_frame"]:
+            issues.append("held-unit lifecycle ends before it starts")
+        counts = [lifecycle.get(key) for key in ("close_threat_samples", "close_threat_attack_attempts",
+                                                   "close_threat_attack_accepted", "close_threat_attack_rejected",
+                                                   "anchor_move_attempts", "anchor_move_accepted")]
+        if all(is_int(value) and value >= 0 for value in counts):
+            if lifecycle["close_threat_attack_attempts"] > lifecycle["close_threat_samples"]:
+                issues.append("held-unit close-threat attempts exceed samples")
+            if lifecycle["close_threat_attack_accepted"] + lifecycle["close_threat_attack_rejected"] != lifecycle["close_threat_attack_attempts"]:
+                issues.append("held-unit close-threat attempts do not reconcile")
+            if lifecycle["anchor_move_accepted"] > lifecycle["anchor_move_attempts"]:
+                issues.append("held-unit accepted anchor moves exceed attempts")
+    if lifecycles and all(isinstance(item, dict) and all(is_int(item.get(key)) for key in (
+            "close_threat_samples", "close_threat_attack_attempts", "close_threat_attack_accepted",
+            "close_threat_attack_rejected")) for item in lifecycles):
+        if sum(item["close_threat_samples"] for item in lifecycles) != close_samples:
+            issues.append("held-unit lifecycle samples do not reconcile with close-threat samples")
+        if sum(item["close_threat_attack_attempts"] for item in lifecycles) != close_attempts:
+            issues.append("held-unit lifecycle attempts do not reconcile with close-threat attempts")
+        if sum(item["close_threat_attack_accepted"] for item in lifecycles) != close_accepted:
+            issues.append("held-unit lifecycle accepted attacks do not reconcile")
+        if sum(item["close_threat_attack_rejected"] for item in lifecycles) != close_rejected:
+            issues.append("held-unit lifecycle rejected attacks do not reconcile")
+        for event in close_events:
+            if isinstance(event, dict) and is_int(event.get("held_unit_id")) and event["held_unit_id"] not in lifecycle_by_id:
+                issues.append("close-threat event has no held-unit lifecycle")
+                break
 
     categories = record.get("command_categories", {})
     if not isinstance(categories, dict):

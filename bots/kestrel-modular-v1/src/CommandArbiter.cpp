@@ -20,12 +20,14 @@ bool CommandArbiter::issue(bool accepted, CommandKind kind) {
     return false;
 }
 
-bool CommandArbiter::attack(BWAPI::Unit unit, BWAPI::Unit target, int frame) {
+bool CommandArbiter::attack(BWAPI::Unit unit, BWAPI::Unit target, int frame, bool* issued) {
+    if (issued) *issued = false;
     if (!unit || !target) return false;
     const auto previous = attacks_.find(unit->getID());
     if (previous != attacks_.end() && previous->second.kind == CommandKind::Attack &&
         previous->second.targetId == target->getID() &&
         frame - previous->second.frame < 96) return true;
+    if (issued) *issued = true;
     const bool accepted = issue(unit->attack(target), CommandKind::Attack);
     if (accepted) attacks_[unit->getID()] = {target->getID(), BWAPI::Positions::None, frame, CommandKind::Attack};
     return accepted;
