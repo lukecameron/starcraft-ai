@@ -2038,6 +2038,37 @@
         "author": "Luke Cameron",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1"
       }
+    },
+    {
+      "id": "kestrel-modular-v1-close-threat-defense-v1",
+      "title": "Kestrel Modular v1 close-threat defense",
+      "date": "2026-09-21",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "Allowing the held lone first Zealot to attack visible detected ground threats within 256 pixels of the public base center will preserve it until a second completed Zealot exists while retaining commandability and modular opening semantics",
+      "notes": "The fixed Heartbreak Ridge row completed validly. The close-threat rule recorded 143 samples and 15 accepted direct attacks, all matched in the replay at the LF3 offset. Two completed Zealots still never coexisted.",
+      "conclusion": "Rejected under the retained second-completed-Zealot and hold-release gates. The first held unit disappeared 123 frames before the second appeared. The row is excluded from Elo and the five-game screen does not run.",
+      "evidence_run_ids": [
+        "20260921T031906-e09a379a5cab"
+      ],
+      "evidence_experiment_id": "kestrel-modular-v1-close-threat-defense-v1",
+      "candidate_binary_sha256": "dbd9b204cb65da112e4d1994f6b6bd15fbd12be97db2bb2b7b64a4a82ee11bdf",
+      "candidate_source_manifest_sha256": "1456d91bf1f3529a246a7dd0d87fdeacaaf2d72a49e2029c2396d778a96f29d3",
+      "candidate_build_sidecar_sha256": "b820ae777131b5ec4048c0bd414a1242ab2e04d9d676b3298e77e9d6d2d4cce6",
+      "plan_sha256": "83bd6c578807c3ed35fd2b487142c668f713e033c624d921609c1a9920f1e45e",
+      "schedule_sha256": "055d45cc1d7906fa9dd1b33e1f3859e0fc22122f4c8962d080c31472ed7c5e81",
+      "batch_manifest_sha256": "b3f39fc728d5d7af36b4135480c9505e239f4d8bf29d37ec11eb0f50bb8b19f2",
+      "final_manifest_sha256": "b3f39fc728d5d7af36b4135480c9505e239f4d8bf29d37ec11eb0f50bb8b19f2",
+      "experiment_manifest_sha256": "5f4326dbbd8c21cde73aa5a041cecd8fb0c7e612cefce9ff3f02a03946731c5e",
+      "candidate_diagnostic_sha256": "0f9ddb419be68057a2f5357c496dd7af70f43a6f18ae2da06efff0144dcf4708",
+      "result_sha256": "31a55a73d71ed9449e32b8ac5e37165cc6a0ec722ee3b5ceb427dff3ecd15c15",
+      "result_path": "docs/evaluations/kestrel-modular-v1-close-threat-defense-v1/RESULT.md",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "author": "Luke Cameron",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1"
+      }
     }
   ]
 }
