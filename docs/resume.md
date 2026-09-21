@@ -1,5 +1,51 @@
 # Resume
 
+## Final checkpoint — 21 September 2026, 05:52 UTC
+
+- No game, build or evaluator process is running. The away-work heartbeat has
+  reached its deadline. Sol led the task and Luna workers independently audited
+  the final screen and rating inclusion.
+- **Kestrel Modular v1 is the active from-scratch research bot.** It is no
+  longer a single-file prototype: 27 source files compose ten explicit systems
+  for WorldState, WorldMemory, StrategyPlanner, WorkerAllocator,
+  ProductionController, ConstructionController, ScoutingController,
+  SquadController, CommandArbiter and Telemetry. It remains Ours / Original and
+  uses only public BWAPI observations for gameplay.
+- The exact latency-instrumented build is
+  `eab694b547a16d954708950f944005fa75a73995452130c6927c5effb8f602eb`,
+  source manifest
+  `711f7bbc49466a0e1fe3fd2d389f57da0fffe9e446a15c12296ceb2b0087b627`.
+  Native Release, official BWAPI headers, CTest and all 185 Python tests pass.
+- The final fixed five-game concurrent screen completed 5/5 validly with ten
+  hash-matched, parseable, race- and callback-frame-verified replay copies. Both
+  players reported LF3 and Kestrel rejected zero commands in every row. Kestrel
+  lost all five: twice to ZZZKBot, once to McRave and twice to UAlbertaBot
+  Protoss. The nominal Wilson 95% win-rate interval is 0–43.4%. Preserve the
+  McRave throughput anomaly (247.75 durable frames/s) and the two ZZZK
+  later-hold-epoch auditor findings. Full result:
+  `docs/evaluations/kestrel-modular-v1-latency-elo-screen-v1/RESULT.md`.
+- The five final manifests are explicitly pinned in `config/local-ratings.json`.
+  Kestrel Modular is connected to the existing exact-build current-engine
+  component through three opponents and four maps. Its local conditional
+  estimate is **365.3 [−244.9, 975.5]**, relative to the arbitrary ZZZKBot=1000
+  coordinate, with prior-SD sensitivity 576.8/149.5 at 200/800. This is sparse
+  Apple Silicon evidence, not a BASIL or tournament rating.
+- The previous gameplay build's second-Gateway screen remains valuable context:
+  1–3 in four valid rows plus one invalid row, including the first verified
+  Kestrel Modular win over ZZZKBot. The latency-only rebuild preserved gameplay
+  identity but the fresh seeds produced five losses. Do not combine those exact
+  builds as one rating node.
+- Next bounded hill-climb candidates are earlier rush survival, worker recovery
+  after the four-Probe Zerg opening, completion of accepted later Gateways,
+  Protoss army composition/engagement timing, and richer public-state threat and
+  combat telemetry. Preregister one isolated change before another five-game
+  run.
+- The generated dashboard snapshot now contains 544 runs, 121 experiments and
+  1,000 replay files. It includes per-bot progress, bot-filtered matches and
+  replays, ten-system architecture cards, hypotheses/notes/conclusions, exact
+  rating history and Ours/Original/Port/Fork provenance with author links.
+
+
 Checkpoint: 21 September 2026, 02:34 UTC. Latest user scope: **continue the short parallel hill-climb and Elo work, while replacing the single-file experimental path with an ambitious from-scratch bot composed of explicit systems**. Sol leads this task; delegated workers use Luna. No reset was redeemed by the agent.
 
 ## Authorization and ongoing work

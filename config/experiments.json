@@ -2163,6 +2163,31 @@
         "author": "Luke Cameron",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1"
       }
+    },
+    {
+      "id": "kestrel-modular-v1-latency-elo-screen-v1",
+      "title": "Kestrel Modular v1 latency-instrumented Elo screen",
+      "date": "2026-09-21",
+      "status": "completed",
+      "decision": "INCONCLUSIVE",
+      "hypothesis": "The latency-instrumented Kestrel Modular v1 build can produce complete exact-build games with measured callback latency and retain prior opening behavior across a small mixed screen.",
+      "notes": "Five fixed rows ran concurrently. Every row completed with reciprocal results, LF3 latency, zero candidate command rejections, and hash-matched parseable replay copies. The two ZZZK policy audits exposed unmatched later hold-epoch attacks; replay integrity still passed and the rows meet the separate local-rating evidence gate.",
+      "conclusion": "All five rows are valid losses. The build is now connected to the local exact-build Bradley\u2013Terry graph, but the small all-loss sample has wide prior-sensitive uncertainty. Keep the composed architecture and prioritize survival, worker economy, threat response, and production scaling before the next screen.",
+      "evidence_run_ids": [
+        "20260921T052401-34157a765715",
+        "20260921T052401-cce0e9af2bfc",
+        "20260921T052402-bed808203acf",
+        "20260921T052402-5f1d99e7bf35",
+        "20260921T052402-707d6cf5cd20"
+      ],
+      "related_game_ids": [
+        "20260921T052401-34157a765715",
+        "20260921T052401-cce0e9af2bfc",
+        "20260921T052402-bed808203acf",
+        "20260921T052402-5f1d99e7bf35",
+        "20260921T052402-707d6cf5cd20"
+      ],
+      "result_path": "docs/evaluations/kestrel-modular-v1-latency-elo-screen-v1/RESULT.md"
     }
   ]
 }

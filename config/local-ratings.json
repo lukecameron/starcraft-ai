@@ -13,7 +13,8 @@
     "local-calibration-v3-mcrave",
     "local-anchor-calibration-v4",
     "kestrel-local-anchor-v3",
-    "kestrel-local-anchor-bridge-v1"
+    "kestrel-local-anchor-bridge-v1",
+    "kestrel-modular-v1-latency-elo-screen-v1"
   ],
   "reviewed_runs": {
     "20260920T055755-fa9bfeecf7e3": "cbb786b46f654e4c65edcb119c40c52d8aed6cccd172f44ec1b2dd127c4ba97d",
@@ -107,7 +108,12 @@
     "20260921T003252-6a8b1ae20337": "adf02525e2ca3292691c8661328e8f28aff55a02c2b45903d39337d9395ca878",
     "20260921T003255-b3b88d10112a": "bf3c000984cb599f3c0ab7e4c870341ebd845a76c56f9508ce0c8cf73035b2cd",
     "20260921T003300-b4e9073c55c8": "2b3d873f9986f6a3dc4ac2d568c475ad03e4d339591e7ba694d5509855f0997d",
-    "20260921T003302-6b230ad32d1d": "798facd61361909ef3902e626bb70f67bc119db9c5e81281108c413f74b5b85a"
+    "20260921T003302-6b230ad32d1d": "798facd61361909ef3902e626bb70f67bc119db9c5e81281108c413f74b5b85a",
+    "20260921T052401-34157a765715": "60e3ba35f20f95bcb8a5231e541418af555d27f1658b6277846b59fdd10e662b",
+    "20260921T052401-cce0e9af2bfc": "ffd40cf222e87e35a1cb5039cf3e47f8c18a843f5825d34bd486e68e96b21647",
+    "20260921T052402-bed808203acf": "abb6cf0bbf4f7c5491c4fd472182977e77db27ec60b06decf6e82e545c54c333",
+    "20260921T052402-5f1d99e7bf35": "f5a03ed00a04c9613c9eeef12c1b83a0006063ec5c1df025a2d4b3c3f0651c9d",
+    "20260921T052402-707d6cf5cd20": "8a620a4caaee9aad6b62a3ebe3afcae3dc8a45bbf4601607f366014f03b865c1"
   },
   "cohorts": [
     {
@@ -184,6 +190,16 @@
       ],
       "expected_nodes": 3,
       "expected_games": 8
+    },
+    {
+      "id": "kestrel-modular-v1-latency-elo-screen-v1",
+      "label": "Kestrel Modular v1 \u00b7 latency-instrumented mixed screen",
+      "current": true,
+      "experiment_ids": [
+        "kestrel-modular-v1-latency-elo-screen-v1"
+      ],
+      "expected_nodes": 4,
+      "expected_games": 5
     }
   ]
 }
