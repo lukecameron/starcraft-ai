@@ -1,4 +1,5 @@
 #include "kestrel/OpeningPolicy.h"
+#include "kestrel/CombatPolicy.h"
 
 #include <iostream>
 
@@ -21,5 +22,10 @@ int main() {
     const kestrel::OpeningInputs otherRace{false, 4, -1, -1, -1, 0};
     const kestrel::OpeningDecision neutral = kestrel::decideOpening(otherRace, 100);
     if (neutral.suppressProbeBeforeFirstPylon || neutral.probeReserve != 0) return 4;
+
+    if (!kestrel::holdLoneZealot(true, 0)) return 6;
+    if (!kestrel::holdLoneZealot(true, 1)) return 7;
+    if (kestrel::holdLoneZealot(true, 2)) return 8;
+    if (kestrel::holdLoneZealot(false, 1)) return 9;
     return 0;
 }

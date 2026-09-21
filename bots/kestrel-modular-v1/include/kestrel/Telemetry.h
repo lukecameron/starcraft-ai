@@ -4,6 +4,7 @@
 #include "kestrel/StrategyPlanner.h"
 #include "kestrel/ProductionController.h"
 #include "kestrel/ConstructionController.h"
+#include "kestrel/SquadController.h"
 #include "kestrel/WorkerAllocator.h"
 
 #include <vector>
@@ -19,6 +20,7 @@ public:
     void write(const WorldSnapshot& state, const CommandArbiter& commands,
                const StrategyPlanner& strategy, const ProductionController& production,
                const ConstructionController& construction, const WorkerAllocator& workers,
+               const SquadController& squads,
                bool ended, bool won) const;
 
 private:

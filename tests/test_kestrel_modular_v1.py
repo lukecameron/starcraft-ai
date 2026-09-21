@@ -92,6 +92,12 @@ class KestrelModularV1Test(unittest.TestCase):
             "worker_accepted_gather_commands",
             "worker_builder_preflight_skips",
             "worker_builder_cargo_deferrals",
+            "lone_zealot_hold_active_samples",
+            "lone_zealot_hold_suppression_samples",
+            "lone_zealot_hold_unique_units",
+            "lone_zealot_hold_home_move_attempts",
+            "lone_zealot_hold_home_move_accepted",
+            "lone_zealot_hold_release_frame",
         ):
             self.assertIn(field, telemetry)
         construction_header = (SOURCE / "include/kestrel/ConstructionController.h").read_text()
@@ -164,6 +170,26 @@ class KestrelModularV1Test(unittest.TestCase):
         malformed = module.validate_recovery_record({"telemetry_schema": "kestrel-modular-v1"})
         self.assertFalse(malformed["complete"])
         self.assertTrue(any("worker_gather_preflight_skips" in issue for issue in malformed["issues"]))
+
+    def test_hold_scorecard_reconciles_public_release_evidence(self):
+        spec = importlib.util.spec_from_file_location(
+            "modular_hold_score", ROOT / "scripts/score_kestrel_modular_hold.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        record = {
+            "known_zerg": True,
+            "second_zealot_completed_frame": 3800,
+            "lone_zealot_hold_active_samples": 200,
+            "lone_zealot_hold_suppression_samples": 100,
+            "lone_zealot_hold_unique_units": 1,
+            "lone_zealot_hold_home_move_attempts": 1,
+            "lone_zealot_hold_home_move_accepted": 1,
+            "lone_zealot_hold_release_frame": 3800,
+        }
+        self.assertEqual(module.validate_hold_evidence(record), ([], []))
+        record["lone_zealot_hold_release_frame"] = 3803
+        _, mechanism_issues = module.validate_hold_evidence(record)
+        self.assertIn("hold release does not match the second-Zealot completion frame", mechanism_issues)
 
 
 if __name__ == "__main__":

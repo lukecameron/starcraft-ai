@@ -147,7 +147,9 @@
       "upstream_name": null,
       "author": "Luke Cameron",
       "author_url": "https://github.com/lukecameron",
-      "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1"
+      "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1",
+      "architecture_source": "docs/evaluations/kestrel-modular-v1-architecture.md",
+      "architecture_source_url": "https://github.com/lukecameron/starcraft-ai/blob/main/docs/evaluations/kestrel-modular-v1-architecture.md"
     }
   }
 }

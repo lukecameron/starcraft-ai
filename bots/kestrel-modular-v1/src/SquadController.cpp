@@ -1,11 +1,21 @@
 #include "kestrel/SquadController.h"
 
+#include "kestrel/CombatPolicy.h"
+
 namespace kestrel {
 
 void SquadController::tick(const WorldSnapshot& state, WorldMemory& memory, CommandArbiter& commands,
                            bool allowRallyAttack) {
     const int army = state.count(BWAPI::UnitTypes::Protoss_Zealot, true) +
                      state.count(BWAPI::UnitTypes::Protoss_Dragoon, true);
+    const int completedZealots = state.count(BWAPI::UnitTypes::Protoss_Zealot, true);
+    const bool loneZealotHold = holdLoneZealot(state.knownZerg, completedZealots);
+    if (loneZealotHold) {
+        ++stats_.loneHoldActiveSamples;
+        loneHoldWasActive_ = true;
+    } else if (loneHoldWasActive_ && stats_.loneHoldReleaseFrame < 0 && completedZealots >= 2) {
+        stats_.loneHoldReleaseFrame = state.frame;
+    }
     const BWAPI::Position home(state.home);
     bool homeThreat = false;
     for (auto enemy : state.visibleEnemies) {
@@ -17,6 +27,17 @@ void SquadController::tick(const WorldSnapshot& state, WorldMemory& memory, Comm
         if (!unit || !unit->exists() || !unit->isCompleted()) continue;
         const BWAPI::UnitType type = unit->getType();
         if (type != BWAPI::UnitTypes::Protoss_Zealot && type != BWAPI::UnitTypes::Protoss_Dragoon) continue;
+        if (loneZealotHold && type == BWAPI::UnitTypes::Protoss_Zealot) {
+            ++stats_.loneHoldSuppressionSamples;
+            if (suppressedUnits_.insert(unit->getID()).second)
+                stats_.loneHoldUniqueUnits = static_cast<int>(suppressedUnits_.size());
+            if (unit->getDistance(home) > 128 && !unit->isMoving()) {
+                ++stats_.loneHoldHomeMoveAttempts;
+                if (commands.move(unit, home, state.frame))
+                    ++stats_.loneHoldHomeMoveAccepted;
+            }
+            continue;
+        }
         if (unit->isAttacking() && unit->getOrderTarget() && !holdingHome) continue;
         if (unit->isAttacking() && unit->getOrderTarget() && holdingHome) {
             const BWAPI::Unit currentTarget = unit->getOrderTarget();

@@ -30,6 +30,7 @@ void Telemetry::sample(const WorldSnapshot& state, const CommandArbiter& command
 void Telemetry::write(const WorldSnapshot& state, const CommandArbiter& commands,
                       const StrategyPlanner& strategy, const ProductionController& production,
                       const ConstructionController& construction, const WorkerAllocator& workers,
+                      const SquadController& squads,
                       bool ended, bool won) const {
     std::ofstream out("bwapi-data/write/diagnostic.json.tmp", std::ios::trunc);
     const auto& stats = commands.stats();
@@ -56,6 +57,12 @@ void Telemetry::write(const WorldSnapshot& state, const CommandArbiter& commands
         << ",\"worker_accepted_gather_commands\":" << workers.stats().acceptedGatherCommands
         << ",\"worker_builder_preflight_skips\":" << workers.stats().builderPreflightSkips
         << ",\"worker_builder_cargo_deferrals\":" << workers.stats().builderCargoDeferrals
+        << ",\"lone_zealot_hold_active_samples\":" << squads.stats().loneHoldActiveSamples
+        << ",\"lone_zealot_hold_suppression_samples\":" << squads.stats().loneHoldSuppressionSamples
+        << ",\"lone_zealot_hold_unique_units\":" << squads.stats().loneHoldUniqueUnits
+        << ",\"lone_zealot_hold_home_move_attempts\":" << squads.stats().loneHoldHomeMoveAttempts
+        << ",\"lone_zealot_hold_home_move_accepted\":" << squads.stats().loneHoldHomeMoveAccepted
+        << ",\"lone_zealot_hold_release_frame\":" << squads.stats().loneHoldReleaseFrame
         << ",\"max_probes\":" << maxProbes_
         << ",\"max_pylons\":" << maxPylons_
         << ",\"max_gateways\":" << maxGateways_

@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.export_dashboard import absolutize_replays, export, identity_for, public_manifest
+from scripts.export_dashboard import absolutize_replays, architecture_systems, export, identity_for, public_manifest
 
 
 class ExportDashboardTest(unittest.TestCase):
@@ -41,6 +41,37 @@ class ExportDashboardTest(unittest.TestCase):
             self.assertEqual(player["origin"], "original")
             self.assertEqual(replay["display_name"], "Kestrel Modular v1")
             self.assertEqual(replay["bot"], "Kestrel Modular v1")
+
+    def test_tracked_architecture_source_is_exported_with_modular_identity(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "docs").mkdir()
+            (root / "docs/architecture.md").write_text(
+                "| System | Owns | Public inputs and outputs |\n"
+                "| --- | --- | --- |\n"
+                "| `WorldState` | The public world snapshot | Snapshot |\n"
+                "| `CommandArbiter` | Command accounting | Commands |\n",
+                encoding="utf-8",
+            )
+            manifest = root / "manifest.json"
+            manifest.write_text(json.dumps({
+                "run_id": "architecture-run",
+                "inputs": {"players": [{"player": 1, "name": "Kestrel Modular v1",
+                    "race": "Protoss", "bot_module": {"path": "/build/KestrelModular.dylib",
+                    "sha256": "m" * 64}}]},
+                "players": [], "replays": [],
+            }))
+            identities = {"KestrelModular.dylib": {
+                "name": "Kestrel Modular v1", "ownership": "project", "origin": "original",
+                "author": "Luke Cameron", "source_url": "https://example.test/source",
+                "architecture_source": "docs/architecture.md",
+                "architecture_source_url": "https://example.test/architecture",
+            }}
+            self.assertEqual(architecture_systems(root, "docs/architecture.md")[0]["name"], "WorldState")
+            player = public_manifest(manifest, identities, root)["players"][0]
+            self.assertEqual(player["architecture_source"], "docs/architecture.md")
+            self.assertEqual(player["architecture_source_url"], "https://example.test/architecture")
+            self.assertEqual([system["name"] for system in player["architecture_systems"]], ["WorldState", "CommandArbiter"])
 
     def test_startup_attempt_keeps_bot_identity_before_process_launch(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -151,6 +182,16 @@ class ExportDashboardTest(unittest.TestCase):
         self.assertIn("p.display_name||p.bot", html)
         self.assertIn(".join(' + ')", html)
         self.assertNotIn("Port/Fork", html)
+
+    def test_dashboard_bot_profile_surfaces_build_status_and_tracked_systems(self):
+        source = Path(__file__).resolve().parents[1] / "dashboard/index.html"
+        html = source.read_text(encoding="utf-8")
+        self.assertIn("Build identity", html)
+        self.assertIn("Current experiment status", html)
+        self.assertIn("Composed systems", html)
+        self.assertIn("architecture_systems", html)
+        self.assertIn("architecture_source_url", html)
+        self.assertIn("function renderBots(){return renderBotProfile()}", html)
 
     def test_export_allowlists_manifest_and_names_bot(self):
         with tempfile.TemporaryDirectory() as tmp:

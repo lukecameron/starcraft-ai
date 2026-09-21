@@ -39,6 +39,25 @@ def atomic_json(path: Path, value: object) -> None:
     os.replace(temporary, path)
 
 
+def _counter(categories: object, name: str, index: int = 0) -> int:
+    """Read legacy ``[attempted, rejected]`` or structured category counts."""
+    if not isinstance(categories, dict):
+        return 0
+    value = categories.get(name)
+    if isinstance(value, list) and len(value) > index and isinstance(value[index], int):
+        return value[index]
+    if isinstance(value, dict):
+        key = "attempted" if index == 0 else "rejected" if index == 1 else None
+        count = value.get(key) if key else None
+        if isinstance(count, int) and not isinstance(count, bool):
+            return count
+    return 0
+
+
+def _accepted_counter(categories: object, name: str) -> int:
+    return max(0, _counter(categories, name, 0) - _counter(categories, name, 1))
+
+
 def outcome_performance(candidate_result: dict[str, object]) -> dict[str, object]:
     """Classify result metadata without treating replay commands as outcomes."""
     winner = candidate_result.get("winner")
@@ -49,9 +68,9 @@ def outcome_performance(candidate_result: dict[str, object]) -> dict[str, object
     dragoons = candidate_result.get("max_dragoons") or 0
     rejected = candidate_result.get("rejected_commands")
     categories = candidate_result.get("command_categories") or {}
-    train_count = (categories.get("train") or [0])[0] if isinstance(categories, dict) else 0
-    build_count = (categories.get("build") or [0])[0] if isinstance(categories, dict) else 0
-    attack_count = (categories.get("attack") or [0])[0] if isinstance(categories, dict) else 0
+    train_count = _accepted_counter(categories, "train")
+    build_count = _accepted_counter(categories, "build")
+    attack_count = _accepted_counter(categories, "attack")
     production_fields = {
         "probes_at_least_10": isinstance(probes, int) and probes >= 10,
         "gateway_completed_or_observed": isinstance(gateways, int) and gateways >= 1,
@@ -90,15 +109,6 @@ def outcome_performance(candidate_result: dict[str, object]) -> dict[str, object
         "rejection_free": rejection_free,
         "note": "Descriptive heuristic only: thresholds are max counters and terminal metadata, not a causal measure of strength or hidden-state survival.",
     }
-
-
-def _counter(categories: object, name: str, index: int = 0) -> int:
-    if not isinstance(categories, dict):
-        return 0
-    value = categories.get(name)
-    if isinstance(value, list) and len(value) > index and isinstance(value[index], int):
-        return value[index]
-    return 0
 
 
 def _resolve_path(path: object, root: Path) -> Path | None:

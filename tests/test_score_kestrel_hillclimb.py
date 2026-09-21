@@ -10,6 +10,26 @@ from scripts import score_kestrel_hillclimb as scorer
 
 
 class KestrelScorecardTests(TestCase):
+    def test_outcome_performance_accepts_structured_command_categories(self):
+        result = scorer.outcome_performance({
+            "winner": False,
+            "frame_count": 5304,
+            "max_probes": 6,
+            "max_gateways": 2,
+            "max_zealots": 2,
+            "max_dragoons": 0,
+            "rejected_commands": 0,
+            "command_categories": {
+                "train": {"attempted": 4, "rejected": 1},
+                "build": {"attempted": 3, "rejected": 0},
+                "attack": {"attempted": 7, "rejected": 2},
+            },
+        })
+
+        self.assertEqual(result["command_counts"], {"train": 3, "build": 3, "attack": 5})
+        self.assertTrue(result["production_fields"]["accepted_train_commands"])
+        self.assertTrue(result["production_fields"]["accepted_build_commands"])
+
     @staticmethod
     def v33_metadata() -> dict[str, object]:
         metadata: dict[str, object] = {

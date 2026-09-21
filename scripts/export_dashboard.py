@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Export an allowlisted static progress dashboard from local manifests."""
 from __future__ import annotations
-import argparse, json, math, shutil
+import argparse, json, math, re, shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -31,9 +31,24 @@ def identity_for(module_name, identities, module_sha=None):
         # upstream attribution must remain intact for every binary.
         value={**family,**{k:v for k,v in overrides[module_sha].items() if k in {"ownership","origin"}}}
     if not isinstance(value,dict): value={}
-    return {"display_name":value.get("display_name") or value.get("name"),"ownership":value.get("ownership","unknown"),"origin":value.get("origin","unknown"),"upstream_name":value.get("upstream_name"),"author":value.get("author"),"author_url":value.get("author_url"),"source_url":value.get("source_url"),"provenance_verified":bool(value)}
+    return {"display_name":value.get("display_name") or value.get("name"),"ownership":value.get("ownership","unknown"),"origin":value.get("origin","unknown"),"upstream_name":value.get("upstream_name"),"author":value.get("author"),"author_url":value.get("author_url"),"source_url":value.get("source_url"),"architecture_source":value.get("architecture_source"),"architecture_source_url":value.get("architecture_source_url"),"provenance_verified":bool(value)}
 
-def public_manifest(path, identities=None):
+def architecture_systems(root, source_path):
+    """Read the public system table from a tracked architecture document."""
+    if not isinstance(source_path,str) or not source_path or Path(source_path).is_absolute(): return []
+    path=(root/source_path).resolve()
+    try:
+        if root.resolve() not in path.parents or not path.is_file(): return []
+        text=path.read_text(encoding="utf-8")
+    except OSError: return []
+    systems=[]
+    for line in text.splitlines():
+        match=re.match(r"^\|\s*`([^`]+)`\s*\|\s*([^|]+?)\s*\|",line)
+        if match and match.group(1) not in {"System","---"}:
+            systems.append({"name":match.group(1),"responsibility":match.group(2).strip()})
+    return systems
+
+def public_manifest(path, identities=None, root=None):
     source=load_json(path,{})
     if not isinstance(source,dict): return {}
     inputs=source.get("inputs",{}) if isinstance(source.get("inputs"),dict) else {}
@@ -49,7 +64,7 @@ def public_manifest(path, identities=None):
         usage=player.get("resource_usage",{}) if isinstance(player.get("resource_usage"),dict) else {}
         build_name=Path(str(module.get("path",""))).name or Path(str(env.get("BWAPI_CONFIG_AI__AI",""))).name or None
         identity=identity_for(build_name,identities or {},module.get("sha256"))
-        players.append({"player":player.get("player"),"name":inp.get("name"),"bot":identity.get("display_name") or identity.get("upstream_name") or bot_identity(player),"race":inp.get("race") or (env.get("BWAPI_CONFIG_AUTO_MENU__RACE") if isinstance(env,dict) else None),"build_name":build_name,"module_sha256":module.get("sha256"),**identity,"source_url":identity.get("source_url") or provenance.get("source_repository") or inp.get("source_url"),"source_revision":provenance.get("source_revision"),"return_code":player.get("return_code"),"peak_rss_raw":usage.get("peak_rss_raw"),"user_cpu_seconds":usage.get("user_cpu_seconds"),"result":{k:result.get(k) for k in ("ended","winner","frame_count","latency_frames","command_count","rejected_commands")} if isinstance(result,dict) else None})
+        players.append({"player":player.get("player"),"name":inp.get("name"),"bot":identity.get("display_name") or identity.get("upstream_name") or bot_identity(player),"race":inp.get("race") or (env.get("BWAPI_CONFIG_AUTO_MENU__RACE") if isinstance(env,dict) else None),"build_name":build_name,"module_sha256":module.get("sha256"),"architecture_systems":architecture_systems((root or path.parent),identity.get("architecture_source")),**identity,"source_url":identity.get("source_url") or provenance.get("source_repository") or inp.get("source_url"),"source_revision":provenance.get("source_revision"),"return_code":player.get("return_code"),"peak_rss_raw":usage.get("peak_rss_raw"),"user_cpu_seconds":usage.get("user_cpu_seconds"),"result":{k:result.get(k) for k in ("ended","winner","frame_count","latency_frames","command_count","rejected_commands")} if isinstance(result,dict) else None})
     replays=[]
     for index,replay in enumerate(source.get("replays",[]),1):
         if isinstance(replay,dict):
@@ -161,7 +176,7 @@ def export(root, output):
     output.mkdir(parents=True,exist_ok=True); fallback=load_json(root/"dashboard/data.json",{})
     identity_config=load_json(root/"config/bot-identities.json",{"bots":{}}); identities=identity_config.get("bots",{}) if isinstance(identity_config,dict) else {}
     run_paths=sorted((root/"artifacts/runs").glob("*/game-*/manifest.json")) or sorted((root/"artifacts/runs").glob("*/manifest.json"))
-    runs=[x for path in run_paths if (x:=public_manifest(path,identities))]; has_raw_artifacts=bool(runs)
+    runs=[x for path in run_paths if (x:=public_manifest(path,identities,root))]; has_raw_artifacts=bool(runs)
     if not runs and isinstance(fallback,dict): runs=fallback.get("runs",[])
     configured=load_json(root/"config/experiments.json",{"experiments":[]}); configured_experiments=configured.get("experiments",[]) if isinstance(configured,dict) else []
     artifact_experiments=[x for path in sorted((root/"artifacts/experiments").glob("*/manifest.json")) if (x:=public_experiment(path,identities))]

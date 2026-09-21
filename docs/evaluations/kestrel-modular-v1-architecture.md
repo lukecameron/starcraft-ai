@@ -16,7 +16,7 @@ state ownership:
 | `ProductionController` | Nexus/Gateway train decisions and Zealot counters | Consumes `Plan`; emits train commands through the arbiter |
 | `ConstructionController` | One-build-at-a-time lifecycle, baseline and builder ownership | Consumes `BuildIntent`; emits build commands through the arbiter |
 | `ScoutingController` | Probe selection and exploration movement | Consumes `WorldMemory`; emits scout movement through the arbiter |
-| `SquadController` | Zealot/Dragoon visible-target attacks, home threat holding and rally | Consumes visible state and memory; emits attack commands through the arbiter |
+| `SquadController` | Zealot/Dragoon visible-target attacks, lone-Zealot staging, home threat holding and rally | Consumes visible state and memory; emits movement and attack commands through the arbiter |
 | `CommandArbiter` | Deduplication, command categories, rejected commands and BWAPI error counts | The only gameplay command accounting boundary |
 | `Telemetry` | Durable diagnostics and architecture identity | Reads owned state; writes `bwapi-data/write/diagnostic.json` |
 
@@ -62,6 +62,11 @@ build tile is known, it preserves cargo returns, checks `canBuild(type, tile)`,
 and chooses the nearest eligible Probe with unit ID as the deterministic
 tie-breaker. Builder preflight skips and cargo deferrals are reported
 separately from issued build commands.
+Against a publicly known Zerg opponent, `CombatPolicy.h` keeps the first
+completed Zealot at home and suppresses its target attacks until a second
+completed Zealot exists. The pure hold predicate is unit-tested separately
+from BWAPI. `SquadController` records hold samples, unique affected units,
+home-move attempts and acceptances, and the public-state release frame.
 
 Telemetry is explicitly tagged `kestrel-modular-v1`. It preserves the exact
 four-Probe Pylon acceptance/completion boundary, ordered accepted Probe train
