@@ -2069,6 +2069,36 @@
         "author": "Luke Cameron",
         "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1"
       }
+    },
+    {
+      "id": "kestrel-modular-v1-lone-zealot-leash-v1",
+      "title": "Kestrel Modular v1 lone-Zealot leash",
+      "date": "2026-09-21",
+      "status": "completed",
+      "decision": "INCONCLUSIVE",
+      "hypothesis": "Keeping the held lone first Zealot within 96 pixels of the public base-center anchor before allowing close-threat attacks will preserve it until a second completed Zealot exists while retaining commandability and modular opening semantics",
+      "notes": "The fixed Heartbreak Ridge attempt stopped in the exact AF_UNIX preflight before either child started because the preregistration audit ran in a restricted execution context. No callback, diagnostic, or replay was produced.",
+      "conclusion": "Infrastructure-inconclusive under the registered rule. The row is preserved without retry or replacement, provides no gameplay or Elo evidence, and revealed that the next candidate should preregister candidate-specific mechanism and replay checks.",
+      "evidence_run_ids": [
+        "20260921T034831-7eff42c20fee"
+      ],
+      "evidence_experiment_id": "kestrel-modular-v1-lone-zealot-leash-v1",
+      "candidate_binary_sha256": "1734fcfa4542eff24c7341f43b226cb6eb03d4fd68a120beb1a0f406160f7818",
+      "candidate_source_manifest_sha256": "112b0f545b3b8b871cb86d166ec33c12fcd0583820d6fd5ebbd956d191875ccf",
+      "candidate_build_sidecar_sha256": "7cab62ed82405a5bb413c28c85d5ab0b272b44cadc4fddc3353ef7f05e8bbd7a",
+      "plan_sha256": "e26ad61b9169ff0e68f19b17b87b85fd853c2f9f6c8164e83d051e92f6b7ec11",
+      "schedule_sha256": "c97137e2b6270f8ec70d63c288486ff48ede9d4de9d98a2b22b250e2986cb1a8",
+      "batch_manifest_sha256": "7f20b9b34df22633e359c9c9f3bdc46bc9fa322f3172aab202ae0b9368ce16cc",
+      "final_manifest_sha256": "bbec0fc9a46ed055dae3517fc6c780d570b7609ad5109c03cf09dee294c908c2",
+      "experiment_manifest_sha256": "7f20b9b34df22633e359c9c9f3bdc46bc9fa322f3172aab202ae0b9368ce16cc",
+      "result_sha256": "da4c4c526d35773f6e74f0adf0725b1b58369511a080564ba3e9a92cb128e0ae",
+      "result_path": "docs/evaluations/kestrel-modular-v1-lone-zealot-leash-v1/RESULT.md",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "author": "Luke Cameron",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1"
+      }
     }
   ]
 }
