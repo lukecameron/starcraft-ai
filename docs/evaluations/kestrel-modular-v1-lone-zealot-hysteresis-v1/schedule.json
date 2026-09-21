@@ -1,0 +1,136 @@
+{
+  "allowed_kill_events": [
+    {
+      "action_id": 87,
+      "source": "controller_not_occupied_after_action"
+    },
+    {
+      "action_id": -1,
+      "source": "transport_callback"
+    }
+  ],
+  "candidate": {
+    "author": "Luke Cameron",
+    "build_sidecar": "artifacts/builds/c1b45a4d70bfb8d52c0fe981e849bbbad63b3fb1f9db649f25fb928f03d2a2fd/kestrel-modular-lone-zealot-hysteresis/KestrelModular.dylib.build.json",
+    "build_sidecar_sha256": "1672f749ba1bbcd9b8ddcb2e010de563ad96e4f6555eab6563040daf1483249e",
+    "name": "Kestrel Modular v1",
+    "origin": "Original",
+    "ownership": "Ours",
+    "path": "artifacts/builds/c1b45a4d70bfb8d52c0fe981e849bbbad63b3fb1f9db649f25fb928f03d2a2fd/kestrel-modular-lone-zealot-hysteresis/KestrelModular.dylib",
+    "race": "Protoss",
+    "sha256": "c1b45a4d70bfb8d52c0fe981e849bbbad63b3fb1f9db649f25fb928f03d2a2fd",
+    "source_commit": "6babb1fa9cc36b3e2091efb68403c63443eec0fe",
+    "source_manifest_sha256": "f42c18ca88cd4b1ffac83b5977ceb0e8605c4f6030e1770aa96e094eb36e67da",
+    "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1"
+  },
+  "concurrency": 1,
+  "engine_sha256": "eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b",
+  "eval_plan": "docs/evaluations/kestrel-modular-v1-lone-zealot-hysteresis-v1/EVAL_PLAN.md",
+  "eval_plan_sha256": "1afc0d0258e21af63ad035a9d7cc69f39b9f0aa1931bd5056ba1453ac99b97e4",
+  "experiment_id": "kestrel-modular-v1-lone-zealot-hysteresis-v1",
+  "game_data_dir": "third_party/game-data/runtime",
+  "game_data_files": [
+    {
+      "path": "third_party/game-data/runtime/BrooDat.mpq",
+      "sha256": "c6d810981e24b947b36d531ab047e143fec0284a581fdaad6fc431e1e75e21df"
+    },
+    {
+      "path": "third_party/game-data/runtime/Patch_rt.mpq",
+      "sha256": "a063f069f1abe202b142b08a9dab878eba8ba033bf13a818024a72631c4452be"
+    },
+    {
+      "path": "third_party/game-data/runtime/StarDat.mpq",
+      "sha256": "8845fd871b4f8f242cc5c2b6f6b8b319d86bbbd02bc836356b51f81b5ba8203f"
+    },
+    {
+      "path": "third_party/game-data/runtime/sscai/(2)Heartbreak Ridge.scx",
+      "sha256": "64527ae691307756dbc2700c68ab5878476eed27c3dfc9a64411955f4107f50b"
+    }
+  ],
+  "games": [
+    {
+      "candidate_player": 2,
+      "index": 1,
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "opponent": "zzzk",
+      "scenario_seed": 12407
+    }
+  ],
+  "hypothesis": "Persisting a held lone first Zealot in return-to-anchor state from the 96-pixel entry radius until the 48-pixel release radius will preserve it until a second completed Zealot exists while retaining commandability and modular opening semantics",
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "launcher_sha256": "af1682393f9fe43afe885b35a1637e9c464719ef93c83e799d614beed20316c1",
+  "launcher_sidecar": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher.build.json",
+  "launcher_sidecar_sha256": "0beebdd3bb6221a5e6143c015763d14fa20330a8976ede3f997062660b3e7390",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "opponents": {
+    "zzzk": {
+      "author": "Chris Coxe",
+      "build_sidecar": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib.build.json",
+      "build_sidecar_sha256": "41c03e2c266fc012a6df0e1ec1c8c9efd65e24973490ef3d1980c9cf6b36f4f1",
+      "name": "ZZZKBot",
+      "origin": "Port",
+      "ownership": "Ours",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "race": "Zerg",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748",
+      "source_patch": "patches/zzzkbot-native-arm64.patch",
+      "source_patch_sha256": "aedeeef6cc664e9d49d181d8a0044e110008fdca720df386e02fadb95c784c2d",
+      "source_revision": "7183e37b6b416ea53c1040c83e639a3a3c395eed",
+      "source_url": "https://github.com/chriscoxe/ZZZKBot"
+    }
+  },
+  "provenance_registry": "config/bot-identities.json",
+  "provenance_registry_sha256": "396d5aa588bfb171f48b68efdeb641f7d8574e1b943c3be11886f678d9b65ff9",
+  "purpose": "Real-engine lone-Zealot leash-hysteresis mechanism smoke for Kestrel Modular v1",
+  "registered_at": "2026-09-21T04:08:00Z",
+  "required_files": [
+    {
+      "path": "config/bot-identities.json",
+      "sha256": "396d5aa588bfb171f48b68efdeb641f7d8574e1b943c3be11886f678d9b65ff9"
+    },
+    {
+      "path": "docs/evaluations/kestrel-modular-v1-architecture.md",
+      "sha256": "02c0191337879de09905ba002ff834866b796c6ee5ad0c7d415d6c7df611bacb"
+    },
+    {
+      "path": "docs/evaluations/kestrel-modular-v1-lone-zealot-hysteresis-v1/EVAL_PLAN.md",
+      "sha256": "1afc0d0258e21af63ad035a9d7cc69f39b9f0aa1931bd5056ba1453ac99b97e4"
+    },
+    {
+      "path": "scripts/build_kestrel_modular.sh",
+      "sha256": "fb3ed1cbcfa5f5ac9f8326a69d9187581490999987887534142029cbfb82811d"
+    },
+    {
+      "path": "scripts/run_batch.py",
+      "sha256": "fd461f22e2ef2c6ff1bd03c03ef395b811cec5f405fc87f64732cce25363cc44"
+    },
+    {
+      "path": "scripts/run_match.py",
+      "sha256": "c96ac4512f7ab40aedb8da2cba3a8667028b4115a2961519c9618d884edee766"
+    },
+    {
+      "path": "scripts/score_kestrel_modular_v1.py",
+      "sha256": "36e0c5b6f2dd3626afb1c74a198495e541131a23de727573cf80764094577327"
+    },
+    {
+      "path": "scripts/score_kestrel_modular_recovery.py",
+      "sha256": "d947bb011342329fe463920423be003695ebb7b8188531f4eb42c18927d0344c"
+    },
+    {
+      "path": "scripts/score_kestrel_modular_hold.py",
+      "sha256": "1c3c1bc0fa5131e0ee3db632a5b6a5c8a0bb6bc7b83889e299de3e5524d8a062"
+    },
+    {
+      "path": "scripts/score_kestrel_modular_leash_hysteresis.py",
+      "sha256": "c5c467907ec1de51a46b3c6c308f291bb13a767999a0862e3ef0f27047a90d86"
+    },
+    {
+      "path": "scripts/audit_kestrel_modular_replay.py",
+      "sha256": "bac6475ed0383a3e9ae05914b2072fa1483f04e58a9cc819e1f5865c58734b82"
+    }
+  ],
+  "schema_version": 1,
+  "stop_after_consecutive_invalid": 1,
+  "stop_condition": "Run the one fixed lone-Zealot leash-hysteresis row exactly once at concurrency one; preserve every artifact; do not retry, reseed, replace, or rerun for any outcome",
+  "wall_timeout_seconds": 120
+}
