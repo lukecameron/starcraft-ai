@@ -29,7 +29,8 @@ void Telemetry::sample(const WorldSnapshot& state, const CommandArbiter& command
 
 void Telemetry::write(const WorldSnapshot& state, const CommandArbiter& commands,
                       const StrategyPlanner& strategy, const ProductionController& production,
-                      const ConstructionController& construction, bool ended, bool won) const {
+                      const ConstructionController& construction, const WorkerAllocator& workers,
+                      bool ended, bool won) const {
     std::ofstream out("bwapi-data/write/diagnostic.json.tmp", std::ios::trunc);
     const auto& stats = commands.stats();
     const auto& policy = strategy.telemetry();
@@ -50,6 +51,9 @@ void Telemetry::write(const WorldSnapshot& state, const CommandArbiter& commands
         << ",\"architecture\":\"world-memory-strategy-economy-production-construction-scout-squad-arbiter\""
         << ",\"command_count\":" << stats.attempted
         << ",\"rejected_commands\":" << stats.rejected
+        << ",\"worker_gather_preflight_skips\":" << workers.stats().gatherPreflightSkips
+        << ",\"worker_cargo_deferrals\":" << workers.stats().cargoDeferrals
+        << ",\"worker_accepted_gather_commands\":" << workers.stats().acceptedGatherCommands
         << ",\"max_probes\":" << maxProbes_
         << ",\"max_pylons\":" << maxPylons_
         << ",\"max_gateways\":" << maxGateways_

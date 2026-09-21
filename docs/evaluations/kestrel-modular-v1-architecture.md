@@ -12,7 +12,7 @@ state ownership:
 | `WorldState` | The current self snapshot, visible enemy snapshot, resources and map starts | Reads BWAPI public state; produces `WorldSnapshot` |
 | `WorldMemory` | Last-seen enemy positions and a persistent scout target | Consumes visible snapshots; never reads replay or evaluator state |
 | `StrategyPlanner` | Opening phase, reserves, build priorities and attack/scout gates | Consumes the snapshot and construction status; produces `Plan` |
-| `WorkerAllocator` | Builder selection and mineral/owned-assimilator assignment | Consumes the snapshot; emits gather commands through the arbiter |
+| `WorkerAllocator` | Builder selection and mineral/owned-assimilator assignment | Consumes the snapshot; preflights public BWAPI commandability and emits gather commands through the arbiter |
 | `ProductionController` | Nexus/Gateway train decisions and Zealot counters | Consumes `Plan`; emits train commands through the arbiter |
 | `ConstructionController` | One-build-at-a-time lifecycle, baseline and builder ownership | Consumes `BuildIntent`; emits build commands through the arbiter |
 | `ScoutingController` | Probe selection and exploration movement | Consumes `WorldMemory`; emits scout movement through the arbiter |
@@ -52,6 +52,11 @@ disable exploration.
 World snapshots and production queues are ordered by stable unit ID. Combat
 targeting checks each unit's ground and air weapon, so Dragoons can defend
 against visible flying threats while Zealots ignore targets they cannot hit.
+Worker reassignment preserves mineral and gas return trips and checks the exact
+resource target with BWAPI's public `canGather` predicate. Temporarily
+uninterruptible workers are skipped instead of producing rejected commands.
+Telemetry separates these preflight skips and cargo deferrals from actual
+gather command attempts and accepted assignments.
 
 Telemetry is explicitly tagged `kestrel-modular-v1`. It preserves the exact
 four-Probe Pylon acceptance/completion boundary, ordered accepted Probe train

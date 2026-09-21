@@ -29,13 +29,14 @@ public:
         planner_.reset();
         production_.reset();
         construction_.reset();
+        workers_.reset();
         telemetry_.reset();
         squads_.reset();
         scoutId_ = -1;
         builderId_ = -1;
         world_.observe(BWAPI::BroodwarPtr);
         memory_.reset(world_.snapshot());
-        telemetry_.write(world_.snapshot(), commands_, planner_, production_, construction_, false, false);
+        telemetry_.write(world_.snapshot(), commands_, planner_, production_, construction_, workers_, false, false);
     }
 
     void onFrame() override {
@@ -67,14 +68,14 @@ public:
         const double callbackMs = std::chrono::duration<double, std::milli>(
             std::chrono::steady_clock::now() - start).count();
         telemetry_.sample(state, commands_, planner_, production_, callbackMs);
-        if (state.frame % 240 == 0) telemetry_.write(state, commands_, planner_, production_, construction_, false, false);
+        if (state.frame % 240 == 0) telemetry_.write(state, commands_, planner_, production_, construction_, workers_, false, false);
     }
 
     void onEnd(bool won) override {
         world_.observe(BWAPI::BroodwarPtr);
         planner_.observe(world_.snapshot());
         construction_.observe(world_.snapshot());
-        telemetry_.write(world_.snapshot(), commands_, planner_, production_, construction_, true, won);
+        telemetry_.write(world_.snapshot(), commands_, planner_, production_, construction_, workers_, true, won);
     }
 
 private:

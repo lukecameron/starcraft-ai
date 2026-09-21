@@ -6,6 +6,21 @@
 
 namespace kestrel {
 
+bool WorkerAllocator::gather(BWAPI::Unit worker, BWAPI::Unit target, CommandArbiter& commands) {
+    if (!worker || !target) return false;
+    if (worker->isCarryingMinerals() || worker->isCarryingGas()) {
+        ++stats_.cargoDeferrals;
+        return false;
+    }
+    if (!worker->canGather(target)) {
+        ++stats_.gatherPreflightSkips;
+        return false;
+    }
+    if (!commands.issue(worker->gather(target), CommandKind::Gather)) return false;
+    ++stats_.acceptedGatherCommands;
+    return true;
+}
+
 BWAPI::Unit WorkerAllocator::findBuilder(const WorldSnapshot& state, int scoutId, int builderId) const {
     for (auto worker : state.ownUnits) {
         if (!worker || !worker->exists() || !worker->isCompleted() ||
@@ -47,7 +62,7 @@ void WorkerAllocator::tick(const WorldSnapshot& state, int scoutId, int builderI
                 const int distance = worker->getDistance(assimilator);
                 if (distance < best) { best = distance; target = assimilator; }
             }
-            if (target && commands.issue(worker->gather(target), CommandKind::Gather)) {
+            if (target && gather(worker, target, commands)) {
                 ++keptGas;
                 continue;
             }
@@ -61,7 +76,7 @@ void WorkerAllocator::tick(const WorldSnapshot& state, int scoutId, int builderI
                 if (distance < best) { best = distance; target = mineral; }
             }
         }
-        if (target && !worker->isGatheringMinerals()) commands.issue(worker->gather(target), CommandKind::Gather);
+        if (target && !worker->isGatheringMinerals()) gather(worker, target, commands);
     }
 }
 

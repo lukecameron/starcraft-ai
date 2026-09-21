@@ -1889,6 +1889,35 @@
         "author": "David Churchill",
         "source_url": "https://github.com/davechurchill/ualbertabot"
       }
+    },
+    {
+      "id": "kestrel-modular-v1-smoke",
+      "title": "Kestrel Modular v1 lifecycle smoke",
+      "date": "2026-09-21",
+      "status": "completed",
+      "decision": "REJECT",
+      "hypothesis": "The composed Kestrel Modular v1 systems can complete one real Zerg game lifecycle with legal commands, replay integrity, and coherent opening, reserve, construction, and command telemetry",
+      "notes": "The one fixed Benzene row completed with valid terminal callbacks and two independently verified replay copies. All structural and opening semantic gates passed, but 10 of 32 gather commands were rejected with Unit_Busy.",
+      "conclusion": "Rejected by the registered zero-command-rejection gate. The valid row is preserved and excluded from Elo. A separately registered recovery build preflights exact gather commandability and preserves cargo returns.",
+      "evidence_run_ids": [
+        "20260921T005435-f2ca7d9e0921"
+      ],
+      "evidence_experiment_id": "kestrel-modular-v1-smoke",
+      "candidate_binary_sha256": "8134235c5ce2c589e5b6c890008cc9a2a086df7a715ddcdacfeef4aa5bd36cca",
+      "candidate_source_manifest_sha256": "4f848a72d4086badc400ce1ec2be61d4663f2cf1823577c40de1b436fab94f67",
+      "plan_sha256": "e3cf963d355a6c787a5c78362efd9859353e727fc7b9243f9a45152263b0be68",
+      "schedule_sha256": "2d6837ab5bdba94fb4cbbead8e150d8c1d1dd0980bd05d4701c9ec2965e83add",
+      "batch_manifest_sha256": "efb00c8a1012a7ea3f290938867669c1858bd234d42e4cfc1ca7f58ff9ab18fa",
+      "final_manifest_sha256": "038f092a6581d7de802f9ce02ad76d2e3daf06002f5d6e8e13fd193e067f40e4",
+      "candidate_diagnostic_sha256": "f7ee31659e3bde74b99e683961143fb251589359029ae703191ff3507fc0835e",
+      "result_sha256": "be31f25e192b3a98c80f6046e2b5f6211fd29ef49fffb6f6662372670a7a97ae",
+      "result_path": "docs/evaluations/kestrel-modular-v1-smoke/RESULT.md",
+      "provenance": {
+        "ownership": "Ours",
+        "origin": "Original",
+        "author": "Luke Cameron",
+        "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1"
+      }
     }
   ]
 }

@@ -4,6 +4,7 @@
 #include "kestrel/StrategyPlanner.h"
 #include "kestrel/ProductionController.h"
 #include "kestrel/ConstructionController.h"
+#include "kestrel/WorkerAllocator.h"
 
 #include <vector>
 
@@ -17,7 +18,8 @@ public:
                 double callbackMs);
     void write(const WorldSnapshot& state, const CommandArbiter& commands,
                const StrategyPlanner& strategy, const ProductionController& production,
-               const ConstructionController& construction, bool ended, bool won) const;
+               const ConstructionController& construction, const WorkerAllocator& workers,
+               bool ended, bool won) const;
 
 private:
     std::vector<double> callbackMs_;

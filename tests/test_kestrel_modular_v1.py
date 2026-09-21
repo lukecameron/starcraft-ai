@@ -58,6 +58,9 @@ class KestrelModularV1Test(unittest.TestCase):
         self.assertIn("desiredGas", allocator)
         self.assertIn("isGatheringGas", allocator)
         self.assertIn("isGatheringMinerals", allocator)
+        self.assertIn("isCarryingMinerals", allocator)
+        self.assertIn("isCarryingGas", allocator)
+        self.assertIn("canGather(target)", allocator)
         self.assertIn("getBuildLocation", construction)
         self.assertIn("Protoss_Assimilator", construction)
         self.assertIn("activeScoutTile_", memory)
@@ -84,6 +87,9 @@ class KestrelModularV1Test(unittest.TestCase):
             "reserve_block_pre_acceptance_flags",
             "construction_events",
             "command_categories",
+            "worker_gather_preflight_skips",
+            "worker_cargo_deferrals",
+            "worker_accepted_gather_commands",
         ):
             self.assertIn(field, telemetry)
         construction_header = (SOURCE / "include/kestrel/ConstructionController.h").read_text()
@@ -147,6 +153,15 @@ class KestrelModularV1Test(unittest.TestCase):
         result = module.validate_record(record)
         self.assertFalse(result["complete"])
         self.assertTrue(any("exactly four" in issue for issue in result["issues"]))
+
+    def test_recovery_scorecard_requires_and_reconciles_worker_commandability(self):
+        spec = importlib.util.spec_from_file_location(
+            "modular_recovery_score", ROOT / "scripts/score_kestrel_modular_recovery.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        malformed = module.validate_recovery_record({"telemetry_schema": "kestrel-modular-v1"})
+        self.assertFalse(malformed["complete"])
+        self.assertTrue(any("worker_gather_preflight_skips" in issue for issue in malformed["issues"]))
 
 
 if __name__ == "__main__":
