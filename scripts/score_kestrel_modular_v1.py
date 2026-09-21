@@ -114,8 +114,8 @@ def validate_record(record):
     ):
         require_int(key, 0)
     require_int("lone_zealot_hold_close_threat_radius", 0)
-    if is_int(record.get("lone_zealot_hold_close_threat_radius")) and record["lone_zealot_hold_close_threat_radius"] != 256:
-        issues.append("lone_zealot_hold_close_threat_radius must equal 256")
+    if is_int(record.get("lone_zealot_hold_close_threat_radius")) and record["lone_zealot_hold_close_threat_radius"] != 160:
+        issues.append("lone_zealot_hold_close_threat_radius must equal 160")
     require_int("lone_zealot_hold_close_threat_first_frame", -1)
     for key in (
         "lone_zealot_hold_leash_radius",

@@ -80,7 +80,7 @@ class KestrelModularLeashHysteresisTest(unittest.TestCase):
             "lone_zealot_hold_leash_move_coalesced": 0,
             "lone_zealot_hold_leash_max_anchor_distance": 96,
             "lone_zealot_hold_close_threat_samples": 1,
-            "lone_zealot_hold_close_threat_radius": 256,
+            "lone_zealot_hold_close_threat_radius": 160,
             "lone_zealot_hold_close_threat_attack_origins_within_leash": True,
             "lone_zealot_hold_close_threat_first_frame": 100,
             "lone_zealot_hold_close_threat_attack_attempts": 1,
@@ -179,6 +179,12 @@ class KestrelModularLeashHysteresisTest(unittest.TestCase):
         record["command_error_counts"]["unit_busy"] = 1
         result = SCORER.validate_leash_hysteresis_record(record)
         self.assertIn("one or more Unit_Busy errors were recorded", result["mechanism_issues"])
+
+    def test_close_threat_radius_is_candidate_specific(self):
+        record = self.valid_record()
+        record["lone_zealot_hold_close_threat_radius"] = 256
+        result = SCORER.validate_leash_hysteresis_record(record)
+        self.assertIn("close-threat radius must equal 160", result["mechanism_issues"])
 
 
 if __name__ == "__main__":

@@ -31,5 +31,6 @@ int main() {
     if (holdAnchor != BWAPI::Position(384, 688)) return 10;
     if (kestrel::loneZealotLeashRadius != 96) return 11;
     if (kestrel::loneZealotReturnReleaseRadius != 48) return 12;
+    if (kestrel::loneZealotCloseThreatRadius != 160) return 13;
     return 0;
 }

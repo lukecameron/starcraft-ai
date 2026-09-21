@@ -22,6 +22,7 @@ except ModuleNotFoundError:  # Running this file directly from scripts/.
 SCHEMA = "kestrel-modular-v1"
 LEASH_RADIUS = 96
 LEASH_RETURN_RADIUS = 48
+CLOSE_THREAT_RADIUS = 160
 
 # The first names are the telemetry convention for this candidate.  The
 # aliases keep the scorer readable against diagnostic fixtures produced while
@@ -126,6 +127,14 @@ def validate_leash_hysteresis_evidence(record):
     elif return_radius != LEASH_RETURN_RADIUS:
         mechanism_issues.append(
             f"leash return radius must equal {LEASH_RETURN_RADIUS}"
+        )
+
+    close_threat_radius = record.get("lone_zealot_hold_close_threat_radius")
+    if not _is_int(close_threat_radius):
+        issues.append("lone_zealot_hold_close_threat_radius is not an integer")
+    elif close_threat_radius != CLOSE_THREAT_RADIUS:
+        mechanism_issues.append(
+            f"close-threat radius must equal {CLOSE_THREAT_RADIUS}"
         )
 
     leash_accepted = record.get("lone_zealot_hold_leash_move_accepted")

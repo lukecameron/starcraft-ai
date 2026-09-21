@@ -4,7 +4,7 @@
 
 namespace kestrel {
 
-constexpr int loneZealotCloseThreatRadius = 256;
+constexpr int loneZealotCloseThreatRadius = 160;
 constexpr int loneZealotLeashRadius = 96;
 constexpr int loneZealotReturnReleaseRadius = 48;
 

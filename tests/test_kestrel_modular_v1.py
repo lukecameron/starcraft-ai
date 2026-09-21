@@ -197,7 +197,7 @@ class KestrelModularV1Test(unittest.TestCase):
             "reserve_block_minerals": [], "reserve_block_reserves": [],
             "reserve_block_pre_acceptance_flags": [], "construction_events": [],
             "lone_zealot_hold_close_threat_samples": 0,
-            "lone_zealot_hold_close_threat_radius": 256,
+            "lone_zealot_hold_close_threat_radius": 160,
             "lone_zealot_hold_close_threat_first_frame": -1,
             "lone_zealot_hold_close_threat_attack_attempts": 0,
             "lone_zealot_hold_close_threat_attack_accepted": 0,
@@ -225,7 +225,7 @@ class KestrelModularV1Test(unittest.TestCase):
         return {
             "telemetry_schema": "kestrel-modular-v1",
             "lone_zealot_hold_close_threat_samples": 2,
-            "lone_zealot_hold_close_threat_radius": 256,
+            "lone_zealot_hold_close_threat_radius": 160,
             "lone_zealot_hold_leash_radius": 96,
             "lone_zealot_hold_leash_block_samples": 0,
             "lone_zealot_hold_leash_move_attempts": 0,
@@ -289,9 +289,9 @@ class KestrelModularV1Test(unittest.TestCase):
         result = module.validate_record(record)
         self.assertIn("close-threat attack attempts do not reconcile with acceptance and rejection", result["issues"])
         record["lone_zealot_hold_close_threat_attack_rejected"] = 0
-        record["lone_zealot_hold_close_threat_radius"] = 255
+        record["lone_zealot_hold_close_threat_radius"] = 159
         result = module.validate_record(record)
-        self.assertIn("lone_zealot_hold_close_threat_radius must equal 256", result["issues"])
+        self.assertIn("lone_zealot_hold_close_threat_radius must equal 160", result["issues"])
 
     def test_close_threat_scorecard_rejects_accepted_event_with_empty_arrays(self):
         module = self._load_close_threat_scorecard()
