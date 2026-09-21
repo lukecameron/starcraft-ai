@@ -42,6 +42,38 @@ def validate_hold_evidence(record):
             and accepted > attempts):
         issues.append("accepted lone-hold home moves exceed attempts")
 
+    anchor = record.get("lone_zealot_hold_anchor")
+    if not isinstance(anchor, dict):
+        issues.append("lone_zealot_hold_anchor is not an object")
+        anchor = {}
+    anchor_values = [anchor.get(key) for key in ("start_tile_x", "start_tile_y", "x", "y")]
+    if any(not isinstance(value, int) or isinstance(value, bool) for value in anchor_values):
+        issues.append("lone_zealot_hold_anchor has invalid coordinates")
+    elif (anchor["x"], anchor["y"]) != (
+            anchor["start_tile_x"] * 32 + 64,
+            anchor["start_tile_y"] * 32 + 48):
+        issues.append("lone-zealot hold anchor is not the public base center")
+
+    targets = record.get("lone_zealot_hold_home_move_accepted_targets")
+    if not isinstance(targets, list):
+        issues.append("lone_zealot_hold_home_move_accepted_targets is not an array")
+        targets = []
+    if isinstance(accepted, int) and not isinstance(accepted, bool) and len(targets) != accepted:
+        issues.append("accepted lone-hold move targets do not reconcile with accepted moves")
+    if all(isinstance(value, int) and not isinstance(value, bool) for value in anchor_values):
+        expected = (anchor["x"], anchor["y"])
+        for target in targets:
+            if (not isinstance(target, dict)
+                    or not isinstance(target.get("x"), int)
+                    or isinstance(target.get("x"), bool)
+                    or not isinstance(target.get("y"), int)
+                    or isinstance(target.get("y"), bool)):
+                issues.append("accepted lone-hold move target has invalid coordinates")
+                break
+            if (target["x"], target["y"]) != expected:
+                issues.append("accepted lone-hold move did not target the public base center")
+                break
+
     if record.get("known_zerg") is True:
         active = record.get("lone_zealot_hold_active_samples")
         suppressions = record.get("lone_zealot_hold_suppression_samples")

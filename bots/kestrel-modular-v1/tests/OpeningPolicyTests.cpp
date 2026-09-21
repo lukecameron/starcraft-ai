@@ -27,5 +27,7 @@ int main() {
     if (!kestrel::holdLoneZealot(true, 1)) return 7;
     if (kestrel::holdLoneZealot(true, 2)) return 8;
     if (kestrel::holdLoneZealot(false, 1)) return 9;
+    const BWAPI::Position holdAnchor = kestrel::loneZealotHoldAnchor(BWAPI::TilePosition(10, 20));
+    if (holdAnchor != BWAPI::Position(384, 688)) return 10;
     return 0;
 }

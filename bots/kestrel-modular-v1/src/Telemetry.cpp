@@ -1,4 +1,5 @@
 #include "kestrel/Telemetry.h"
+#include "kestrel/CombatPolicy.h"
 
 #include <algorithm>
 #include <chrono>
@@ -63,6 +64,17 @@ void Telemetry::write(const WorldSnapshot& state, const CommandArbiter& commands
         << ",\"lone_zealot_hold_home_move_attempts\":" << squads.stats().loneHoldHomeMoveAttempts
         << ",\"lone_zealot_hold_home_move_accepted\":" << squads.stats().loneHoldHomeMoveAccepted
         << ",\"lone_zealot_hold_release_frame\":" << squads.stats().loneHoldReleaseFrame
+        << ",\"lone_zealot_hold_anchor\":{\"start_tile_x\":" << state.home.x
+        << ",\"start_tile_y\":" << state.home.y
+        << ",\"x\":" << loneZealotHoldAnchor(state.home).x
+        << ",\"y\":" << loneZealotHoldAnchor(state.home).y << '}'
+        << ",\"lone_zealot_hold_home_move_accepted_targets\":[";
+    for (size_t i = 0; i < squads.stats().loneHoldAcceptedHomeMoveTargets.size(); ++i) {
+        if (i) out << ',';
+        const BWAPI::Position target = squads.stats().loneHoldAcceptedHomeMoveTargets[i];
+        out << "{\"x\":" << target.x << ",\"y\":" << target.y << '}';
+    }
+    out << ']'
         << ",\"max_probes\":" << maxProbes_
         << ",\"max_pylons\":" << maxPylons_
         << ",\"max_gateways\":" << maxGateways_

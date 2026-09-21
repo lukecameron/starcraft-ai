@@ -17,6 +17,7 @@ void SquadController::tick(const WorldSnapshot& state, WorldMemory& memory, Comm
         stats_.loneHoldReleaseFrame = state.frame;
     }
     const BWAPI::Position home(state.home);
+    const BWAPI::Position loneHoldHome = loneZealotHoldAnchor(state.home);
     bool homeThreat = false;
     for (auto enemy : state.visibleEnemies) {
         if (enemy && enemy->getDistance(home) <= 400) { homeThreat = true; break; }
@@ -33,8 +34,10 @@ void SquadController::tick(const WorldSnapshot& state, WorldMemory& memory, Comm
                 stats_.loneHoldUniqueUnits = static_cast<int>(suppressedUnits_.size());
             if (unit->getDistance(home) > 128 && !unit->isMoving()) {
                 ++stats_.loneHoldHomeMoveAttempts;
-                if (commands.move(unit, home, state.frame))
+                if (commands.move(unit, loneHoldHome, state.frame)) {
                     ++stats_.loneHoldHomeMoveAccepted;
+                    stats_.loneHoldAcceptedHomeMoveTargets.push_back(loneHoldHome);
+                }
             }
             continue;
         }

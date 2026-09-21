@@ -98,6 +98,8 @@ class KestrelModularV1Test(unittest.TestCase):
             "lone_zealot_hold_home_move_attempts",
             "lone_zealot_hold_home_move_accepted",
             "lone_zealot_hold_release_frame",
+            "lone_zealot_hold_anchor",
+            "lone_zealot_hold_home_move_accepted_targets",
         ):
             self.assertIn(field, telemetry)
         construction_header = (SOURCE / "include/kestrel/ConstructionController.h").read_text()
@@ -185,8 +187,14 @@ class KestrelModularV1Test(unittest.TestCase):
             "lone_zealot_hold_home_move_attempts": 1,
             "lone_zealot_hold_home_move_accepted": 1,
             "lone_zealot_hold_release_frame": 3800,
+            "lone_zealot_hold_anchor": {"start_tile_x": 10, "start_tile_y": 20, "x": 384, "y": 688},
+            "lone_zealot_hold_home_move_accepted_targets": [{"x": 384, "y": 688}],
         }
         self.assertEqual(module.validate_hold_evidence(record), ([], []))
+        record["lone_zealot_hold_home_move_accepted_targets"][0]["x"] = 320
+        issues, _ = module.validate_hold_evidence(record)
+        self.assertIn("accepted lone-hold move did not target the public base center", issues)
+        record["lone_zealot_hold_home_move_accepted_targets"][0]["x"] = 384
         record["lone_zealot_hold_release_frame"] = 3803
         _, mechanism_issues = module.validate_hold_evidence(record)
         self.assertIn("hold release does not match the second-Zealot completion frame", mechanism_issues)

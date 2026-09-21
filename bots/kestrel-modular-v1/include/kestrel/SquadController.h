@@ -4,6 +4,7 @@
 #include "kestrel/WorldMemory.h"
 
 #include <unordered_set>
+#include <vector>
 
 namespace kestrel {
 
@@ -16,6 +17,7 @@ public:
         int loneHoldHomeMoveAttempts = 0;
         int loneHoldHomeMoveAccepted = 0;
         int loneHoldReleaseFrame = -1;
+        std::vector<BWAPI::Position> loneHoldAcceptedHomeMoveTargets;
     };
 
     void reset() {
