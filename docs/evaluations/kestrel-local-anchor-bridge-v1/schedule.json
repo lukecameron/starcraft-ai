@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "experiment_id": "kestrel-local-anchor-bridge-v1",
+  "registered_at": "2026-09-21T00:09:28Z",
+  "eval_plan": "docs/evaluations/kestrel-local-anchor-bridge-v1/EVAL_PLAN.md",
+  "eval_plan_sha256": "bdc150f65b65b125460f133c8717d8c1b6875182fd34fa9f809b4fa35dddd2ef",
+  "purpose": "Exact-regime UAlbertaBot-Protoss bridge for the canonical Kestrel v13 local rating component",
+  "hypothesis": "Four direct UAlbertaBot-Protoss games against Kestrel v13 plus four against ZZZKBot can connect an additional exact node and reduce uncertainty in the 120-second Kestrel rating component",
+  "stop_condition": "Run the fixed eight rows exactly once at concurrency four; preserve every started row; stop after two consecutive infrastructure-invalid completions or completion; do not retry, reseed, replace, or rerun",
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "launcher_sha256": "af1682393f9fe43afe885b35a1637e9c464719ef93c83e799d614beed20316c1",
+  "launcher_sidecar": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher.build.json",
+  "launcher_sidecar_sha256": "0beebdd3bb6221a5e6143c015763d14fa20330a8976ede3f997062660b3e7390",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "engine_sha256": "eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b",
+  "game_data_dir": "third_party/game-data/runtime",
+  "game_data_files": [
+    {
+      "path": "third_party/game-data/runtime/BrooDat.mpq",
+      "sha256": "c6d810981e24b947b36d531ab047e143fec0284a581fdaad6fc431e1e75e21df"
+    },
+    {
+      "path": "third_party/game-data/runtime/Patch_rt.mpq",
+      "sha256": "a063f069f1abe202b142b08a9dab878eba8ba033bf13a818024a72631c4452be"
+    },
+    {
+      "path": "third_party/game-data/runtime/StarDat.mpq",
+      "sha256": "8845fd871b4f8f242cc5c2b6f6b8b319d86bbbd02bc836356b51f81b5ba8203f"
+    },
+    {
+      "path": "third_party/game-data/runtime/sscai/(2)Benzene.scx",
+      "sha256": "45764b9baa72f83a5eb2eab49ddea46c6af21da75bc42e687e6dab93e4e4044e"
+    },
+    {
+      "path": "third_party/game-data/runtime/sscai/(2)Destination.scx",
+      "sha256": "0241ae7e8b43632e3421444aa3ca3bb10d28b4796f4ccc138103c3b75e5158a5"
+    },
+    {
+      "path": "third_party/game-data/runtime/sscai/(2)Heartbreak Ridge.scx",
+      "sha256": "64527ae691307756dbc2700c68ab5878476eed27c3dfc9a64411955f4107f50b"
+    },
+    {
+      "path": "third_party/game-data/runtime/sscai/(4)Circuit Breaker.scx",
+      "sha256": "ba956f73d18342f3f329741b684fd569e6bcf718b1fcebd86c2d965481260bc0"
+    }
+  ],
+  "wall_timeout_seconds": 120,
+  "concurrency": 4,
+  "stop_after_consecutive_invalid": 2,
+  "allowed_kill_events": [
+    {
+      "source": "controller_not_occupied_after_action",
+      "action_id": 87
+    },
+    {
+      "source": "transport_callback",
+      "action_id": -1
+    }
+  ],
+  "candidate": {
+    "name": "UAlbertaBot-Protoss",
+    "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+    "race": "Protoss",
+    "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9",
+    "ownership": "Ours",
+    "origin": "Port",
+    "author": "David Churchill",
+    "source_url": "https://github.com/davechurchill/ualbertabot",
+    "ai_config": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/AI/UAlbertaBot_Config.txt",
+    "ai_config_sha256": "e4b2a2f5e40f85c2fd3f43e094fdee4808062751f143d66c785ef0178ba91b39",
+    "build_sidecar": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib.build.json",
+    "build_sidecar_sha256": "2710a35e2dc0f05548a99822a235aee47a0aeadc95d2e8dbf75699da248aeb40",
+    "source_patch": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/ualbertabot-native-arm64.patch",
+    "source_patch_sha256": "7fae4072f37521490e8cffce07257768c22b2972e337f17f77b7750e7c6e43b0"
+  },
+  "opponents": {
+    "kestrel-v13": {
+      "name": "Kestrel-v13",
+      "path": "artifacts/builds/622bca47b47f78f3e9d1971d1e340f991b54ced7f3bfdfd932d3062e125cbd98/kestrel-v13-gas-worker-guard/Kestrel.dylib",
+      "race": "Protoss",
+      "sha256": "622bca47b47f78f3e9d1971d1e340f991b54ced7f3bfdfd932d3062e125cbd98",
+      "ownership": "Ours",
+      "origin": "Original",
+      "author": "Luke Cameron",
+      "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel",
+      "source_sha256": "12cecdb5039569711c318bab5bb6781b4f1e86e22c87e453f9d85c295fa13df0",
+      "source_patch": "patches/kestrel-v7-to-v13.patch",
+      "source_patch_sha256": "8fd24ff479bc5a8794f0ae092855082b1a44270123fe8cc1810ee1493996177b",
+      "build_sidecar": "artifacts/builds/622bca47b47f78f3e9d1971d1e340f991b54ced7f3bfdfd932d3062e125cbd98/kestrel-v13-gas-worker-guard/Kestrel.dylib.build.json",
+      "build_sidecar_sha256": "1f66dec14e5d44b176080a640afd6a97a3ddcb474682cf23dc0c0ee2954c7bb7"
+    },
+    "zzzk": {
+      "name": "ZZZKBot",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "race": "Zerg",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748",
+      "ownership": "Ours",
+      "origin": "Port",
+      "author": "Chris Coxe",
+      "source_url": "https://github.com/chriscoxe/ZZZKBot",
+      "source_revision": "7183e37b6b416ea53c1040c83e639a3a3c395eed",
+      "source_patch": "patches/zzzkbot-native-arm64.patch",
+      "source_patch_sha256": "aedeeef6cc664e9d49d181d8a0044e110008fdca720df386e02fadb95c784c2d",
+      "build_sidecar": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib.build.json",
+      "build_sidecar_sha256": "41c03e2c266fc012a6df0e1ec1c8c9efd65e24973490ef3d1980c9cf6b36f4f1"
+    }
+  },
+  "games": [
+    {
+      "index": 1,
+      "opponent": "kestrel-v13",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 14001,
+      "candidate_player": 1
+    },
+    {
+      "index": 2,
+      "opponent": "zzzk",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 14002,
+      "candidate_player": 2
+    },
+    {
+      "index": 3,
+      "opponent": "kestrel-v13",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 14003,
+      "candidate_player": 2
+    },
+    {
+      "index": 4,
+      "opponent": "zzzk",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 14004,
+      "candidate_player": 1
+    },
+    {
+      "index": 5,
+      "opponent": "kestrel-v13",
+      "map": "sscai/(2)Destination.scx",
+      "scenario_seed": 14005,
+      "candidate_player": 1
+    },
+    {
+      "index": 6,
+      "opponent": "zzzk",
+      "map": "sscai/(2)Benzene.scx",
+      "scenario_seed": 14006,
+      "candidate_player": 2
+    },
+    {
+      "index": 7,
+      "opponent": "kestrel-v13",
+      "map": "sscai/(4)Circuit Breaker.scx",
+      "scenario_seed": 14007,
+      "candidate_player": 2
+    },
+    {
+      "index": 8,
+      "opponent": "zzzk",
+      "map": "sscai/(2)Heartbreak Ridge.scx",
+      "scenario_seed": 14008,
+      "candidate_player": 1
+    }
+  ],
+  "required_files": [
+    {
+      "path": "docs/evaluations/kestrel-local-anchor-bridge-v1/EVAL_PLAN.md",
+      "sha256": "bdc150f65b65b125460f133c8717d8c1b6875182fd34fa9f809b4fa35dddd2ef"
+    },
+    {
+      "path": "scripts/run_batch.py",
+      "sha256": "260d387a80a36ac1c713b87af421e21a3a300877a15dc0d563aca9bb0f1379eb"
+    },
+    {
+      "path": "scripts/run_match.py",
+      "sha256": "d0a0eee0d932fc279b2ee53831ddf82accf7042a8b7be52e73f144deeb191cbe"
+    },
+    {
+      "path": "config/bot-identities.json",
+      "sha256": "7336555a6cfaa992bc6d912c61c1d0c421953e084ab10af0e202a5a632801b7d"
+    }
+  ],
+  "provenance_registry": "config/bot-identities.json",
+  "provenance_registry_sha256": "7336555a6cfaa992bc6d912c61c1d0c421953e084ab10af0e202a5a632801b7d",
+  "rating_rule": {
+    "prior_sd_elo": 400,
+    "minimum_valid_games": 7,
+    "minimum_valid_games_per_edge": 3,
+    "minimum_valid_games_per_candidate_slot_per_edge": 1,
+    "minimum_distinct_maps_per_edge": 3,
+    "reference": "ZZZKBot",
+    "invalid_rows_enter_likelihood": false
+  }
+}

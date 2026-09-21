@@ -85,6 +85,32 @@ class BatchSummaryTests(unittest.TestCase):
         crash = {"termination_reason": "children_exited", "players": [{"return_code": -11}, {"return_code": 0}]}
         self.assertEqual(run_batch.classify(crash, 1, 1), "crash")
 
+    def test_frozen_input_preflight_rejects_hash_drift(self):
+        with tempfile.TemporaryDirectory() as directory:
+            frozen = Path(directory) / "frozen.bin"
+            frozen.write_bytes(b"actual")
+            schedule = {
+                "candidate": {"name": "c", "race": "Zerg", "sha256": "module"},
+                "opponents": {},
+                "required_files": [{"path": str(frozen), "sha256": hashlib.sha256(b"other").hexdigest()}],
+            }
+            with self.assertRaises(SystemExit):
+                run_batch.verify_schedule_inputs(argparse.ArgumentParser(), schedule)
+
+    def test_optional_identity_sidecar_must_match_module(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            sidecar = root / "build.json"
+            sidecar.write_text(json.dumps({"binary_sha256": "different"}))
+            schedule = {
+                "candidate": {"name": "c", "race": "Zerg", "sha256": "module",
+                              "build_sidecar": str(sidecar),
+                              "build_sidecar_sha256": hashlib.sha256(sidecar.read_bytes()).hexdigest()},
+                "opponents": {},
+            }
+            with self.assertRaises(SystemExit):
+                run_batch.verify_schedule_inputs(argparse.ArgumentParser(), schedule)
+
 
 class BatchLifecycleTests(unittest.TestCase):
     def test_schedule_is_persisted_and_results_are_incremental(self):

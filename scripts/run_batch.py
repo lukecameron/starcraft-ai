@@ -41,6 +41,68 @@ def sha256(path):
     return digest.hexdigest()
 
 
+def verify_file(parser, path, expected_sha256, label):
+    path = Path(path)
+    if not path.is_file():
+        parser.error(f"{label} is missing: {path}")
+    actual = sha256(path)
+    if actual != expected_sha256:
+        parser.error(f"{label} SHA-256 mismatch: expected {expected_sha256}, got {actual}")
+
+
+def verify_identity_files(parser, identity, label):
+    optional_files = (
+        ("build_sidecar", "build_sidecar_sha256", "build sidecar"),
+        ("source_patch", "source_patch_sha256", "source patch"),
+        ("ai_config", "ai_config_sha256", "AI config"),
+    )
+    for path_key, hash_key, description in optional_files:
+        if path_key in identity or hash_key in identity:
+            if not identity.get(path_key) or not identity.get(hash_key):
+                parser.error(f"{label} must freeze both {path_key} and {hash_key}")
+            verify_file(parser, identity[path_key], identity[hash_key], f"{label} {description}")
+    if identity.get("build_sidecar"):
+        try:
+            sidecar = json.loads(Path(identity["build_sidecar"]).read_text())
+        except (OSError, json.JSONDecodeError) as error:
+            parser.error(f"{label} build sidecar is unreadable: {error}")
+        if sidecar.get("binary_sha256") != identity.get("sha256"):
+            parser.error(f"{label} build sidecar does not identify the frozen module")
+
+
+def verify_schedule_inputs(parser, schedule):
+    """Fail before creating an experiment ledger if optional frozen inputs drift."""
+    optional_files = (
+        ("launcher", "launcher_sha256", "launcher"),
+        ("launcher_sidecar", "launcher_sidecar_sha256", "launcher sidecar"),
+        ("eval_plan", "eval_plan_sha256", "evaluation plan"),
+        ("provenance_registry", "provenance_registry_sha256", "provenance registry"),
+    )
+    for path_key, hash_key, label in optional_files:
+        if hash_key in schedule:
+            if not schedule.get(path_key):
+                parser.error(f"schedule freezes {hash_key} without {path_key}")
+            verify_file(parser, schedule[path_key], schedule[hash_key], label)
+    for collection, label in ((schedule.get("game_data_files", []), "game-data file"),
+                              (schedule.get("required_files", []), "required file")):
+        for item in collection:
+            if not isinstance(item, dict) or not item.get("path") or not item.get("sha256"):
+                parser.error(f"{label} entries require path and sha256")
+            verify_file(parser, item["path"], item["sha256"], label)
+    verify_identity_files(parser, schedule["candidate"], "candidate")
+    for name, opponent in schedule["opponents"].items():
+        verify_identity_files(parser, opponent, f"opponent {name}")
+    if schedule.get("launcher_sidecar"):
+        try:
+            sidecar = json.loads(Path(schedule["launcher_sidecar"]).read_text())
+        except (OSError, json.JSONDecodeError) as error:
+            parser.error(f"launcher sidecar is unreadable: {error}")
+        for artifact in sidecar.get("artifacts", []):
+            if not artifact.get("path") or not artifact.get("sha256"):
+                parser.error("launcher sidecar artifact lacks path or sha256")
+            verify_file(parser, artifact["path"], artifact["sha256"], "launcher-sidecar artifact")
+
+
 def wilson(wins, games):
     if not games:
         return None
@@ -141,6 +203,8 @@ def validate_schedule(parser, schedule):
         parser.error("schedule must preregister hypothesis and stop_condition")
     if not isinstance(schedule["games"], list) or not schedule["games"]:
         parser.error("schedule has no games")
+    if "concurrency" in schedule and (type(schedule["concurrency"]) is not int or schedule["concurrency"] < 1):
+        parser.error("schedule concurrency must be a positive integer")
     for index, game in enumerate(schedule["games"], 1):
         if game.get("opponent") not in schedule["opponents"]:
             parser.error(f"game {index} names an unknown opponent")
@@ -205,16 +269,22 @@ def main():
     parser.add_argument("--candidate", required=True)
     parser.add_argument("--runner", default=str(Path(__file__).with_name("run_match.py")))
     parser.add_argument("--artifacts-dir", default="artifacts")
-    parser.add_argument("--concurrency", type=int, default=2)
+    parser.add_argument("--concurrency", type=int)
     parser.add_argument("--no-publish", action="store_true", help="Skip the configured completion hook (tests/local inspection).")
     args = parser.parse_args()
-    if args.concurrency < 1:
+    if args.concurrency is not None and args.concurrency < 1:
         parser.error("--concurrency must be positive")
 
     schedule_path = Path(args.schedule).resolve()
     candidate = Path(args.candidate).resolve()
     schedule = json.loads(schedule_path.read_text())
     validate_schedule(parser, schedule)
+    scheduled_concurrency = schedule.get("concurrency")
+    if args.concurrency is None:
+        args.concurrency = scheduled_concurrency or 2
+    elif scheduled_concurrency is not None and args.concurrency != scheduled_concurrency:
+        parser.error(f"--concurrency {args.concurrency} does not match frozen schedule concurrency {scheduled_concurrency}")
+    verify_schedule_inputs(parser, schedule)
     candidate_hash = sha256(candidate)
     if candidate_hash != schedule["candidate"].get("sha256"):
         parser.error("candidate SHA-256 does not match the frozen schedule")
