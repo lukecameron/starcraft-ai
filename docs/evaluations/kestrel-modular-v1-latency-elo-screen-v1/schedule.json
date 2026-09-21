@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "status": "registered-not-run",
+  "experiment_id": "kestrel-modular-v1-latency-elo-screen-v1",
+  "eval_plan": "docs/evaluations/kestrel-modular-v1-latency-elo-screen-v1/EVAL_PLAN.md",
+  "eval_plan_sha256": "79b398e330abb829dba3073f6c11eeac9c5f7a9197cb20fe7c9200cab183f5c7",
+  "registered_at": "2026-09-21T05:20:00Z",
+  "purpose": "Five-game exact-build local rating screen for latency-instrumented Kestrel Modular v1",
+  "hypothesis": "The latency-instrumented Kestrel Modular v1 build can produce complete exact-build games with measured callback latency and retain prior opening behavior across a small mixed screen.",
+  "concurrency": 5,
+  "wall_timeout_seconds": 120,
+  "cohort_wall_cap_seconds": 300,
+  "stop_after_consecutive_invalid": 2,
+  "stop_condition": "Launch exactly the five fixed rows concurrently; preserve every outcome; do not retry, reseed, replace, substitute, or rerun any row. Stop new launches at the cohort wall cap, though already-running rows may finish.",
+  "allowed_kill_events": [
+    {"action_id": 87, "source": "controller_not_occupied_after_action"},
+    {"action_id": -1, "source": "transport_callback"}
+  ],
+  "engine_sha256": "eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b",
+  "launcher": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher",
+  "launcher_sha256": "af1682393f9fe43afe885b35a1637e9c464719ef93c83e799d614beed20316c1",
+  "launcher_sidecar": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain/BWAPILauncher.build.json",
+  "launcher_sidecar_sha256": "0beebdd3bb6221a5e6143c015763d14fa20330a8976ede3f997062660b3e7390",
+  "library_path": "artifacts/builds/eee406fca0aed7ebda45d229a930452bfe33c763f52ecc83c7c996327ea7114b/openbw-terminal-drain",
+  "game_data_dir": "third_party/game-data/runtime",
+  "game_data_files": [
+    {"path": "third_party/game-data/runtime/BrooDat.mpq", "sha256": "c6d810981e24b947b36d531ab047e143fec0284a581fdaad6fc431e1e75e21df"},
+    {"path": "third_party/game-data/runtime/Patch_rt.mpq", "sha256": "a063f069f1abe202b142b08a9dab878eba8ba033bf13a818024a72631c4452be"},
+    {"path": "third_party/game-data/runtime/StarDat.mpq", "sha256": "8845fd871b4f8f242cc5c2b6f6b8b319d86bbbd02bc836356b51f81b5ba8203f"},
+    {"path": "third_party/game-data/runtime/sscai/(2)Benzene.scx", "sha256": "45764b9baa72f83a5eb2eab49ddea46c6af21da75bc42e687e6dab93e4e4044e"},
+    {"path": "third_party/game-data/runtime/sscai/(2)Destination.scx", "sha256": "0241ae7e8b43632e3421444aa3ca3bb10d28b4796f4ccc138103c3b75e5158a5"},
+    {"path": "third_party/game-data/runtime/sscai/(2)Heartbreak Ridge.scx", "sha256": "64527ae691307756dbc2700c68ab5878476eed27c3dfc9a64411955f4107f50b"},
+    {"path": "third_party/game-data/runtime/sscai/(4)Circuit Breaker.scx", "sha256": "ba956f73d18342f3f329741b684fd569e6bcf718b1fcebd86c2d965481260bc0"}
+  ],
+  "candidate": {
+    "name": "Kestrel Modular v1",
+    "race": "Protoss",
+    "ownership": "Ours",
+    "origin": "Original",
+    "author": "Luke Cameron",
+    "source_url": "https://github.com/lukecameron/starcraft-ai/tree/main/bots/kestrel-modular-v1",
+    "source_commit": "9f02aaea07cfecbd23cbd53a6295fc1dc526e831",
+    "path": "artifacts/builds/eab694b547a16d954708950f944005fa75a73995452130c6927c5effb8f602eb/kestrel-modular-v1-latency-elo-screen/KestrelModular.dylib",
+    "sha256": "eab694b547a16d954708950f944005fa75a73995452130c6927c5effb8f602eb",
+    "build_sidecar": "artifacts/builds/eab694b547a16d954708950f944005fa75a73995452130c6927c5effb8f602eb/kestrel-modular-v1-latency-elo-screen/KestrelModular.dylib.build.json",
+    "build_sidecar_sha256": "927e7fa9e4b075298e7236be1ce665d854284ad21dc12767cafed2abc85273d9",
+    "source_manifest_sha256": "711f7bbc49466a0e1fe3fd2d389f57da0fffe9e446a15c12296ceb2b0087b627"
+  },
+  "opponents": {
+    "zzzk": {
+      "name": "ZZZKBot",
+      "race": "Zerg",
+      "ownership": "Ours",
+      "origin": "Port",
+      "author": "Chris Coxe",
+      "source_url": "https://github.com/chriscoxe/ZZZKBot",
+      "source_revision": "7183e37b6b416ea53c1040c83e639a3a3c395eed",
+      "source_patch": "patches/zzzkbot-native-arm64.patch",
+      "source_patch_sha256": "aedeeef6cc664e9d49d181d8a0044e110008fdca720df386e02fadb95c784c2d",
+      "path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib",
+      "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748",
+      "build_sidecar": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib.build.json",
+      "build_sidecar_sha256": "41c03e2c266fc012a6df0e1ec1c8c9efd65e24973490ef3d1980c9cf6b36f4f1"
+    },
+    "mcrave": {
+      "name": "McRave memo fork",
+      "race": "Zerg",
+      "ownership": "Ours",
+      "origin": "Fork",
+      "author": "Christian McCrave",
+      "source_url": "https://github.com/Cmccrave/McRave",
+      "path": "artifacts/builds/04521befa41bb3873783b215493abf3a071414d2a5315cdea68fc7a67f4415ec/mcrave-as-memo-candidate/McRave.dylib",
+      "sha256": "04521befa41bb3873783b215493abf3a071414d2a5315cdea68fc7a67f4415ec",
+      "build_sidecar": "artifacts/builds/04521befa41bb3873783b215493abf3a071414d2a5315cdea68fc7a67f4415ec/mcrave-as-memo-candidate/McRave.dylib.build.json",
+      "build_sidecar_sha256": "86965dce3c68d42c72373afa505bd68502b36eb030ca58b579934bd6fbdb399f"
+    },
+    "uab-p": {
+      "name": "UAlbertaBot-Protoss",
+      "race": "Protoss",
+      "ownership": "Ours",
+      "origin": "Port",
+      "author": "David Churchill",
+      "source_url": "https://github.com/davechurchill/ualbertabot",
+      "path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib",
+      "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9",
+      "build_sidecar": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib.build.json",
+      "build_sidecar_sha256": "2710a35e2dc0f05548a99822a235aee47a0aeadc95d2e8dbf75699da248aeb40"
+    }
+  },
+  "games": [
+    {"index": 1, "opponent": "zzzk", "map": "sscai/(2)Benzene.scx", "candidate_player": 1, "scenario_seed": 12511},
+    {"index": 2, "opponent": "mcrave", "map": "sscai/(4)Circuit Breaker.scx", "candidate_player": 2, "scenario_seed": 12512},
+    {"index": 3, "opponent": "uab-p", "map": "sscai/(2)Heartbreak Ridge.scx", "candidate_player": 1, "scenario_seed": 12513},
+    {"index": 4, "opponent": "zzzk", "map": "sscai/(2)Destination.scx", "candidate_player": 2, "scenario_seed": 12514},
+    {"index": 5, "opponent": "uab-p", "map": "sscai/(2)Benzene.scx", "candidate_player": 2, "scenario_seed": 12515}
+  ],
+  "elo_eligibility": {
+    "automatic_update": false,
+    "required_latency_frames": 3,
+    "required_exact_regime": true,
+    "required_replay_integrity": "Both copies hash/size match; screp parses complete replay; expected races; replay_header_frames + 1 equals owning callback frame; final manifest identity pins reviewed.",
+    "eligible_rows": "Only rows passing exact-build identity, reviewed manifest hashes, unique scenario identity, complete replay integrity, integer latency=3 for both players, and current engine/regime review may be added by a later explicit config change.",
+    "uncertainty": "Five rows are a coarse screen. Report nominal Wilson intervals and conditional Bradley-Terry intervals only after cohort review; do not claim BASIL transfer or pooled heterogeneous Elo."
+  },
+  "provenance_registry": "config/bot-identities.json",
+  "provenance_registry_sha256": "396d5aa588bfb171f48b68efdeb641f7d8574e1b943c3be11886f678d9b65ff9",
+  "required_files": [
+    {"path": "config/bot-identities.json", "sha256": "396d5aa588bfb171f48b68efdeb641f7d8574e1b943c3be11886f678d9b65ff9"},
+    {"path": "docs/evaluations/kestrel-modular-v1-architecture.md", "sha256": "e4ca9e49c104e4eb9cad226773e9619f7cd60f87094076965bbb2971c03f98dc"},
+    {"path": "docs/evaluations/kestrel-modular-v1-latency-elo-screen-v1/EVAL_PLAN.md", "sha256": "79b398e330abb829dba3073f6c11eeac9c5f7a9197cb20fe7c9200cab183f5c7"},
+    {"path": "scripts/build_kestrel_modular.sh", "sha256": "fb3ed1cbcfa5f5ac9f8326a69d9187581490999987887534142029cbfb82811d"},
+    {"path": "scripts/run_batch.py", "sha256": "fd461f22e2ef2c6ff1bd03c03ef395b811cec5f405fc87f64732cce25363cc44"},
+    {"path": "scripts/run_match.py", "sha256": "c96ac4512f7ab40aedb8da2cba3a8667028b4115a2961519c9618d884edee766"},
+    {"path": "scripts/score_kestrel_modular_v1.py", "sha256": "a6c4996128f727104a15c51849958901f37b765ba024069ce7323f09cac9b851"},
+    {"path": "scripts/audit_kestrel_modular_replay.py", "sha256": "dd8f471e5f28f68bb43e51485697f3d6152b6071f6c5b78a42cf1b484d886b6a"},
+    {"path": "artifacts/builds/eab694b547a16d954708950f944005fa75a73995452130c6927c5effb8f602eb/kestrel-modular-v1-latency-elo-screen/KestrelModular.dylib", "sha256": "eab694b547a16d954708950f944005fa75a73995452130c6927c5effb8f602eb"},
+    {"path": "artifacts/builds/eab694b547a16d954708950f944005fa75a73995452130c6927c5effb8f602eb/kestrel-modular-v1-latency-elo-screen/KestrelModular.dylib.build.json", "sha256": "927e7fa9e4b075298e7236be1ce665d854284ad21dc12767cafed2abc85273d9"},
+    {"path": "artifacts/builds/ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748/aedeeef6cc66/ZZZKBot.dylib", "sha256": "ce796a5d49d78121aaf42b57ba758423ee89f74a249b42180cbc0b0cb9df4748"},
+    {"path": "artifacts/builds/04521befa41bb3873783b215493abf3a071414d2a5315cdea68fc7a67f4415ec/mcrave-as-memo-candidate/McRave.dylib", "sha256": "04521befa41bb3873783b215493abf3a071414d2a5315cdea68fc7a67f4415ec"},
+    {"path": "artifacts/builds/75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9/UAlbertaBot.dylib", "sha256": "75ac4f6bb44ed6e48fbee883638c77df9557c9a88070ceca4de11183053238c9"}
+  ]
+}
