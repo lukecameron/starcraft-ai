@@ -13,6 +13,7 @@ from pathlib import Path
 REQUIRED = (
     "telemetry_schema",
     "frame_count",
+    "latency_frames",
     "ended",
     "known_zerg",
     "command_count",
@@ -193,7 +194,7 @@ def validate_record(record):
         if not is_int(value) or (minimum is not None and value < minimum):
             issues.append(f"{key} is not a valid integer")
 
-    for key in ("frame_count", "command_count", "rejected_commands", "callback_count", "accepted_zealot_trains"):
+    for key in ("frame_count", "latency_frames", "command_count", "rejected_commands", "callback_count", "accepted_zealot_trains"):
         require_int(key, 0)
     for key in ("command_count", "callback_count"):
         if is_int(record.get(key)) and record[key] == 0:

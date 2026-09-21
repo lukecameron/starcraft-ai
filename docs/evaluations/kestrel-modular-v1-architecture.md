@@ -80,6 +80,7 @@ is unit-tested separately from BWAPI.
 active samples, releases, move outcomes and the public-state release frame.
 
 Telemetry is explicitly tagged `kestrel-modular-v1`. It preserves the exact
+observed public BWAPI latency in `latency_frames`, alongside the exact
 four-Probe Pylon acceptance/completion boundary, ordered accepted Probe train
 frames, second-Zealot train and completion frames, reserve-active and
 eligible-Nexus reserve-active frame/available-mineral/value histories and

@@ -92,6 +92,7 @@ class KestrelModularV1Test(unittest.TestCase):
         self.assertIn("airWeapon()", memory)
         self.assertIn("callbackMs_.push_back", telemetry)
         self.assertIn("telemetry_schema\\\":\\\"kestrel-modular-v1", telemetry)
+        self.assertIn('<< ",\\\"latency_frames\\\":" << state.latencyFrames', telemetry)
         for field in (
             "zerg_four_probe_pylon_accepted",
             "zerg_four_probe_pylon_accepted_frame",
@@ -183,6 +184,7 @@ class KestrelModularV1Test(unittest.TestCase):
         spec.loader.exec_module(module)
         record = {
             "telemetry_schema": "kestrel-modular-v1", "frame_count": 1000,
+            "latency_frames": 3,
             "ended": True, "known_zerg": True, "command_count": 1,
             "rejected_commands": 0, "callback_count": 1,
             "zerg_four_probe_pylon_accepted": True,
@@ -224,6 +226,7 @@ class KestrelModularV1Test(unittest.TestCase):
     def _close_threat_record(self):
         return {
             "telemetry_schema": "kestrel-modular-v1",
+            "latency_frames": 3,
             "lone_zealot_hold_close_threat_samples": 2,
             "lone_zealot_hold_close_threat_radius": 160,
             "lone_zealot_hold_leash_radius": 96,

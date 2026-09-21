@@ -64,6 +64,7 @@ void Telemetry::write(const WorldSnapshot& state, const CommandArbiter& commands
     };
     out << "{\"schema_version\":3,\"telemetry_schema\":\"kestrel-modular-v1\",\"bot\":\"Kestrel Modular v1\""
         << ",\"frame_count\":" << state.frame
+        << ",\"latency_frames\":" << state.latencyFrames
         << ",\"known_zerg\":" << (state.knownZerg ? "true" : "false")
         << ",\"ended\":" << (ended ? "true" : "false")
         << ",\"winner\":" << (ended ? (won ? "true" : "false") : "null")

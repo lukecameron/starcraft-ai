@@ -18,6 +18,7 @@ class KestrelModularLeashHysteresisTest(unittest.TestCase):
         return {
             "telemetry_schema": "kestrel-modular-v1",
             "frame_count": 5000,
+            "latency_frames": 3,
             "ended": True,
             "known_zerg": True,
             "command_count": 7,
