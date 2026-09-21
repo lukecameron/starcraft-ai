@@ -1,0 +1,155 @@
+diff --git a/third_party/kestrel-opening-v43-candidate/Kestrel.cpp b/third_party/kestrel-opening-v45-candidate/Kestrel.cpp
+index c28fed1..c64a7d3 100644
+--- a/third_party/kestrel-opening-v43-candidate/Kestrel.cpp
++++ b/third_party/kestrel-opening-v45-candidate/Kestrel.cpp
+@@ -62,6 +62,7 @@ class Kestrel final : public BWAPI::AIModule {
+     bool firstZealotQueued_ = false;
+     int acceptedZealotTrains_ = 0;
+     int secondZealotTrainFrame_ = -1;
++    int secondZealotCompletedFrame_ = -1;
+     int secondGatewayCurrentFrame_ = -1;
+     int secondGatewayCompletedFrame_ = -1;
+     int firstHomeThreatFrame_ = -1;
+@@ -81,19 +82,21 @@ class Kestrel final : public BWAPI::AIModule {
+     int openingProbeReserve_ = 0;
+     int maxOpeningProbeReserve_ = 0;
+     int zergPrePylonProbeReserveFrames_ = 0;
+-    int zergFiveProbePolicyActiveFrames_ = 0;
+-    int zergFiveProbePylonAcceptedFrame_ = -1;
++    int zergFourProbePolicyActiveFrames_ = 0;
++    int zergFourProbePylonAcceptedFrame_ = -1;
++    int zergFourProbePylonProbeCount_ = -1;
+     int zergSecondZealotProbeReserveActiveFrames_ = 0;
+     int zergSecondZealotProbeReserveBlockCount_ = 0;
+     std::vector<int> zergSecondZealotProbeReserveBlockFrames_;
+     std::vector<int> zergSecondZealotProbeReserveBlockMinerals_;
++    std::vector<int> zergSecondZealotProbeReserveBlockPreAcceptFlags_;
+     int firstProbeReserveWindowFrame_ = -1;
+     int probeReserveWindowEndFrame_ = -1;
+     int probeReserveBlockCount_ = 0;
+     static constexpr int kPylonCap = 10;
+-    // Zerg-only opening bank: after five completed Probes, defer the next
+-    // Probe until the second Gateway is current so its 50 minerals remain
+-    // available for the second 150-mineral Gateway.
++    // Zerg-only opening bank: after the first Pylon is accepted, defer the
++    // next Probe until the second Gateway is current so its 50 minerals
++    // remain available for the second 150-mineral Gateway.
+     static constexpr int kZergTwoGatewayProbeReserve = 250;
+     static constexpr int kPostCoreGatewayCap = 6;
+     static constexpr int kSingularityChargeMineralCost = 150;
+@@ -385,6 +388,7 @@ class Kestrel final : public BWAPI::AIModule {
+             << ",\"first_zealot_completed_frame\":" << firstZealotCompletedFrame_
+             << ",\"accepted_zealot_trains\":" << acceptedZealotTrains_
+             << ",\"second_zealot_train_frame\":" << secondZealotTrainFrame_
++            << ",\"second_zealot_completed_frame\":" << secondZealotCompletedFrame_
+             << ",\"second_gateway_current_frame\":" << secondGatewayCurrentFrame_
+             << ",\"second_gateway_completed_frame\":" << secondGatewayCompletedFrame_
+             << ",\"fifth_gateway_accepted_frame\":" << fifthGatewayAcceptedFrame_
+@@ -559,9 +563,10 @@ class Kestrel final : public BWAPI::AIModule {
+             << ",\"max_opening_probe_reserve\":" << maxOpeningProbeReserve_
+             << ",\"zerg_two_gateway_probe_reserve\":" << kZergTwoGatewayProbeReserve
+             << ",\"zerg_pre_pylon_probe_reserve_frames\":" << zergPrePylonProbeReserveFrames_
+-            << ",\"zerg_five_probe_policy_active_frames\":" << zergFiveProbePolicyActiveFrames_
+-            << ",\"zerg_five_probe_pylon_accepted_frame\":" << zergFiveProbePylonAcceptedFrame_
+-            << ",\"zerg_five_probe_pylon_accepted\":" << (zergFiveProbePylonAcceptedFrame_ >= 0 ? "true" : "false")
++            << ",\"zerg_four_probe_policy_active_frames\":" << zergFourProbePolicyActiveFrames_
++            << ",\"zerg_four_probe_pylon_accepted_frame\":" << zergFourProbePylonAcceptedFrame_
++            << ",\"zerg_four_probe_pylon_accepted\":" << (zergFourProbePylonAcceptedFrame_ >= 0 ? "true" : "false")
++            << ",\"zerg_four_probe_pylon_probe_count\":" << zergFourProbePylonProbeCount_
+             << ",\"zerg_second_zealot_probe_reserve_active_frames\":" << zergSecondZealotProbeReserveActiveFrames_
+             << ",\"zerg_second_zealot_probe_reserve_block_frames\":[";
+         for (size_t index = 0; index < zergSecondZealotProbeReserveBlockFrames_.size(); ++index) {
+@@ -573,6 +578,11 @@ class Kestrel final : public BWAPI::AIModule {
+             if (index) out << ',';
+             out << zergSecondZealotProbeReserveBlockMinerals_[index];
+         }
++        out << "],\"zerg_second_zealot_probe_reserve_block_pre_accept_flags\":[";
++        for (size_t index = 0; index < zergSecondZealotProbeReserveBlockPreAcceptFlags_.size(); ++index) {
++            if (index) out << ',';
++            out << zergSecondZealotProbeReserveBlockPreAcceptFlags_[index];
++        }
+         out << "],\"zerg_second_zealot_probe_reserve_block_count\":" << zergSecondZealotProbeReserveBlockCount_
+             << ",\"zerg_second_zealot_probe_reserve\":100"
+             << ",\"first_probe_reserve_window_frame\":" << firstProbeReserveWindowFrame_
+@@ -1359,8 +1369,10 @@ class Kestrel final : public BWAPI::AIModule {
+             if (firstZealotTrainFrame_ >= 0) ++acceptedStructuresAfterFirstZealot_;
+             if (type == BWAPI::UnitTypes::Protoss_Pylon && firstPylonAcceptedFrame_ < 0) {
+                 firstPylonAcceptedFrame_ = frame;
+-                if (knownZerg_ && count(BWAPI::UnitTypes::Protoss_Probe, true) >= 5 && firstPylonCurrentFrame_ < 0)
+-                    zergFiveProbePylonAcceptedFrame_ = frame;
++                if (knownZerg_ && count(BWAPI::UnitTypes::Protoss_Probe, true) >= 4 && firstPylonCurrentFrame_ < 0) {
++                    zergFourProbePylonAcceptedFrame_ = frame;
++                    zergFourProbePylonProbeCount_ = count(BWAPI::UnitTypes::Protoss_Probe, true);
++                }
+             }
+             if (type == BWAPI::UnitTypes::Protoss_Pylon && count(type) >= 5 && sixthPylonAcceptedFrame_ < 0) sixthPylonAcceptedFrame_ = frame;
+             if (type == BWAPI::UnitTypes::Protoss_Pylon && preCommandStructureCount >= 6 && seventhPylonAcceptedFrame_ < 0) seventhPylonAcceptedFrame_ = frame;
+@@ -1425,13 +1437,11 @@ class Kestrel final : public BWAPI::AIModule {
+         const int probes = count(BWAPI::UnitTypes::Protoss_Probe);
+         const int completedProbes = count(BWAPI::UnitTypes::Protoss_Probe, true);
+         int openingReserve = 0;
+-        const bool zergFiveProbePolicyActive =
+-            knownZerg_ && completedProbes >= 5 && firstPylonCurrentFrame_ < 0;
++        const bool zergFourProbePolicyActive =
++            knownZerg_ && completedProbes >= 4 && firstPylonCurrentFrame_ < 0;
+         const bool zergPrePylonProbeReserve =
+             knownZerg_ && completedProbes >= 6 && firstPylonCurrentFrame_ < 0;
+-        if (zergFiveProbePolicyActive) {
+-            openingReserve = kZergTwoGatewayProbeReserve;
+-        } else if (knownZerg_ && firstPylonAcceptedFrame_ >= 0) {
++        if (knownZerg_ && firstPylonAcceptedFrame_ >= 0) {
+             // Bank minerals for the second Gateway before adding another
+             // Probe.  In v35 the second Gateway completed at 3242 while the
+             // first Zerg pressure arrived at 3789; the second Zealot missed
+@@ -1445,7 +1455,7 @@ class Kestrel final : public BWAPI::AIModule {
+         }
+         const int frame = BWAPI::Broodwar->getFrameCount();
+         openingProbeReserve_ = knownZerg_ ? openingReserve : 0;
+-        if (zergFiveProbePolicyActive) ++zergFiveProbePolicyActiveFrames_;
++        if (zergFourProbePolicyActive) ++zergFourProbePolicyActiveFrames_;
+         const bool zergSecondZealotProbeReserve =
+             knownZerg_ && secondGatewayCurrentFrame_ >= 0 && acceptedZealotTrains_ < 2;
+         if (zergSecondZealotProbeReserve) ++zergSecondZealotProbeReserveActiveFrames_;
+@@ -1473,8 +1483,10 @@ class Kestrel final : public BWAPI::AIModule {
+                     ++zergSecondZealotProbeReserveBlockCount_;
+                     zergSecondZealotProbeReserveBlockFrames_.push_back(frame);
+                     zergSecondZealotProbeReserveBlockMinerals_.push_back(minerals);
++                    zergSecondZealotProbeReserveBlockPreAcceptFlags_.push_back(acceptedZealotTrains_ < 2 ? 1 : 0);
+                 }
+-                if (minerals >= 50 + openingReserve + (rangeUpgradeBankActive() ? kSingularityChargeMineralCost : 0) && canTrainProbe) {
++                if (minerals >= 50 + openingReserve + (rangeUpgradeBankActive() ? kSingularityChargeMineralCost : 0) && canTrainProbe &&
++                    (!knownZerg_ || firstPylonAcceptedFrame_ >= 0)) {
+                     if (issue(unit->train(BWAPI::UnitTypes::Protoss_Probe), TrainCommand))
+                         if (knownZerg_) acceptedProbeTrainFrames_.push_back(frame);
+                 }
+@@ -1488,7 +1500,12 @@ class Kestrel final : public BWAPI::AIModule {
+                         ++acceptedZealotTrains_;
+                         firstZealotQueued_ = true;
+                         if (firstZealotTrainFrame_ < 0) firstZealotTrainFrame_ = BWAPI::Broodwar->getFrameCount();
+-                        if (acceptedZealotTrains_ == 2) secondZealotTrainFrame_ = BWAPI::Broodwar->getFrameCount();
++                        if (acceptedZealotTrains_ == 2) {
++                            secondZealotTrainFrame_ = BWAPI::Broodwar->getFrameCount();
++                            for (size_t index = 0; index < zergSecondZealotProbeReserveBlockFrames_.size(); ++index)
++                                if (zergSecondZealotProbeReserveBlockFrames_[index] == secondZealotTrainFrame_)
++                                    zergSecondZealotProbeReserveBlockPreAcceptFlags_[index] = 0;
++                        }
+                     }
+                 }
+             }
+@@ -1504,7 +1521,7 @@ class Kestrel final : public BWAPI::AIModule {
+         const int pylons = count(BWAPI::UnitTypes::Protoss_Pylon);
+         const int completedPylons = count(BWAPI::UnitTypes::Protoss_Pylon, true);
+         const int completedProbes = count(BWAPI::UnitTypes::Protoss_Probe, true);
+-        if (knownZerg_ && completedProbes >= 5 && firstPylonCurrentFrame_ < 0 && spendableMinerals() >= 100) {
++        if (knownZerg_ && completedProbes >= 4 && firstPylonCurrentFrame_ < 0 && spendableMinerals() >= 100) {
+             if (build(BWAPI::UnitTypes::Protoss_Pylon, home)) return;
+         }
+         if (knownZerg_ && firstPylonAcceptedFrame_ >= 0 && completedPylons > 0 &&
+@@ -1891,6 +1908,7 @@ class Kestrel final : public BWAPI::AIModule {
+         if (count(BWAPI::UnitTypes::Protoss_Gateway) > 0 && firstGatewayCurrentFrame_ < 0) firstGatewayCurrentFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Gateway, true) > 0 && firstGatewayCompletedFrame_ < 0) firstGatewayCompletedFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Zealot, true) > 0 && firstZealotCompletedFrame_ < 0) firstZealotCompletedFrame_ = frame;
++        if (count(BWAPI::UnitTypes::Protoss_Zealot, true) >= 2 && secondZealotCompletedFrame_ < 0) secondZealotCompletedFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Gateway) >= 2 && secondGatewayCurrentFrame_ < 0) secondGatewayCurrentFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Gateway, true) >= 2 && secondGatewayCompletedFrame_ < 0) secondGatewayCompletedFrame_ = frame;
+         if (count(BWAPI::UnitTypes::Protoss_Gateway) >= 5 && fifthGatewayCurrentFrame_ < 0) fifthGatewayCurrentFrame_ = frame;
